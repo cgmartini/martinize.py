@@ -230,10 +230,10 @@ class Topology:
         elif isinstance(other,IO.Chain):
             if other.type() == "Protein":
                 self.fromAminoAcidSequence(other)
-            elif other.type == "Nucleic":
+            elif other.type() == "Nucleic":
                 # Currently there are no Martini Nucleic Acids
                 self.fromNucleicAcidSequence(other)
-            elif other.type == "Mixed":
+            elif other.type() == "Mixed":
                 logging.warning('Mixed Amino Acid /Nucleic Acid chains are not yet implemented')
                 # How can you have a mixed chain?
                 # Well, you could get a covalently bound lipid or piece of DNA to a protein :S
@@ -624,9 +624,198 @@ class Topology:
         if chain and self.multiscale:
             self.natoms += len(chain.atoms())
 
-    def fromNucleicAcidSequence(self,other):
-        logging.warning('Nucleic Acid parameters are not available in MARTINI. Maybe *you* should create them?')
-        pass
+    def fromNucleicAcidSequence(self,sequence,secstruc=None,links=None,breaks=None,
+                              mapping=None,rubber=False,multi=False):
+
+        # Shift for the atom numbers of the atomistic part in a chain 
+        # that is being multiscaled
+        shift = 0
+        # First check if we get a sequence or a Chain instance
+        if isinstance(sequence, IO.Chain):
+            chain         = sequence
+            links         = chain.links
+            breaks        = chain.breaks
+            # If the mapping is not specified, the actual mapping is taken,
+            # used to construct the coarse grained system from the atomistic one.
+            # The function argument "mapping" could be used to use a default 
+            # mapping scheme in stead, like the mapping for the GROMOS96 force field.
+            mapping = mapping           or chain.mapping
+            multi   = self.options['multi']  or chain.multiscale
+            self.secstruc = chain.sstypes or len(chain)*"C"
+            self.sequence = chain.sequence
+            # If anything hints towards multiscaling, do multiscaling
+            self.multiscale = self.multiscale or chain.multiscale or multi
+            if self.multiscale:
+                shift        = self.natoms
+                self.natoms += len(chain.atoms())
+        elif not secstruc:
+            # If no secondary structure is provided, set all to coil
+            chain         = None
+            self.secstruc = len(self.sequence)*"C"
+        else:
+            # If a secondary structure is provided, use that. chain is none.
+            chain         = None
+            self.secstruc = secstruc
+
+        logging.debug(self.secstruc)
+        logging.debug(self.sequence)
+
+        # Fetch the base information 
+        # Pad with empty lists for atoms, bonds, angles 
+        # and dihedrals, and take the first five lists out
+        # This will avoid errors for residues for which 
+        # these are not defined.
+
+        sc = [(self.options['ForceField'].bases[res]+5*[[]])[:5] for res in self.sequence]
+
+        # ID of the first atom/residue
+        # The atom number and residue number follow from the last 
+        # atom c.q. residue id in the list processed in the topology
+        # thus far. In the case of multiscaling, the real atoms need 
+        # also be accounted for.
+        startAtom = self.natoms + 1 
+        startResi = self.atoms and self.atoms[-1][2]+1 or 1
+
+        # Backbone bead atom IDs
+        bbid = [[startAtom,startAtom+1,startAtom+2]]
+        for i in zip(*sc)[0]:
+            bbid1 = bbid[-1][0]+len(i)+3
+            bbid.append([bbid1,bbid1+1,bbid1+2])
+            #bbid.append(bbid[-1]+len(i)+1)
+
+        # Residue numbers for this moleculetype topology
+        resid = range(startResi,startResi+len(self.sequence))     
+
+        # This contains the information for deriving backbone bead types,
+        # bb bond types, bbb/bbs angle types, and bbbb dihedral types.
+        seqss = zip(bbid,self.sequence,self.secstruc)
+
+        # Fetch the proper backbone beads          
+        bb = [self.options['ForceField'].bbGetBead(res,typ) for num,res,typ in seqss]
+
+        # This is going to be usefull for the type of the last backbone bead.
+        # If termini need to be charged, change the bead types
+        #if not self.options['NeutralTermini']:
+        #    bb[0]  ="Qd"
+        #    bb[-1] = "Qa"
+
+        # If breaks need to be charged, change the bead types 
+        #if self.options['ChargesAtBreaks']:
+        #    for i in breaks:
+        #        bb[i]   = "Qd"
+        #        bb[i-1] = "Qa"
+
+        # For backbone parameters, iterate over fragments, inferred from breaks
+        for i,j in zip([0]+breaks,breaks+[-1]):
+            # Extract the fragment
+            frg = j==-1 and seqss[i:] or seqss[i:j]
+            # Expand the 3 bb beads per residue into one long list
+            # Resulting list contains three tuples per residue 
+            # We also add a dummy 0 for ca that is not used for *NA
+            frg = [(i,j[1],j[2],0) for j in frg for i in j[0]]
+
+            # Iterate over backbone bonds
+            print [Bond(pair,category="BB",options=self.options,).atoms for pair in zip(frg,frg[1:])]
+            print [Bond(pair,category="BB",options=self.options,).parameters for pair in zip(frg,frg[1:])]
+            self.bonds.extend([Bond(pair,category="BB",options=self.options,) for pair in zip(frg,frg[1:])])
+
+            # Iterate over backbone angles
+            # Don't skip the first and last residue in the fragment
+            self.angles.extend([Angle(triple,options=self.options,category="BBB") for triple in zip(frg,frg[1:],frg[2:])])
+
+            # Get backbone quadruples
+            quadruples = zip(frg,frg[1:],frg[2:],frg[3:])
+
+            # No i-1,i,i+1,i+2 interactions defined for Elnedyn
+            # Process dihedrals
+            for q in quadruples:
+                id,rn,ss,ca = zip(*q)
+                # Maybe do local elastic networks
+                if ss == ("E","E","E","E") and not self.options['ExtendedDihedrals']:
+                    # This one may already be listed as the 2-4 bond of a previous one
+                    if not (id[0],id[2]) in self.bonds:
+                        self.bonds.append(Bond(options=self.options,atoms=(id[0],id[2]),parameters=self.options['ForceField'].ebonds['short'],type=1,
+                                               comments="%s(%s)-%s(%s) 1-3"%(rn[0],id[0],rn[2],id[2]),
+                                               category="Elastic short"))
+                    self.bonds.append(Bond(options=self.options,atoms=(id[1],id[3]),parameters=self.options['ForceField'].ebonds['short'],type=1,
+                                           comments="%s(%s)-%s(%s) 2-4"%(rn[1],id[1],rn[3],id[3]),
+                                           category="Elastic short"))
+                    self.bonds.append(Bond(options=self.options,atoms=(id[0],id[3]),parameters=self.options['ForceField'].ebonds['long'],type=1,
+                                           comments="%s(%s)-%s(%s) 1-4"%(rn[0],id[0],rn[3],id[3]),
+                                           category="Elastic long"))
+                else:
+                    # Since dihedrals can return None, we first collect them separately and then
+                    # add the non-None ones to the list
+                    dihed = Dihedral(q,options=self.options,category="BBBB")
+                    if dihed:
+                        self.dihedrals.append(dihed)
+
+        # Now do the atom list, and take the sidechains along
+        #
+        atid  = startAtom
+        for resi,resname,bbb,sidechn,ss in zip(resid,self.sequence,bb,sc,self.secstruc):
+            scatoms, bon_par, ang_par, dih_par, vsite_par = sidechn
+
+            # Side chain bonded terms
+            # Collect bond, angle and dihedral connectivity
+            bon_con,ang_con,dih_con,vsite_con = (self.options['ForceField'].connectivity[resname]+4*[[]])[:4]
+
+            # Side Chain Bonds/Constraints
+            for atids,par in zip(bon_con,bon_par):
+                if par[1] == None:
+                    self.bonds.append(Bond(options=self.options,atoms=atids,parameters=[par[0]],type=1,
+                                           comments=resname,category="Constraint"))
+                else:
+                    self.bonds.append(Bond(options=self.options,atoms=atids,parameters=par,type=1,
+                                           comments=resname,category="SC"))
+                # Shift the atom numbers
+                self.bonds[-1] += atid
+
+            # Side Chain Angles
+            for atids,par in zip(ang_con,ang_par):
+                self.angles.append(Angle(options=self.options,atoms=atids,parameters=par,type=2,
+                                         comments=resname,category="SC"))
+                # Shift the atom numbers
+                self.angles[-1] += atid
+
+            # Side Chain Dihedrals
+            for atids,par in zip(dih_con,dih_par):
+                self.dihedrals.append(Dihedral(options=self.options,atoms=atids,parameters=par,type=2,
+                                               comments=resname,category="SC"))
+                # Shift the atom numbers
+                self.dihedrals[-1] += atid
+
+            # Side Chain V-Sites
+            for atids,par in zip(vsite_con,vsite_par):
+                self.vsites.append(Vsite(options=self.options,atoms=atids,parameters=par,type=1,
+                                               comments=resname,category="SC"))
+                # Shift the atom numbers
+                self.vsites[-1] += atid
+            
+            # Side Chain exclusions
+            # The new polarizable forcefield give problems with the charges in the sidechain, if the backbone is also charged.
+            # To avoid that, we add explicit exclusions
+            if bbb in self.options['ForceField'].charges.keys() and resname in self.options['ForceField'].mass_charge.keys():
+                for i in [i for i, d in enumerate(scatoms) if d=='D']:
+                    self.exclusions.append(Exclusion(options=self.options,atoms=(atid,i+atid+1),comments='%s(%s)'%(resname,resi),parameters=(None,)))
+
+            # All residue atoms
+            counter = 0  # Counts over beads
+            for atype,aname in zip([bbb]+list(scatoms),MAP.CoarseGrained.residue_bead_names):
+                if self.multiscale:
+                    atype,aname = "v"+atype,"v"+aname
+                self.atoms.append((atid,atype,resi,resname,aname,atid,self.options['ForceField'].charges.get(atype,0),ss))
+                # Doing this here saves going over all the atoms onesmore.
+                # Generate position restraints for all atoms or Backbone beads only.
+                if 'all' in self.options['PosRes']:
+                    self.posres.append((atid)) 
+                elif aname in self.options['PosRes']:
+                    self.posres.append((atid))
+                if mapping:
+                    self.mapping.append((atid,[i+shift for i in mapping[counter]]))
+                atid    += 1
+                counter += 1
+
 
     def fromMoleculeList(self,other):
         pass

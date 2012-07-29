@@ -320,6 +320,7 @@ def main(options):
     
                 # Write the molecule type topology
                 top = TOP.Topology(mol[0],options=options,name=name)
+                print top.sequence
                 for m in mol[1:]:
                     top += TOP.Topology(m,options=options)
     

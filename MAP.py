@@ -3,9 +3,16 @@
 ##########################
 import FUNC
 
-# Amino acid codes:                                                                                  
-AA3     = FUNC.spl("TRP TYR PHE HIS ARG LYS CYS ASP GLU ILE LEU MET ASN PRO HYP GLN SER THR VAL ALA GLY") #@#
-AA1     = FUNC.spl("  W   Y   F   H   R   K   C   D   E   I   L   M   N   P   O   Q   S   T   V   A   G") #@#
+
+dnares3 = " DA DC DG DT" 
+dnares1 = " dA dC dG dT"
+rnares3 = "  A  C  G  U"
+rnares1 = " rA rC rG rU" # 
+
+# Amino acid nucleic acid codes:                                                                                 
+# The naming (AA and '3') is not strictly correct when adding DNA/RNA, but we keep it like this for consistincy.
+AA3     = FUNC.spl("TRP TYR PHE HIS ARG LYS CYS ASP GLU ILE LEU MET ASN PRO HYP GLN SER THR VAL ALA GLY"+dnares3+rnares3) #@#
+AA1     = FUNC.spl("  W   Y   F   H   R   K   C   D   E   I   L   M   N   P   O   Q   S   T   V   A   G"+dnares1+rnares1) #@#
 
 
 # Dictionaries for conversion from one letter code to three letter code v.v.                         

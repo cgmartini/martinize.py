@@ -9,7 +9,7 @@ authors=["Tsjerk A. Wassenaar","Djurre de Jong", "Clement Arnarez"]
 
 # Parameters are defined for the following (protein) forcefields:
 #forcefields = ['martini21','martini21p','martini22','martini22p','elnedyn_old','elnedyn','elnedyn22','elnedyn22p']
-forcefields = ['martini21','martini21p','martini22','martini22p','elnedyn','elnedyn22','elnedyn22p']
+forcefields = ['martini21','martini21p','martini22','martini22p','elnedyn','elnedyn22','elnedyn22p','martini22dna']
 
 
 notes = [
