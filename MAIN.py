@@ -244,7 +244,7 @@ def main(options):
         # topology.
         for chain in chains:
             chain.set_ss(ssAver[:len(chain)])
-            ss = ssAver[len(chain):]
+            ssAver = ssAver[len(chain):]
         
         
         # Now the chains are complete, each consisting of a residuelist, 
