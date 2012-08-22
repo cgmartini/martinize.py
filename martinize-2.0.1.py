@@ -4,7 +4,7 @@
 # EDITABLE SECTIONS ARE MARKED WITH #@# 
 
 
-version="2.0beta4"
+version="2.0.1"
 authors=["Tsjerk A. Wassenaar","Djurre de Jong", "Clement Arnarez"]
 
 # Parameters are defined for the following (protein) forcefields:
@@ -39,7 +39,10 @@ notes = [
     ("DdJ260612","Adopted forcefield class to better fit in polar and charged particles"),
     ("DdJ260612","Added new forcefield files (elnedyn, elnedyn22, elnedyn22p)"),
     ("DdJ120712","Added basic DNA capabilities"),
-    ("DdJ240712","Fixed bug due to insertion code (TAW120329). Added FF specific message definition."),
+    ("DdJ240712","Fixed bug with manually defined Cys-bridges due to insertion code (TAW120329)."), 
+    ("DdJ240712","Added FF specific message definition."),
+    ("DdJ240712","Added exclusions for p-FFs. Changed naming of dummy beads."),
+    ("DdJ220812","Bug fixing bond lengths, ss for multiple chains and print message in itp."),
     ]
 
 # 
@@ -1453,7 +1456,7 @@ class martini22:
                     "HYP": spl(" C5    N0    C5    N0    N0    N0    N0    P4    P4")  # HYP specific    #@#
         }                                                                                   #                 #@#
         ## BONDS ##                                                                         #                 
-        self.bbldef   =             (.365, .350, .320, .320, .320, .320, .350, .350, .350)  # BB bond lengths #@#
+        self.bbldef   =             (.365, .350, .310, .310, .310, .310, .350, .350, .350)  # BB bond lengths #@#
         self.bbkb     =             (1250, 1250, None, None, None, None, 1250, 1250, 1250)  # BB bond kB      #@#
         self.bbltyp   = {}                                                                  #                 #@#
         self.bbkbtyp  = {}                                                                  #                 #@#
@@ -1645,6 +1648,8 @@ class martini22:
         
     def messages(self):
         '''Prints any force-field specific logging messages.'''
+        import logging
+        logging.warning('Martini version 2.2 is in beta release. It has not been extensively tested and problems might occur.')
         pass
 ################################
 ## 6 # FORCE FIELD PARAMETERS ##  -> @FF <-
@@ -1707,7 +1712,7 @@ class martini22p:
                     "HYP": spl(" C5    N0    C5    N0    N0    N0    N0    P4    P4")  # HYP specific    #@#
         }                                                                                   #                 #@#
         ## BONDS ##                                                                         #                 
-        self.bbldef   =             (.365, .350, .320, .320, .320, .320, .350, .350, .350)  # BB bond lengths #@#
+        self.bbldef   =             (.365, .350, .310, .310, .310, .310, .350, .350, .350)  # BB bond lengths #@#
         self.bbkb     =             (1250, 1250, None, None, None, None, 1250, 1250, 1250)  # BB bond kB      #@#
         self.bbltyp   = {}                                                                  #                 #@#
         self.bbkbtyp  = {}                                                                  #                 #@#
@@ -1906,6 +1911,8 @@ class martini22p:
 
     def messages(self):
         '''Prints any force-field specific logging messages.'''
+        import logging
+        logging.warning('Martini version 2.2 is in beta release. It has not been extensively tested and problems might occur.')
         pass
 ################################
 ## 6 # FORCE FIELD PARAMETERS ##  -> @FF <-
@@ -2379,6 +2386,7 @@ class elnedyn22:
         import logging
         logging.warning('Elnedyn topologies might not give numerical stable simulations with a 20fs timestep.')
         logging.warning('This can be solved by setting all S-type bead masses to 72amu.')
+        logging.warning('Martini version 2.2 is in beta release. It has not been extensively tested and problems might occur.')
         pass
 ################################
 ## 6 # FORCE FIELD PARAMETERS ##  -> @FF <-
@@ -2622,6 +2630,7 @@ class elnedyn22p:
         import logging
         logging.warning('Elnedyn topologies might not give numerical stable simulations with a 20fs timestep.')
         logging.warning('This can be solved by setting all S-type bead masses to 72amu.')
+        logging.warning('Martini version 2.2 is in beta release. It has not been extensively tested and problems might occur.')
         pass
 
 #########################
@@ -3569,9 +3578,9 @@ class Topology:
 
     def __str__(self):
         if self.multiscale:
-             out  = [ '; MARTINI 2.1 Multiscale virtual sites topology section for "%s"' %self.name ]
+             out  = [ '; MARTINI (%s) Multiscale virtual sites topology section for "%s"' %(self.options['ForceField'].name,self.name) ]
         else:
-             out  = [ '; MARTINI 2.1 Coarse Grained topology file for "%s"' %self.name ]
+             out  = [ '; MARTINI (%s) Coarse Grained topology file for "%s"' %(self.options['ForceField'].name, self.name) ]
         if self.sequence:
             out += [
                 '; Sequence:',
@@ -3890,7 +3899,7 @@ class Topology:
                 # We don't want to do this for BB beads because of charged termini.
                 if resname in self.options['ForceField'].mass_charge.keys() and counter != 0:
                     M,Q = self.options['ForceField'].mass_charge[resname]
-                    aname = M>0 and 'SCP' or M<0 and 'SCN' or aname
+                    aname = Q[counter-1]>0 and 'SCP' or Q[counter-1]<0 and 'SCN' or aname
                     self.atoms.append((atid,atype,resi,resname,aname,atid,Q[counter-1],M[counter-1],ss))
                 else:
                     self.atoms.append((atid,atype,resi,resname,aname,atid,self.options['ForceField'].charges.get(atype,0),ss))
@@ -4173,7 +4182,7 @@ def main(options):
         # topology.
         for chain in chains:
             chain.set_ss(ssAver[:len(chain)])
-            ss = ssAver[len(chain):]
+            ssAver = ssAver[len(chain):]
         
         
         # Now the chains are complete, each consisting of a residuelist, 
@@ -4211,8 +4220,9 @@ def main(options):
                     d2 = min([distance2(a,b) for a,b in zip(cyscoord[i],cyscoord[j])])
                     if d2 <= options['CystineMaxDist2']:
                         a, b = cysteines[i], cysteines[j]
+                        options['linkListCG'].append((("SC1","CYS",a[2],a[3]),("SC1","CYS",b[2]-(32<<20),b[3]),bl,kb))
+                        a,b = (a[0],a[1],a[2]-(32<<20),a[3]),(b[0],b[1],b[2]-(32<<20),b[3])
                         logging.info("Detected SS bridge between %s and %s (%f nm)"%(a,b,math.sqrt(d2)/10))
-                        options['linkListCG'].append((("SC1","CYS",a[2],a[3]),("SC1","CYS",b[2],b[3]),bl,kb))
         
         
         ## REAL ITP STUFF ##
