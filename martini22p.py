@@ -60,7 +60,7 @@ class martini22p:
                     "HYP": FUNC.spl(" C5    N0    C5    N0    N0    N0    N0    P4    P4")  # HYP specific    #@#
         }                                                                                   #                 #@#
         ## BONDS ##                                                                         #                 
-        self.bbldef   =             (.365, .350, .320, .320, .320, .320, .350, .350, .350)  # BB bond lengths #@#
+        self.bbldef   =             (.365, .350, .310, .310, .310, .310, .350, .350, .350)  # BB bond lengths #@#
         self.bbkb     =             (1250, 1250, None, None, None, None, 1250, 1250, 1250)  # BB bond kB      #@#
         self.bbltyp   = {}                                                                  #                 #@#
         self.bbkbtyp  = {}                                                                  #                 #@#

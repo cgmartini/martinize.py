@@ -4,7 +4,7 @@
 # EDITABLE SECTIONS ARE MARKED WITH #@# 
 
 
-version="2.0"
+version="2.0.1"
 authors=["Tsjerk A. Wassenaar","Djurre de Jong", "Clement Arnarez"]
 
 # Parameters are defined for the following (protein) forcefields:
@@ -42,6 +42,7 @@ notes = [
     ("DdJ240712","Fixed bug with manually defined Cys-bridges due to insertion code (TAW120329)."), 
     ("DdJ240712","Added FF specific message definition."),
     ("DdJ240712","Added exclusions for p-FFs. Changed naming of dummy beads."),
+    ("DdJ220812","Bug fixing bond lengths, ss for multiple chains and print message in itp."),
     ]
 
 # 

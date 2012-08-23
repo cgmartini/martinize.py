@@ -272,9 +272,9 @@ class Topology:
 
     def __str__(self):
         if self.multiscale:
-             out  = [ '; MARTINI 2.1 Multiscale virtual sites topology section for "%s"' %self.name ]
+             out  = [ '; MARTINI (%s) Multiscale virtual sites topology section for "%s"' %(self.options['ForceField'].name,self.name) ]
         else:
-             out  = [ '; MARTINI 2.1 Coarse Grained topology file for "%s"' %self.name ]
+             out  = [ '; MARTINI (%s) Coarse Grained topology file for "%s"' %(self.options['ForceField'].name, self.name) ]
         if self.sequence:
             out += [
                 '; Sequence:',
