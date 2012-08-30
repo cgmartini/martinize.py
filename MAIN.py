@@ -40,7 +40,7 @@ def main(options):
             # interpreted as chain separators. 
             residuelist = [residue for residue in IO.residues(atoms)]
             # The breaks are indices to residues
-            broken = breaks(residuelist)
+            broken = IO.breaks(residuelist)
             # Reorder, such that each chain is specified with (i,j,k)
             # where i and j are the start and end of the chain, and 
             # k is a chain identifier
