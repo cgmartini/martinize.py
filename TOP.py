@@ -259,7 +259,7 @@ class Topology:
         atoms[2]  = [i+last[2] for i in atoms[2]] # Update residue numbers
         atoms[5]  = [i+last[5] for i in atoms[5]] # Update charge group numbers
         self.atoms.extend(zip(*atoms))
-        for attrib in ["bonds","vsites","angles","dihedrals","impropers","constraints"]:
+        for attrib in ["bonds","vsites","angles","dihedrals","impropers","constraints","posres"]:
             getattr(self,attrib).extend([source+shift for source in getattr(other,attrib)])
         return self
 
@@ -603,8 +603,10 @@ class Topology:
                     self.posres.append((atid)) 
                 elif aname in self.options['PosRes']:
                     self.posres.append((atid))
+                # VVV This might be orphan code. VVV
                 if mapping:
                     self.mapping.append((atid,[i+shift for i in mapping[counter]]))
+                # ^^^ This might be orphan code. ^^^
                 atid    += 1
                 counter += 1
 

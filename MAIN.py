@@ -328,7 +328,7 @@ def main(options):
                 mcg, coords = zip(*[(j[:4],j[4:7]) for m in mol for j in m.cg()])
                 mcg         = list(mcg)
         
-                # Run through the link list and add connections
+                # Run through the link list and add connections (links = cys bridges or hand specified links)
                 for atomA,atomB,bondlength,forceconst in options['linkListCG']:
                     if bondlength == -1 and forceconst == -1:
                         bondlength, forceconst = options['ForceField'].special[(atomA[:2],atomB[:2])]
