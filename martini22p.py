@@ -261,4 +261,6 @@ class martini22p:
         '''Prints any force-field specific logging messages.'''
         import logging
         logging.warning('Martini version 2.2 is in beta release. It has not been extensively tested and problems might occur.')
+        logging.warning('Bead names of charges in sidechains differ between .top/.itp and .pdb.')
+        logging.warning('Using names in topology, as Gromacs does, gives the correct result.')
         pass

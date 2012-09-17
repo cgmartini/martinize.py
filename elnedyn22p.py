@@ -244,5 +244,7 @@ class elnedyn22p:
         logging.warning('Elnedyn topologies might not give numerical stable simulations with a 20fs timestep.')
         logging.warning('This can be solved by setting all S-type bead masses to 72amu.')
         logging.warning('Martini version 2.2 is in beta release. It has not been extensively tested and problems might occur.')
+        logging.warning('Bead names of charges in sidechains differ between .top/.itp and .pdb.')
+        logging.warning('Using names in topology, as Gromacs does, gives the correct result.')
         pass
 
