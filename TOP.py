@@ -259,7 +259,7 @@ class Topology:
         atoms[2]  = [i+last[2] for i in atoms[2]] # Update residue numbers
         atoms[5]  = [i+last[5] for i in atoms[5]] # Update charge group numbers
         self.atoms.extend(zip(*atoms))
-        for attrib in ["bonds","vsites","angles","dihedrals","impropers","constraints","posres"]:
+        for attrib in ["bonds","vsites","angles","dihedrals","impropers","constraints"]:
             getattr(self,attrib).extend([source+shift for source in getattr(other,attrib)])
         return self
 
@@ -274,7 +274,10 @@ class Topology:
         if self.multiscale:
              out  = [ '; MARTINI (%s) Multiscale virtual sites topology section for "%s"' %(self.options['ForceField'].name,self.name) ]
         else:
-             out  = [ '; MARTINI (%s) Coarse Grained topology file for "%s"' %(self.options['ForceField'].name, self.name) ]
+             string  = '; MARTINI (%s) Coarse Grained topology file for "%s"' %(self.options['ForceField'].name, self.name)
+             string += '\n; Created by martinize.py version %s \n; Using the following options:  ' %(self.options['Version'])
+             string += ' '.join(self.options['Arguments'])
+             out  = [ string ]
         if self.sequence:
             out += [
                 '; Sequence:',
@@ -603,10 +606,8 @@ class Topology:
                     self.posres.append((atid)) 
                 elif aname in self.options['PosRes']:
                     self.posres.append((atid))
-                # VVV This might be orphan code. VVV
                 if mapping:
                     self.mapping.append((atid,[i+shift for i in mapping[counter]]))
-                # ^^^ This might be orphan code. ^^^
                 atid    += 1
                 counter += 1
 

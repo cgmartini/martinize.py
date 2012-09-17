@@ -101,7 +101,7 @@ class elnedyn22p:
         'TRP': [FUNC.spl("SC4 SNd SC5 SC5"), [(0.255,73000), (0.220,None), (0.250,None), (0.280,None), (0.255,None), (0.35454,None)], [(142,30), (143,20), (104,50)], [(180,200)]],
         'TYR': [FUNC.spl("SC4 SC4 SP1"),     [(0.335, 6000), (0.335,6000), (0.240,None), (0.310,None), (0.310,None)],                 [(70,100), (130, 50)]],
         'PHE': [FUNC.spl("SC5 SC5 SC5"),     [(0.340, 7500), (0.340,7500), (0.240,None), (0.240,None), (0.240,None)],                 [(70,100), (125,100)]],
-        'HIS': [FUNC.spl("SC4 SP1 SP1"),     [(0.195, None), (0.340,   0), (0.193,None), (0.295,None), (0.216,None)],                 [(135,100),(115, 50)]],
+        'HIS': [FUNC.spl("SC4 SP1 SP1"),     [(0.195, None), (.3585,None), (0.193,None), (0.295,None), (0.216,None)],                 [(135,100),(115, 50)]],
         'GLN': [FUNC.spl("Nda D D"),         [(0.300, 2400), (0.280,None)],                                                           [],                             [],         [(0.5,)]],
         'ASN': [FUNC.spl("Nda D D"),         [(0.250,61000), (0.280,None)],                                                           [],                             [],         [(0.5,)]],
         'SER': [FUNC.spl("N0 D D"),          [(0.195,94000), (0.280,None)],                                                           [],                             [],         [(0.5,)]],
@@ -143,27 +143,29 @@ class elnedyn22p:
         }
 
         # Defines the connectivity between between beads
+        # The polar sidechains have charged dummy beads, connected with a constraint
+        # The charged sidechains have a charged dummy bead.
         self.connectivity = {
-        #RES       BONDS                                   ANGLES             DIHEDRALS              V-SITE
-        "TRP":     [[(0,1),(1,2),(1,3),(2,3),(2,4),(3,4)], [(0,1,2),(0,1,3)], [(0,2,3,1),(1,2,4,3)]],
-        "TYR":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
-        "PHE":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
-        "HIS":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
-        "GLN":     [[(0,1),(2,3)],                         [],                [],                    [(1,2,3)]],
-        "ASN":     [[(0,1),(2,3)],                         [],                [],                    [(1,2,3)]],
-        "SER":     [[(0,1),(2,3)],                         [],                [],                    [(1,2,3)]],
-        "THR":     [[(0,1),(2,3)],                         [],                [],                    [(1,2,3)]],
-        "ARG":     [[(0,1),(1,2),(2,3)],                   [(0,1,2)]],
-        "LYS":     [[(0,1),(1,2),(2,3)],                   [(0,1,2)]],
-        "ASP":     [[(0,1),(1,2)]],
-        "GLU":     [[(0,1),(1,2)]],
-        "CYS":     [[(0,1)]],
-        "ILE":     [[(0,1)]],
-        "LEU":     [[(0,1)]],
-        "MET":     [[(0,1)]],
-        "PRO":     [[(0,1)]],
-        "HYP":     [[(0,1)]],
-        "VAL":     [[(0,1)]],
+        #RES       BONDS                                              ANGLES                            DIHEDRALS       V-SITE
+        "TRP":     [[(0, 1), (1, 2), (2, 4), (4, 3), (3, 1), (1, 4)],[(0, 1, 2), (0, 1, 4), (0, 1, 3)],[(1, 2, 3, 4)]],
+        "TYR":     [[(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)],        [(0, 1, 2), (0, 1, 3)]],
+        "PHE":     [[(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)],        [(0, 1, 2), (0, 1, 3)]],
+        "HIS":     [[(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)],        [(0, 1, 2), (0, 1, 3)]],
+        "GLN":     [[(0, 1), (2, 3)],                                [],                               [],              [(1,2,3)]],
+        "ASN":     [[(0, 1), (2, 3)],                                [],                               [],              [(1,2,3)]],
+        "SER":     [[(0, 1), (2, 3)],                                [],                               [],              [(1,2,3)]],
+        "THR":     [[(0, 1), (2, 3)],                                [],                               [],              [(1,2,3)]],
+        "ARG":     [[(0, 1), (1, 2), (2, 3)],                        [(0,1,2)]],
+        "LYS":     [[(0, 1), (1, 2), (2, 3)],                        [(0,1,2)]],
+        "ASP":     [[(0, 1), (1, 2)]],
+        "GLU":     [[(0, 1), (1, 2)]],
+        "CYS":     [[(0, 1)]],
+        "ILE":     [[(0, 1)]],
+        "LEU":     [[(0, 1)]],
+        "MET":     [[(0, 1)]],
+        "PRO":     [[(0, 1)]],
+        "HYP":     [[(0, 1)]],
+        "VAL":     [[(0, 1)]],
         "ALA":     [],
         "GLY":     [],
         }
@@ -244,7 +246,5 @@ class elnedyn22p:
         logging.warning('Elnedyn topologies might not give numerical stable simulations with a 20fs timestep.')
         logging.warning('This can be solved by setting all S-type bead masses to 72amu.')
         logging.warning('Martini version 2.2 is in beta release. It has not been extensively tested and problems might occur.')
-        logging.warning('Bead names of charges in sidechains differ between .top/.itp and .pdb.')
-        logging.warning('Using names in topology, as Gromacs does, gives the correct result.')
         pass
 

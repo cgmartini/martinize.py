@@ -33,6 +33,10 @@ def option_parser(args,options,lists,version=0):
 
     # Convert the option list to a dictionary, discarding all comments
     options = dict([i for i in options if not type(i) == str])
+
+    # This information we would like to print to some files, so let's put it in our information class
+    options['Version']             = version
+    options['Arguments']           = args[:]
    
     while args:
         ar = args.pop(0)
