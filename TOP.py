@@ -455,7 +455,14 @@ class Topology:
             bbid.append(bbid[-1]+len(i)+1)
 
         # Calpha positions, to get Elnedyn BBB-angles and BB-bond lengths
-        positionCa = [residue[1][4:] for residue in chain.residues]
+        # positionCa = [residue[1][4:] for residue in chain.residues]
+        # The old method (line above) assumed no hydrogens: Ca would always be
+        # the second atom of the residue. Now we look at the name.
+        positionCa = []
+        for residue in chain.residues:
+            for atom in residue:
+                if atom[0] == "CA":
+                    positionCa.append(atom[4:])
 
         # Residue numbers for this moleculetype topology
         resid = range(startResi,startResi+len(self.sequence))     
