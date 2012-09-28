@@ -46,6 +46,7 @@ notes = [
     ("DdJ140912","Fixed bug in TYR/HIS in elnedyn forcefields."),
     ("DdJ140912","Added warning about differing beadnames and printing commandline arguments to itp."),
     ("DdJ270912","The Ca position is now determined based on atom name (CA) iso second atom of residue.")
+    ("DdJ280912","Fixed more bugs in the elnedyn definition.")
     ]
 
 # 

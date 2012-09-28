@@ -411,8 +411,7 @@ Martini system from %s
     
 [ molecules ]
 ; name        number
-%s
-        ''' % (useRubber, itps, options["-f"] and options["-f"].value or "stdin", molecules))
+%s''' % (useRubber, itps, options["-f"] and options["-f"].value or "stdin", molecules))
     
         logging.info('Written topology files')
     
