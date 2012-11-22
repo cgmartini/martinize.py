@@ -48,7 +48,8 @@ def option_parser(args,options,lists,version=0):
     logLevel = options["-v"] and logging.DEBUG or logging.INFO
     logging.basicConfig(format='%(levelname)-7s    %(message)s',level=logLevel)
 
-    logging.info('MARTINIZE version %s'%version)
+    logging.info('MARTINIZE, script version %s'%version)
+    logging.info('If you use this script please site: de Jong et al., J. Chem. Theor.Comp., 2013, DOI:10.1021/ct300646g')
     
     # Process the raw options from the command line
     # Boolean options are set to more intuitive variables
