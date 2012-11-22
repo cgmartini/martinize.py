@@ -101,7 +101,7 @@ class elnedyn22p:
         'TRP': [FUNC.spl("SC4 SNd SC5 SC5"), [(0.255,73000), (0.220,None), (0.250,None), (0.280,None), (0.255,None), (0.35454,None)], [(142,30), (143,20), (104,50)], [(180,200)]],
         'TYR': [FUNC.spl("SC4 SC4 SP1"),     [(0.335, 6000), (0.335,6000), (0.240,None), (0.310,None), (0.310,None)],                 [(70,100), (130, 50)]],
         'PHE': [FUNC.spl("SC5 SC5 SC5"),     [(0.340, 7500), (0.340,7500), (0.240,None), (0.240,None), (0.240,None)],                 [(70,100), (125,100)]],
-        'HIS': [FUNC.spl("SC4 SP1 SP1"),     [(0.195,95000), (0.193,None), (0.295,None), (0.216,None)],                               [(135,100),(115, 50)]],
+        'HIS': [FUNC.spl("SC4 SP1 SP1"),     [(0.195,94000), (0.193,None), (0.295,None), (0.216,None)],                               [(135,100),(115, 50)]],
         'GLN': [FUNC.spl("Nda D D"),         [(0.300, 2400), (0.280,None)],                                                           [],                             [],         [(0.5,)]],
         'ASN': [FUNC.spl("Nda D D"),         [(0.250,61000), (0.280,None)],                                                           [],                             [],         [(0.5,)]],
         'SER': [FUNC.spl("N0 D D"),          [(0.195,94000), (0.280,None)],                                                           [],                             [],         [(0.5,)]],
@@ -232,7 +232,7 @@ class elnedyn22p:
         import FUNC 
         import math
         # The 150000 forceconstant gave an error message, turning to constraints would be better.
-        return ( math.sqrt(FUNC.distance2(ca[0],ca[1]))/10., None )
+        return ( math.sqrt(FUNC.distance2(ca[0],ca[1]))/10., None   )
     
     def bbGetAngle(self,r,ca,ss):
         import FUNC,IO 
@@ -244,7 +244,8 @@ class elnedyn22p:
         '''Prints any force-field specific logging messages.'''
         import logging
         logging.info('The elnedyn forcefield has been implemented with some changes compared to the published parameters:')
-        logging.info('- Backbone-Backbone bonds are constraints in stead of high force constant bonds.')
+        #logging.info('- Backbone-Backbone bonds are constraints in stead of high force constant bonds.')
+        logging.info('- Backbone-Backbone bonds use high force constant bonds instead of constraints.')
         logging.info('- Trp has an extra constrain added to the sidechain.')
         logging.info('- The Backbone sidechain bonds with high force constants are replaced by constraints except for Trp and His and the polar sidechains.')
         logging.warning('Elnedyn topologies might not give numerical stable simulations with a 20fs timestep.')
