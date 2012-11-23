@@ -48,6 +48,8 @@ notes = [
     ("DdJ270912","The Ca position is now determined based on atom name (CA) iso second atom of residue."),
     ("DdJ280912","Fixed more bugs in the elnedyn definition."),
     ("DdJ221112","Clean help text and some code."),
+    ("DdJ221112","Fixed that crashed the break checking code if water chain name == protein chain name."),
+    ("DdJ231112","Fixed bug when helix was starting at first residue."),
     ]
 
 # 
