@@ -21,7 +21,7 @@ class martini22p:
         self.name = 'martini22p'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "RQd":1, "AQa":-1}                                                           #@#
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                                                           #@#
         
         
         #----+---------------------+

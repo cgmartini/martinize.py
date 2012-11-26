@@ -10,7 +10,7 @@ class martini21:
         self.name = 'martini21'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "sQd":1, "sQa":-1, "RQd":1, "AQa":-1}                        #@#
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                        #@#
         
         
         #----+---------------------+

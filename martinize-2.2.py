@@ -922,7 +922,7 @@ class martini21:
         self.name = 'martini21'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "sQd":1, "sQa":-1, "RQd":1, "AQa":-1}                        #@#
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                        #@#
         
         
         #----+---------------------+
@@ -1169,7 +1169,7 @@ class martini21p:
         self.name = 'martini21p'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "sQd":1, "sQa":-1, "RQd":1, "AQa":-1}                                                           #@#
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                                                           #@#
         
         
         #----+---------------------+
@@ -1423,7 +1423,7 @@ class martini22:
         self.name = 'martini22'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "sQd":1, "sQa":-1, "RQd":1, "AQa":-1}                                                           #@#
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                                                           #@#
         
         
         #----+---------------------+
@@ -1681,7 +1681,7 @@ class martini22p:
         self.name = 'martini22p'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "RQd":1, "AQa":-1}                                                           #@#
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                                                           #@#
         
         
         #----+---------------------+
@@ -1943,7 +1943,7 @@ class elnedyn:
         self.name = 'elnedyn'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "sQd":1, "sQa":-1, "RQd":1, "AQa":-1}                                                           #@#
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                                                           #@#
         
         
         #----+---------------------+
@@ -2192,7 +2192,7 @@ class elnedyn22:
         self.name = 'elnedyn22'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "sQd":1, "sQa":-1, "RQd":1, "AQa":-1}                                                           #@#
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                                                           #@#
         
         
         #----+---------------------+
@@ -2436,7 +2436,7 @@ class elnedyn22p:
         self.name = 'elnedyn22p'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "sQd":1, "sQa":-1, "RQd":1, "AQa":-1}                                                           #@#
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                                                           #@#
         
         
         #----+---------------------+
@@ -2565,7 +2565,7 @@ class elnedyn22p:
         "THR":[[0,36,36],         [0,0.36,-0.36]],
         "ARG":[[72,36,36],        [0,0,1]],
         "LYS":[[72,36,36],        [0,0,1]],
-        "HIH":[[72,,72,36,36],    [0,0,0,1]],
+        "HIH":[[72,72,36,36],    [0,0,0,1]],
         "ASP":[[36,36],           [0,-1]],
         "GLU":[[36,36],           [0,-1]],
         }
