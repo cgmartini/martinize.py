@@ -143,6 +143,17 @@ def groFrameIterator(streamIterator):
 ## C | GENERAL I/O |
 #----+-------------+
 
+# It is not entirely clear where this fits in best.
+# Called from main. 
+def getChargeType(resname,resid,choices):
+    '''Get user input for the charge of residues, based on list with choises.'''
+    print 'Which %s type do you want for residue %s:'%(resname,resid+1)
+    for i,choice in choices.iteritems():
+        print '%s. %s'%(i,choice)
+    choice = None
+    while choice not in choices.keys():
+        choice = input('Type a number:')
+    return choices[choice]
 
 # *NOTE*: This should probably be a CheckableStream class that
 # reads in lines until either of a set of specified conditions
@@ -233,6 +244,8 @@ def residueDistance2(r1,r2):
 def breaks(residuelist,selection=("N","CA","C"),cutoff=2.5):
     # Extract backbone atoms coordinates
     bb = [[atom[4:] for atom in residue if atom[0] in selection] for residue in residuelist]
+    # Needed to remove waters residues from mixed residues.
+    bb = [res for res in bb if res != []]
 
     # We cannot rely on some standard order for the backbone atoms.
     # Therefore breaks are inferred from the minimal distance between
@@ -367,8 +380,7 @@ def check_merge(chains, m_list=[], l_list=[], ss_cutoff=0):
 
 
 ## !! NOTE !! ##
-## The chain class needs to be simplified by extracting things to separate functions/classes
-
+## XXX The chain class needs to be simplified by extracting things to separate functions/classes
 class Chain:
     # Attributes defining a chain
     # When copying a chain, or slicing, the attributes in this list have to
@@ -402,7 +414,7 @@ class Chain:
         # BREAKS: List of indices of residues where a new fragment starts
         # Only when polymeric (protein, DNA, RNA, ...)
         # For now, let's remove it for the Nucleic acids...
-        self.breaks     = self.type() in ("Protein") and breaks(self.residues) or []
+        self.breaks     = self.type() in ("Protein","Mixed") and breaks(self.residues) or []
 
         # LINKS:  List of pairs of pairs of indices of linked residues/atoms
         # This list is used for cysteine bridges and peptide bonds involving side chains
@@ -472,6 +484,12 @@ class Chain:
         # Extract the slices from all lists
         for attr in self._attributes:           
             setattr(newchain, attr, getattr(self,attr)[i:j])
+        # Breaks that fall within the start and end of this chain need to be passed on.
+        # Residue numbering is increased by 20 bits!!
+        # XXX I don't know if this works.
+        ch_sta,ch_end = newchain.residues[0][0][2],newchain.residues[-1][0][2]
+        newchain.breaks     = [crack for crack in self.breaks if ch_sta < (crack<<20) < ch_end]
+        newchain.links     = [link for link in self.links if ch_sta < (link<<20) < ch_end]
         newchain.multiscale = self.multiscale
         newchain.natoms     = len(newchain.atoms())
         newchain.type()
@@ -523,6 +541,7 @@ class Chain:
         chainStart = 0
         for i in range(len(self.sequence)-1):
             if MAP.residueTypes.get(self.sequence[i],"Unknown") != MAP.residueTypes.get(self.sequence[i+1],"Unknown"):
+                # Use the __getslice__ method to take a part of the chain.
                 chains.append(self[chainStart:i+1])
                 chainStart = i+1
         if chains:
@@ -583,7 +602,10 @@ class Chain:
         atid     = 1
         bb       = [1]
         fail     = False
-        for residue,rss in zip(self.residues,self.sstypes):
+        for residue,rss,resname in zip(self.residues,self.sstypes,self.sequence):
+            # Check if residues have change, might happen if the user sets things interactively
+            residue = [(atom[0],resname)+atom[2:] for atom in residue]
+            # Water we can't handle yet.
             if residue[0][1] in ("SOL","HOH","TIP"):
                 continue
             if not residue[0][1] in MAP.CoarseGrained.mapping.keys():

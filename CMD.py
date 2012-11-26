@@ -33,6 +33,10 @@ def option_parser(args,options,lists,version=0):
 
     # Convert the option list to a dictionary, discarding all comments
     options = dict([i for i in options if not type(i) == str])
+
+    # This information we would like to print to some files, so let's put it in our information class
+    options['Version']             = version
+    options['Arguments']           = args[:]
    
     while args:
         ar = args.pop(0)
@@ -44,19 +48,10 @@ def option_parser(args,options,lists,version=0):
     logLevel = options["-v"] and logging.DEBUG or logging.INFO
     logging.basicConfig(format='%(levelname)-7s    %(message)s',level=logLevel)
 
-    logging.info('MARTINIZE version %s'%version)
-    
-    # Process the raw options from the command line
-    # Boolean options are set to more intuitive variables
-    options['Collagen']            = options['-collagen']
-    options['ChargesAtBreaks']     = options['-cb']
-    options['NeutralTermini']      = options['-nt']
-    options['ExtendedDihedrals']   = options['-ed']
-    options['RetainHETATM']        = False # options['-hetatm']
-    options['SeparateTop']         = options['-sep']
-    options['MixedChains']         = False # options['-mixed']
-    options['ElasticNetwork']      = options['-elastic']
-    
+    logging.info('MARTINIZE, script version %s'%version)
+    logging.info('If you use this script please cite:')
+    logging.info('de Jong et al., J. Chem. Theory Comput., 2013, DOI:10.1021/ct300646g')
+     
     # The make the program flexible, the forcefield parameters are defined
     # for multiple forcefield. Check if a existing one is defined:
     ###_tmp  = __import__(options['-ff'].value.lower())
@@ -72,7 +67,18 @@ def option_parser(args,options,lists,version=0):
     except:
         logging.error("Forcefield '%s' can not be found."%(options['-ff']))
         sys.exit()
-
+   
+    # Process the raw options from the command line
+    # Boolean options are set to more intuitive variables
+    options['Collagen']            = options['-collagen']
+    options['chHIS']               = options['-his']
+    options['ChargesAtBreaks']     = options['-cb']
+    options['NeutralTermini']      = options['-nt']
+    options['ExtendedDihedrals']   = options['-ed']
+    options['RetainHETATM']        = False # options['-hetatm']
+    options['SeparateTop']         = options['-sep']
+    options['MixedChains']         = False # options['-mixed']
+    options['ElasticNetwork']      = options['-elastic']
  
     # Parsing of some other options into variables
     options['ElasticMaximumForce'] = options['-ef'].value 
@@ -90,22 +96,13 @@ def option_parser(args,options,lists,version=0):
     
     
     if options['ForceField'].ElasticNetwork:
-        #
         # Some forcefields, like elnedyn, always use an elatic network. This is set in the 
         # forcefield file, with the parameter ElasticNetwork.
-        #
         options['ElasticNetwork']  = True
-#        # Unless explicitly told not to, using Elnedyn will 
-#        # merge all chains into a single moleculetype to 
-#        # allow a global Elnedyn network.
-#        if "no" in lists['merges']:
-#            lists['merges'].remove("no")
-#        else:
-#            lists['merges'] = ["all"]
-    
     
     # Merges, links and cystines
     options['mergeList'] = "all" in lists['merges'] and ["all"] or [i.split(",") for i in lists['merges']]
+
 
     # Process links
     linkList   = []

@@ -10,7 +10,6 @@ def main(options):
     # inferring the file type, without consuming lines already
     inStream = IO.streamTag(options["-f"] and options["-f"].value or sys.stdin)
     
-    
     # The streamTag iterator first yields the file type, which 
     # is used to specify the function for reading frames
     fileType = inStream.next()
@@ -19,9 +18,7 @@ def main(options):
     else:
         frameIterator = IO.pdbFrameIterator
     
-    
     ## ITERATE OVER FRAMES IN STRUCTURE FILE ##
-    
     # Now iterate over the frames in the stream
     # This should become a StructureFile class with a nice .next method
     model     = 1
@@ -32,7 +29,7 @@ def main(options):
     
         if fileType == "PDB":
             # The PDB file can have chains, in which case we list and process them specifically
-            # TER statements are interpreted as chain separators
+            # TER statements are also interpreted as chain separators
             # A chain may have breaks in which case the breaking residues are flagged
             chains = [ IO.Chain(options,[i for i in IO.residues(chain)]) for chain in IO.pdbChains(atoms) ]        
         else:
@@ -40,7 +37,7 @@ def main(options):
             # interpreted as chain separators. 
             residuelist = [residue for residue in IO.residues(atoms)]
             # The breaks are indices to residues
-            broken = breaks(residuelist)
+            broken = IO.breaks(residuelist)
             # Reorder, such that each chain is specified with (i,j,k)
             # where i and j are the start and end of the chain, and 
             # k is a chain identifier
@@ -61,6 +58,7 @@ def main(options):
         # Note that in some cases HETATM residues are part of a 
         # chain. This will get problematic. But we cannot cover
         # all, probably.
+        # This is not yet active, but might be if we get to mixed protein/DNA.
         if not options['MixedChains']:
             demixedChains = []
             for chain in chains:
@@ -80,22 +78,30 @@ def main(options):
                 logging.info("Removing %d water molecules (chain %s)."%(len(chain),chain.id))
             elif chain.type() in ("Protein","Nucleic"):
                 keep.append(chain)
+            # This is currently not active:
             elif options['RetainHETATM']:
                 keep.append(chain)
             else:
                 logging.info("Removing HETATM chain %s consisting of %d residues."%(chain.id,len(chain)))
         chains = keep
+
+        # Here we interactively check the charge state of resides
+        # Can be easily expanded to residues other than HIS
+        for chain in chains:
+            for i,resname in enumerate(chain.sequence):
+                 if resname == 'HIS' and options['chHIS']:
+                     choices = {0:'HIH',1:'HIS'}
+                     choice = IO.getChargeType(resname,i,choices)
+                     chain.sequence[i] = choice
+
     
-        
         # Check which chains need merging
         if model == 1:
             order, merge = IO.check_merge(chains, options['mergeList'], options['linkList'], options['CystineCheckBonds'] and options['CystineMaxDist2'])
     
-    
         # Get the total length of the sequence
         seqlength = sum([len(chain) for chain in chains])
         logging.info('Total size of the system: %s residues.'%seqlength)
-    
     
         ## SECONDARY STRUCTURE
         ss = '' 
@@ -104,9 +110,10 @@ def main(options):
                 chain.set_ss("F")
                 ss += chain.ss
         elif options["-ss"]:
+            # XXX We need error-catching here, 
+            # in case the file doesn't excist, or the string contains bogus.
             # If the string given for the sequence consists strictly of upper case letters
             # and does not appear to be a file, assume it is the secondary structure
-            # Is that safe or silly?
             ss = options["-ss"].value.replace('~','L').replace(' ','L')
             if ss.isalnum() and ss.isupper() and not os.path.exists(options["-ss"].value):
                 ss = options["-ss"].value
@@ -190,13 +197,17 @@ def main(options):
         model += 1
     
     
-    # Write the index file if requested
+    # Write the index file if requested.
+    # Mainly of interest for multiscaling.
+    # Could be improved by adding separte groups for BB, SC, etc.
     if options["-n"].value:
         logging.info("Writing index file.")
+        # Lists for All-atom, Virtual sites and Coarse Grain.
         NAA,NVZ,NCG = [],[],[]
         atid = 1
         for i in order:
             ci = chains[i]
+            # Convert to coarse grain.
             coarseGrained = ci.cg()
             if ci.multiscale:
                 NAA.extend([" %5d"%(a+atid) for a in range(ci.natoms)]) 
@@ -238,14 +249,12 @@ def main(options):
         ssAver = "".join(ssAver)
         logging.info('(Average) Secondary structure has been determined (see head of .itp-file).')
         
-        
         # Divide the secondary structure according to the division in chains
         # This will set the secondary structure types to be used for the 
         # topology.
         for chain in chains:
             chain.set_ss(ssAver[:len(chain)])
             ssAver = ssAver[len(chain):]
-        
         
         # Now the chains are complete, each consisting of a residuelist, 
         # and a secondary structure designation if the chain is of type 'Protein'.
@@ -260,9 +269,7 @@ def main(options):
         # If there are merges to be done, the order of things may be changed, in which
         # case the coarse grained structure will not match with the topology...
         
-        
         ## CYSTINE BRIDGES ##
-        
         # Extract the cysteine coordinates (for all frames) and the cysteine identifiers
         if options['CystineCheckBonds']:
             logging.info("Checking for cystine bridges, based on sulphur (SG) atoms lying closer than %.4f nm"%math.sqrt(options['CystineMaxDist2']/100))
@@ -288,7 +295,6 @@ def main(options):
         
         
         ## REAL ITP STUFF ##
-        
         # Check whether we have identical chains, in which case we 
         # only write the ITP for one...
         # This means making a distinction between chains and 
@@ -305,7 +311,7 @@ def main(options):
         # In addition we write a master topology file, using the value of
         # options["-o"], with an added extension ".top" if not given.
         
-        # *NOTE*: This should probably be gathered in a 'Universe' class
+        # XXX *NOTE*: This should probably be gathered in a 'Universe' class
         itp = 0
         moleculeTypes = {}
         for mi in range(len(molecules)):
@@ -314,7 +320,6 @@ def main(options):
             # If not, generate the topology from the chain definition
             if not mol in moleculeTypes or options['SeparateTop']:
                 # Name of the moleculetype
-                # NOTE: The naming should be changed; now it becomes Protein_X+Protein_Y+...
                 name = "+".join([chain.getname(options['-name'].value) for chain in mol])
                 moleculeTypes[mol] = name
     
@@ -329,7 +334,7 @@ def main(options):
                 mcg, coords = zip(*[(j[:4],j[4:7]) for m in mol for j in m.cg()])
                 mcg         = list(mcg)
         
-                # Run through the link list and add connections
+                # Run through the link list and add connections (links = cys bridges or hand specified links)
                 for atomA,atomB,bondlength,forceconst in options['linkListCG']:
                     if bondlength == -1 and forceconst == -1:
                         bondlength, forceconst = options['ForceField'].special[(atomA[:2],atomB[:2])]
@@ -370,15 +375,7 @@ def main(options):
         
         logging.info('Written %d ITP file%s'%(itp,itp>1 and "s" or ""))
                 
-        
-        
-        #----+--------------------------------------------
-        ## B # MORE WORK -- WRITING THE MASTER TOPOLOGY ##
-        #----+--------------------------------------------
-        
-        
-        # Processing stuff
-        
+        # WRITING THE MASTER TOPOLOGY
         # Output stream
         top  = options["-o"] and open(options['-o'].value,'w') or sys.stdout
         
@@ -389,16 +386,15 @@ def main(options):
         logging.info("Output contains %d molecules:"%len(molecules))
         n = 1
         for molecule in molecules:
-            stuff = (n, moleculeTypes[molecule], len(molecule)>1 and "s" or " ", " ".join([i.id for i in molecule]))
-            logging.info("  %2d->  %s (chain%s %s)"%stuff)
+            chainInfo = (n, moleculeTypes[molecule], len(molecule)>1 and "s" or " ", " ".join([i.id for i in molecule]))
+            logging.info("  %2d->  %s (chain%s %s)"%chainInfo)
             n += 1
         molecules   = '\n'.join(['%s \t 1'%moleculeTypes[molecule] for molecule in molecules])
         
         # Set a define if we are to use rubber bands
         useRubber   = options['ElasticNetwork'] and "#define RUBBER_BANDS" or ""
-        
-        # Do not set a define for position restrains here, as people are more used to do it in mdp file?
-        
+       
+        # XXX Specify a better, version specific base-itp name.
         top.write(
 '''#include "martini.itp"
     
@@ -412,8 +408,7 @@ Martini system from %s
     
 [ molecules ]
 ; name        number
-%s
-        ''' % (useRubber, itps, options["-f"] and options["-f"].value or "stdin", molecules))
+%s''' % (useRubber, itps, options["-f"] and options["-f"].value or "stdin", molecules))
     
         logging.info('Written topology files')
     
@@ -422,8 +417,5 @@ Martini system from %s
 
     # The following lines are always printed (if no errors occur).
     print "\n\tThere you are. One MARTINI. Shaken, not stirred.\n"
-    
     Q = DOC.martiniq.pop(random.randint(0,len(DOC.martiniq)-1))
     print "\n", Q[1], "\n%80s"%("--"+Q[0]), "\n"
-    
-    

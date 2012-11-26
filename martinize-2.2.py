@@ -4,11 +4,10 @@
 # EDITABLE SECTIONS ARE MARKED WITH #@# 
 
 
-version="2.0.1"
-authors=["Tsjerk A. Wassenaar","Djurre de Jong", "Clement Arnarez"]
+version="2.2"
+authors=["Djurre de Jong", "Tsjerk A. Wassenaar"]
 
 # Parameters are defined for the following (protein) forcefields:
-#forcefields = ['martini21','martini21p','martini22','martini22p','elnedyn_old','elnedyn','elnedyn22','elnedyn22p']
 forcefields = ['martini21','martini21p','martini22','martini22p','elnedyn','elnedyn22','elnedyn22p']
 
 
@@ -43,6 +42,15 @@ notes = [
     ("DdJ240712","Added FF specific message definition."),
     ("DdJ240712","Added exclusions for p-FFs. Changed naming of dummy beads."),
     ("DdJ220812","Bug fixing bond lengths, ss for multiple chains and print message in itp."),
+    ("DdJ140912","Fixed wrong combining of position restraints when merging proteins."),
+    ("DdJ140912","Fixed bug in TYR/HIS in elnedyn forcefields."),
+    ("DdJ140912","Added warning about differing beadnames and printing commandline arguments to itp."),
+    ("DdJ270912","The Ca position is now determined based on atom name (CA) iso second atom of residue."),
+    ("DdJ280912","Fixed more bugs in the elnedyn definition."),
+    ("DdJ221112","Clean help text and some code."),
+    ("DdJ221112","Fixed that crashed the break checking code if water chain name == protein chain name."),
+    ("DdJ231112","Fixed bug when helix was starting at first residue."),
+    ("DdJ261112","Added capability to interactively choose HIS-charge state."),
     ]
 
 # 
@@ -124,24 +132,27 @@ lists = {
     'multi'   : [],
     }
 
-# List of 
+# List of Help text and options. 
+# This way we can simply print this list if the user wants help. 
 options = [
 #   NOTE: Options marked with (+) can be given multiple times on the command line
 #   option              type number default description
     """
+MARTINIZE.py is a script to create Coarse Grain Martini input files of
+proteins, ready for use in the molecular dynamics simulations package 
+Gromacs. For more information on the Martini forcefield, see:
+www.cgmartini.nl
+and read our papers:
+Monticelli et al., J. Chem. Theory Comput., 2008, 4(5), 819-834
+de Jong et al., J. Chem. Theory Comput., 2013, DOI:10.1021/ct300646g
+
 Primary input/output
 --------------------
 The input file (-f) should be a coordinate file in PDB or GROMOS
-format. The format is inferred from the structure of the file, also
-allowing reading MEAD/GRASP (.pqr) files. The input can also be
-provided through stdin, allowing piping of structures, e.g. using grep
-or sed to make a selection of atoms. This can be useful for removing
-HETATM records: 
-
-grep -v '^HETATM' input.pdb | py
-
-The input structure can have multiple frames/models. If an output
-structure file (-x) is given, each frame will be coarsegrained,
+format. The format is inferred from the structure of the file. The 
+input can also be provided through stdin, allowing piping of 
+structures. The input structure can have multiple frames/models. If an output
+structure file (-x) is given, each frame will be coarse grained,
 resulting in a multimodel output structure. Having multiple frames may
 also affect the topology. If secondary structure is determined
 internally, the structure will be averaged over the frames. Likewise,
@@ -153,14 +164,7 @@ be used for the master topology, using #include statements to link the
 moleculetype definitions, which are written to separate files. If no
 output filename is given, the topology and the moleculetype
 definitions are written to stdout.
-""",
-    ("-f",        Option(str,             1,     None, "Input file (PDB|GRO)")),
-    ("-o",        Option(str,             1,     None, "Output topology (TOP)")),
-    ("-x",        Option(str,             1,     None, "Output coarse grained structure (PDB)")),
-    ("-n",        Option(str,             1,     None, "Output index file")),
-    ("-v",        Option(bool,            0,    False, "Verbose. Be load and noisy.")), 
-    ("-h",        Option(bool,            0,    False, "Display this help.")),
-    """
+
 Secondary structure
 -------------------
 The secondary structure plays a central role in the assignment of atom
@@ -174,21 +178,14 @@ The option -collagen will set the whole structure to collagen. If this
 is not what you want (eg only part of the structure is collagen, you
 can give a secondary structure file/string (-ss) and specifiy collagen
 as "F". Parameters for collagen are taken from: Gautieri et al., 
-J. Chem. Theory Comput, 2010, 6, 1210-1218. 
+J. Chem. Theory Comput., 2010, 6, 1210-1218. 
 With multimodel input files, the secondary structure as determined with
-DSSP or PyMOL will be averaged over the frames. In this case, a cutoff
+DSSP will be averaged over the frames. In this case, a cutoff
 can be specified (-ssc) indicating the fraction of frames to match a
 certain secondary structure type for designation.
-""",
-    ("-ss",       Option(str,             1,     None, "Secondary structure (File or string)")),
-    ("-ssc",      Option(float,           1,      0.5, "Cutoff fraction for ss in case of ambiguity (default: 0.5).")),
-    ("-dssp",     Option(str,             1,     None, "DSSP executable for determining structure")),
-#    ("-pymol",    Option(str,             1,     None, "PyMOL executable for determining structure")),
-    ("-collagen", Option(bool,            0,    False, "Use collagen parameters")),
-    """
+
 Topology
 --------
-
 Several options are available to tune the resulting topology. By
 default, termini are charged, and chain breaks are kept neutral. This
 behaviour can be changed using -nt and -cb, respectively.
@@ -243,46 +240,18 @@ Different forcefields can be specified with -ff. All the parameters and
 options belonging to that forcefield  will be set (eg. bonded interactions,
 BB-bead positions, Elastic Network, etc.). By default martini 2.1 is
 used.
-""",
-    ("-nt",       Option(bool,                     0,      False, "Set neutral termini (charged is default)")), 
-    ("-cb",       Option(bool,                     0,      False, "Set charges at chain breaks (neutral is default)")), 
-    ("-cys",      Option(lists['cystines'].append, 1,       None, "Disulphide bond (+)")),
-    ("-link",     Option(lists['links'].append,    1,       None, "Link (+)")),
-    ("-merge",    Option(lists['merges'].append,   1,       None, "Merge chains: e.g. -merge A,B,C (+)")),
-#    ("-mixed",    Option(bool,                     0,      False, "Allow chains of mixed type (default: False)")),
-    ("-name",     Option(str,                      1,       None, "Moleculetype name")),
-    ("-p",        Option(str,                      1,     'None', "Output position restraints (None/All/Backbone) (default: None)")),
-    ("-pf",       Option(float,                    1,       1000, "Position restraints force constant (default: 1000 kJ/mol/nm^2)")),
-    ("-ed",       Option(bool,                     0,      False, "Use dihedrals for extended regions rather than elastic bonds)")),
-    ("-sep",      Option(bool,                     0,      False, "Write separate topologies for identical chains.")),
-    ("-ff",       Option(str,                      1,'martini21', "Which forcefield to use: "+' ,'.join(n for n in forcefields))),
-    """
+
 Elastic network
 ---------------
-
 Martinize can write an elastic network for atom pairs within a cutoff
 distance. The force constant (-ef) and the upper distance bound (-eu) 
 can be speficied. If a force field with an intrinsic Elastic
 network is specified (eg. Elnedyn) with -ff, -elastic in implied and
 the default values for the force constant and upper cutoff are used.
 However, these can be overwritten.
-""",
-# Fij = Fc exp( -a (rij - lo)**p )
-    ("-elastic",  Option(bool,            0,    False, "Write elastic bonds")),
-#    ("-elnedyn",  Option(bool,            0,    False, "Use Elnedyn mapping and parameters with elastic network")),
-    ("-ef",       Option(float,           1,      500, "Elastic bond force constant Fc")),
-    ("-el",       Option(float,           1,        0, "Elastic bond lower cutoff: F = Fc if rij < lo")),
-    ("-eu",       Option(float,           1,     0.90, "Elastic bond upper cutoff: F = 0  if rij > up")),
-    ("-ea",       Option(float,           1,        0, "Elastic bond decay factor a")),
-    ("-ep",       Option(float,           1,        1, "Elastic bond decay power p")),
-    ("-em",       Option(float,           1,        0, "Remove elastic bonds with force constant lower than this")),
-    ("-eb",       Option(str,             1,     'BB', "Comma separated list of bead names for elastic bonds")),
-#    ("-cgo",      Option(str,             1,     None, "PyMOL CGO file for elastic network visualization")), 
-#    ("-hetatm",   Option(bool,            0,    False, "Include HETATM records from PDB file (Use with care!)")),
-    """
+
 Multiscaling
 ------------
-
 Martinize can process a structure to yield a multiscale system,
 consisting of a coordinate file with atomistic parts and
 corresponding, overlaid coarsegrained parts. For chains that are
@@ -292,9 +261,43 @@ be appended to the atomistic moleculetype definitions.
 The option -multi can be specified multiple times, and takes a chain
 identifier as argument. Alternatively, the keyword 'all' can be given
 as argument, causing all chains to be multiscaled.
+========================================================================\n
 """,
+    ("-f",        Option(str,                      1,     None, "Input file (PDB|GRO)")),
+    ("-o",        Option(str,                      1,     None, "Output topology (TOP)")),
+    ("-x",        Option(str,                      1,     None, "Output coarse grained structure (PDB)")),
+    ("-n",        Option(str,                      1,     None, "Output index file")),
+    ("-v",        Option(bool,                     0,    False, "Verbose. Be load and noisy.")), 
+    ("-h",        Option(bool,                     0,    False, "Display this help.")),
+    ("-ss",       Option(str,                      1,     None, "Secondary structure (File or string)")),
+    ("-ssc",      Option(float,                    1,      0.5, "Cutoff fraction for ss in case of ambiguity (default: 0.5).")),
+    ("-dssp",     Option(str,                      1,     None, "DSSP executable for determining structure")),
+#    ("-pymol",    Option(str,                      1,     None, "PyMOL executable for determining structure")),
+    ("-collagen", Option(bool,                     0,    False, "Use collagen parameters")),
+    ("-his",      Option(bool,                     0,    False, "Interactively set the charge of each His-residue.")),
+    ("-nt",       Option(bool,                     0,    False, "Set neutral termini (charged is default)")), 
+    ("-cb",       Option(bool,                     0,    False, "Set charges at chain breaks (neutral is default)")), 
+    ("-cys",      Option(lists['cystines'].append, 1,     None, "Disulphide bond (+)")),
+    ("-link",     Option(lists['links'].append,    1,     None, "Link (+)")),
+    ("-merge",    Option(lists['merges'].append,   1,     None, "Merge chains: e.g. -merge A,B,C (+)")),
+#    ("-mixed",    Option(bool,                     0,    False, "Allow chains of mixed type (default: False)")),
+    ("-name",     Option(str,                      1,     None, "Moleculetype name")),
+    ("-p",        Option(str,                      1,   'None', "Output position restraints (None/All/Backbone) (default: None)")),
+    ("-pf",       Option(float,                    1,     1000, "Position restraints force constant (default: 1000 kJ/mol/nm^2)")),
+    ("-ed",       Option(bool,                     0,    False, "Use dihedrals for extended regions rather than elastic bonds)")),
+    ("-sep",      Option(bool,                     0,    False, "Write separate topologies for identical chains.")),
+    ("-ff",       Option(str,                      1,'martini21', "Which forcefield to use: "+' ,'.join(n for n in forcefields))),
+# Fij = Fc exp( -a (rij - lo)**p )
+    ("-elastic",  Option(bool,                     0,    False, "Write elastic bonds")),
+    ("-ef",       Option(float,                    1,      500, "Elastic bond force constant Fc")),
+    ("-el",       Option(float,                    1,        0, "Elastic bond lower cutoff: F = Fc if rij < lo")),
+    ("-eu",       Option(float,                    1,     0.90, "Elastic bond upper cutoff: F = 0  if rij > up")),
+    ("-ea",       Option(float,                    1,        0, "Elastic bond decay factor a")),
+    ("-ep",       Option(float,                    1,        1, "Elastic bond decay power p")),
+    ("-em",       Option(float,                    1,        0, "Remove elastic bonds with force constant lower than this")),
+    ("-eb",       Option(str,                      1,     'BB', "Comma separated list of bead names for elastic bonds")),
+#    ("-hetatm",   Option(bool,                     0,    False, "Include HETATM records from PDB file (Use with care!)")),
     ("-multi",    Option(lists['multi'].append,    1,     None, "Chain to be set up for multiscaling (+)")),
-"========================================================================\n"
     ]
 
 ## Martini Quotes
@@ -318,6 +321,7 @@ martiniq = [
 desc = ""
     
 def help():
+    """Print help text and list of options and end the program."""
     import sys
     for item in options:
         if type(item) == str:
@@ -327,7 +331,6 @@ def help():
             print "%10s  %s"%(item[0],item[1].description)
     print
     sys.exit()
-    
 ##############################
 ## 2 # COMMAND LINE PARSING ##  -> @CMD <-
 ##############################
@@ -362,6 +365,10 @@ def option_parser(args,options,lists,version=0):
 
     # Convert the option list to a dictionary, discarding all comments
     options = dict([i for i in options if not type(i) == str])
+
+    # This information we would like to print to some files, so let's put it in our information class
+    options['Version']             = version
+    options['Arguments']           = args[:]
    
     while args:
         ar = args.pop(0)
@@ -373,19 +380,10 @@ def option_parser(args,options,lists,version=0):
     logLevel = options["-v"] and logging.DEBUG or logging.INFO
     logging.basicConfig(format='%(levelname)-7s    %(message)s',level=logLevel)
 
-    logging.info('MARTINIZE version %s'%version)
-    
-    # Process the raw options from the command line
-    # Boolean options are set to more intuitive variables
-    options['Collagen']            = options['-collagen']
-    options['ChargesAtBreaks']     = options['-cb']
-    options['NeutralTermini']      = options['-nt']
-    options['ExtendedDihedrals']   = options['-ed']
-    options['RetainHETATM']        = False # options['-hetatm']
-    options['SeparateTop']         = options['-sep']
-    options['MixedChains']         = False # options['-mixed']
-    options['ElasticNetwork']      = options['-elastic']
-    
+    logging.info('MARTINIZE, script version %s'%version)
+    logging.info('If you use this script please cite:')
+    logging.info('de Jong et al., J. Chem. Theory Comput., 2013, DOI:10.1021/ct300646g')
+     
     # The make the program flexible, the forcefield parameters are defined
     # for multiple forcefield. Check if a existing one is defined:
     ###_tmp  = __import__(options['-ff'].value.lower())
@@ -401,7 +399,18 @@ def option_parser(args,options,lists,version=0):
     except:
         logging.error("Forcefield '%s' can not be found."%(options['-ff']))
         sys.exit()
-
+   
+    # Process the raw options from the command line
+    # Boolean options are set to more intuitive variables
+    options['Collagen']            = options['-collagen']
+    options['chHIS']               = options['-his']
+    options['ChargesAtBreaks']     = options['-cb']
+    options['NeutralTermini']      = options['-nt']
+    options['ExtendedDihedrals']   = options['-ed']
+    options['RetainHETATM']        = False # options['-hetatm']
+    options['SeparateTop']         = options['-sep']
+    options['MixedChains']         = False # options['-mixed']
+    options['ElasticNetwork']      = options['-elastic']
  
     # Parsing of some other options into variables
     options['ElasticMaximumForce'] = options['-ef'].value 
@@ -419,22 +428,13 @@ def option_parser(args,options,lists,version=0):
     
     
     if options['ForceField'].ElasticNetwork:
-        #
         # Some forcefields, like elnedyn, always use an elatic network. This is set in the 
         # forcefield file, with the parameter ElasticNetwork.
-        #
         options['ElasticNetwork']  = True
-#        # Unless explicitly told not to, using Elnedyn will 
-#        # merge all chains into a single moleculetype to 
-#        # allow a global Elnedyn network.
-#        if "no" in lists['merges']:
-#            lists['merges'].remove("no")
-#        else:
-#            lists['merges'] = ["all"]
-    
     
     # Merges, links and cystines
     options['mergeList'] = "all" in lists['merges'] and ["all"] or [i.split(",") for i in lists['merges']]
+
 
     # Process links
     linkList   = []
@@ -581,8 +581,8 @@ def distance2(a,b):
 ##########################
 
 # Amino acid codes:                                                                                  
-AA3     = spl("TRP TYR PHE HIS ARG LYS CYS ASP GLU ILE LEU MET ASN PRO HYP GLN SER THR VAL ALA GLY") #@#
-AA1     = spl("  W   Y   F   H   R   K   C   D   E   I   L   M   N   P   O   Q   S   T   V   A   G") #@#
+AA3     = spl("TRP TYR PHE HIS HIH ARG LYS CYS ASP GLU ILE LEU MET ASN PRO HYP GLN SER THR VAL ALA GLY") #@#
+AA1     = spl("  W   Y   F   H   H   R   K   C   D   E   I   L   M   N   P   O   Q   S   T   V   A   G") #@#
 
 
 # Dictionaries for conversion from one letter code to three letter code v.v.                         
@@ -649,6 +649,7 @@ class CoarseGrained:
         "PHE":  nsplit(bb,"CB CG CD1 HD1","CD2 HD2 CE2 HE2","CE1 HE1 CZ HZ"),
         "GLY":  nsplit(bb),
         "HIS":  nsplit(bb,"CB CG","CD2 HD2 NE2 HE2","ND1 HD1 CE1 HE1"),
+        "HIH":  nsplit(bb,"CB CG","CD2 HD2 NE2 HE2","ND1 HD1 CE1 HE1"),     # Charged Histidine.
         "ILE":  nsplit(bb,"CB CG1 CG2 CD CD1"),
         "LYS":  nsplit(bb,"CB CG CD","CE NZ HZ1 HZ2 HZ3"),
         "LEU":  nsplit(bb,"CB CG CD1 CD2"),
@@ -847,9 +848,10 @@ sstd = dict([ (i,ord(i)*null+i+(255-ord(i))*null) for i in cgss ])
 
 # Pattern substitutions
 def typesub(seq,patterns,types):                                                            
+    seq = null+seq+null
     for i,j in zip(patterns,types):                                                         
         seq = seq.replace(i,j)                                                              
-    return seq                                                                              
+    return seq[1:-1]                                                                              
 
 
 # The following function translates a string encoding the secondary structure
@@ -920,7 +922,7 @@ class martini21:
         self.name = 'martini21'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "RQd":1, "AQa":-1}                                                           #@#
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                        #@#
         
         
         #----+---------------------+
@@ -1012,6 +1014,7 @@ class martini21:
             "TYR": [spl("SC4 SC4 SP1"),    [(0.320,5000), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
             "PHE": [spl("SC4 SC4 SC4"),    [(0.310,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
             "HIS": [spl("SC4 SP1 SP1"),    [(0.320,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
+            "HIH": [spl("SC4 SP1 SQd"),    [(0.320,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
             "ARG": [spl("N0 Qd"),          [(0.330,5000), (0.340,5000)],                           [(180,25)]],
             "LYS": [spl("C3 Qd"),          [(0.330,5000), (0.280,5000)],                           [(180,25)]],
             "CYS": [spl("C5"),             [(0.310,7500)]],
@@ -1051,6 +1054,7 @@ class martini21:
         "TYR":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
         "PHE":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
         "HIS":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
+        "HIH":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
         "GLN":     [[(0,1)]],
         "ASN":     [[(0,1)]],
         "SER":     [[(0,1)]],
@@ -1165,7 +1169,7 @@ class martini21p:
         self.name = 'martini21p'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "RQd":1, "AQa":-1}                                                           #@#
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                                                           #@#
         
         
         #----+---------------------+
@@ -1257,6 +1261,7 @@ class martini21p:
             "TYR": [spl("SC4 SC4 SP1"),    [(0.320,5000), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
             "PHE": [spl("SC4 SC4 SC4"),    [(0.310,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
             "HIS": [spl("SC4 SP1 SP1"),    [(0.320,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
+            "HIH": [spl("SC4 SP1 SQd"),    [(0.320,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
             "ARG": [spl("N0 Qd"),          [(0.330,5000), (0.340,5000)],                           [(180,25)]],
             "LYS": [spl("C3 Qd"),          [(0.330,5000), (0.280,5000)],                           [(180,25)]],
             "CYS": [spl("C5"),             [(0.310,7500)]],
@@ -1296,6 +1301,7 @@ class martini21p:
         "TYR":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
         "PHE":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
         "HIS":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
+        "HIH":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
         "GLN":     [[(0,1)]],
         "ASN":     [[(0,1)]],
         "SER":     [[(0,1)]],
@@ -1417,7 +1423,7 @@ class martini22:
         self.name = 'martini22'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "RQd":1, "AQa":-1}                                                           #@#
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                                                           #@#
         
         
         #----+---------------------+
@@ -1509,6 +1515,7 @@ class martini22:
             "TYR": [spl("SC4 SC4 SP1"),    [(0.320,5000), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
             "PHE": [spl("SC5 SC5 SC5"),    [(0.310,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
             "HIS": [spl("SC4 SP1 SP1"),    [(0.320,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
+            "HIH": [spl("SC4 SP1 SQd"),    [(0.320,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
             "ARG": [spl("N0 Qd"),          [(0.330,5000), (0.340,5000)],                           [(180,25)]],
             "LYS": [spl("C3 Qd"),          [(0.330,5000), (0.280,5000)],                           [(180,25)]],
             "CYS": [spl("C5"),             [(0.310,7500)]],
@@ -1548,6 +1555,7 @@ class martini22:
         "TYR":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]], 
         "PHE":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
         "HIS":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
+        "HIH":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
         "GLN":     [[(0,1)]],
         "ASN":     [[(0,1)]],
         "SER":     [[(0,1)]],
@@ -1673,7 +1681,7 @@ class martini22p:
         self.name = 'martini22p'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "RQd":1, "AQa":-1}                                                           #@#
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                                                           #@#
         
         
         #----+---------------------+
@@ -1759,18 +1767,19 @@ class martini22p:
         
         # To be compatible with Elnedyn, all parameters are explicitly defined, even if they are double.
         self.sidechains = {
-          #RES#   BEADS                       BONDS                                                   ANGLES                      DIHEDRALS        V-SITES
-          #                                   BB-SC          SC-SC                                    BB-SC-SC  SC-SC-SC
-          "TRP": [spl("SC4 SNd SC5 SC5"),[(0.300,5000)]+[(0.270,None) for i in range(5)],        [(210,50),(90,50),(90,50)], [(0,50),(0,200)]],
-          "TYR": [spl("SC4 SC4 SP1"),    [(0.320,5000), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
-          "PHE": [spl("SC5 SC5 SC5"),    [(0.310,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
-          "HIS": [spl("SC4 SP1 SP1"),    [(0.320,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
-          "GLN": [spl("Nda D D"),        [(0.400,5000), (0.280,None)],                           [],                         [],              [(0.5,)]],
-          "ASN": [spl("Nda D D"),        [(0.320,5000), (0.280,None)],                           [],                         [],              [(0.5,)]],
-          "SER": [spl("N0 D D"),         [(0.250,7500), (0.280,None)],                           [],                         [],              [(0.5,)]],
-          "THR": [spl("N0 D D"),         [(0.260,9000), (0.280,None)],                           [],                         [],              [(0.5,)]],
-          "ARG": [spl("N0 Qd D"),        [(0.330,5000), (0.340,5000), (0.110,None)],             [(180,25)]],
-          "LYS": [spl("C3 Qd D"),        [(0.330,5000), (0.280,5000), (0.110,None)],             [(180,25)]],
+          #RES#   BEADS                       BONDS                                                                   ANGLES                      DIHEDRALS        V-SITES
+          #                                   BB-SC          SC-SC                                                    BB-SC-SC  SC-SC-SC
+          "TRP": [spl("SC4 SNd SC5 SC5"),[(0.300,5000)]+[(0.270,None) for i in range(5)],                    [(210,50),(90,50),(90,50)], [(0,50),(0,200)]],
+          "TYR": [spl("SC4 SC4 SP1"),    [(0.320,5000), (0.270,None), (0.270,None),(0.270,None)],            [(150,50),(150,50)],        [(0,50)]],
+          "PHE": [spl("SC5 SC5 SC5"),    [(0.310,7500), (0.270,None), (0.270,None),(0.270,None)],            [(150,50),(150,50)],        [(0,50)]],
+          "HIS": [spl("SC4 SP1 SP1"),    [(0.320,7500), (0.270,None), (0.270,None),(0.270,None)],            [(150,50),(150,50)],        [(0,50)]],
+          "HIH": [spl("SC4 SP1 SQd D"),  [(0.320,7500), (0.270,None), (0.270,None),(0.270,None),(0.11,None)],[(150,50),(150,50)],        [(0,50)]],
+          "GLN": [spl("Nda D D"),        [(0.400,5000), (0.280,None)],                                       [],                         [],              [(0.5,)]],
+          "ASN": [spl("Nda D D"),        [(0.320,5000), (0.280,None)],                                       [],                         [],              [(0.5,)]],
+          "SER": [spl("N0 D D"),         [(0.250,7500), (0.280,None)],                                       [],                         [],              [(0.5,)]],
+          "THR": [spl("N0 D D"),         [(0.260,9000), (0.280,None)],                                       [],                         [],              [(0.5,)]],
+          "ARG": [spl("N0 Qd D"),        [(0.330,5000), (0.340,5000), (0.110,None)],                         [(180,25)]],
+          "LYS": [spl("C3 Qd D"),        [(0.330,5000), (0.280,5000), (0.110,None)],                         [(180,25)]],
           "ASP": [spl("Qa D"),           [(0.320,7500), (0.110,None)]],
           "GLU": [spl("Qa D"),           [(0.400,5000), (0.110,None)]],
           "CYS": [spl("C5"),             [(0.310,7500)]],
@@ -1790,7 +1799,7 @@ class martini22p:
 
         # Martini 2.2p has polar and charged residues with seperate charges.
         self.polar   = ["GLN","ASN","SER","THR"]
-        self.charged = ["ARG","LYS","ASP","GLU"]
+        self.charged = ["ARG","LYS","ASP","GLU","HIH"]
 
         # If masses or charged diverge from standard (45/72 and -/+1) they are defined here.
         self.mass_charge = {
@@ -1801,6 +1810,7 @@ class martini22p:
         "THR":[[0,36,36],         [0,0.36,-0.36]],
         "ARG":[[72,36,36],        [0,0,1]],
         "LYS":[[72,36,36],        [0,0,1]],
+        "HIH":[[45,45,36,36],     [0,0,0,1]],
         "ASP":[[36,36],           [0,-1]],
         "GLU":[[36,36],           [0,-1]],
         }
@@ -1811,6 +1821,7 @@ class martini22p:
         "TYR":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]], 
         "PHE":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
         "HIS":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
+        "HIH":     [[(0,1),(1,2),(1,3),(2,3),(3,4)],       [(0,1,2),(0,1,3)], [(0,2,3,1)]],
         "GLN":     [[(0,1),(2,3)],                         [],                [],                    [(1,2,3)]],
         "ASN":     [[(0,1),(2,3)],                         [],                [],                    [(1,2,3)]],
         "SER":     [[(0,1),(2,3)],                         [],                [],                    [(1,2,3)]],
@@ -1913,6 +1924,8 @@ class martini22p:
         '''Prints any force-field specific logging messages.'''
         import logging
         logging.warning('Martini version 2.2 is in beta release. It has not been extensively tested and problems might occur.')
+        logging.warning('Bead names of charges in sidechains differ between .top/.itp and .pdb.')
+        logging.warning('Using names in topology, as Gromacs does, gives the correct result.')
         pass
 ################################
 ## 6 # FORCE FIELD PARAMETERS ##  -> @FF <-
@@ -1920,12 +1933,17 @@ class martini22p:
 
 class elnedyn:
     def __init__(self):
+        '''The forcefield has been implemented with some changes compared to the published parameters:
+        - Backbone-Backbone bonds are constraints in stead of strong bonds.
+        - Trp has an extra constrain added to the sidechain
+        - The Backbone sidechain bonds with high force constants are replaced by constraints except for Trp.
+        '''
 
         # parameters are defined here for the following (protein) forcefields:
         self.name = 'elnedyn'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "RQd":1, "AQa":-1}                                                           #@#
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                                                           #@#
         
         
         #----+---------------------+
@@ -2016,16 +2034,17 @@ class elnedyn:
         'TRP': [spl("SC4 SP1 SC4 SC4"), [(0.255,73000), (0.220,None), (0.250,None), (0.280,None), (0.255,None), (0.35454,None)], [(142,30), (143,20), (104,50)], [(180,200)]],
         'TYR': [spl("SC4 SC4 SP1"),     [(0.335, 6000), (0.335,6000), (0.240,None), (0.310,None), (0.310,None)], [(70,100), (130, 50)]],
         'PHE': [spl("SC4 SC4 SC4"),     [(0.340, 7500), (0.340,7500), (0.240,None), (0.240,None), (0.240,None)], [(70,100), (125,100)]],
-        'HIS': [spl("SC4 SP1 SP1"),     [(0.195, None), (0.340,   0), (0.193,None), (0.295,None), (0.216,None)], [(135,100),(115, 50)]],
+        'HIS': [spl("SC4 SP1 SP1"),     [(0.195,91000), (0.193,None), (0.295,None), (0.216,None)],               [(135,100),(115, 50)]],
+        'HIH': [spl("SC4 SP1 SQd"),     [(0.195,91000), (0.193,None), (0.295,None), (0.216,None)],               [(135,100),(115, 50)]],
         'ARG': [spl("N0 Qd"),           [(0.250,12500), (0.350,6200)],                                           [(150,15)]],
         'LYS': [spl("C3 Qd"),           [(0.250,12500), (0.300,9700)],                                           [(150,20)]],
-        'CYS': [spl("C5"),              [(0.240,94000)]],
-        'ASP': [spl("Qa"),              [(0.255,65000)]],
+        'CYS': [spl("C5"),              [(0.240, None)]],
+        'ASP': [spl("Qa"),              [(0.255, None)]],
         'GLU': [spl("Qa"),              [(0.310, 2500)]],
         'ILE': [spl("C1"),              [(0.225,13250)]],
-        'LEU': [spl("C1"),              [(0.265,81500)]],
+        'LEU': [spl("C1"),              [(0.265, None)]],
         'MET': [spl("C5"),              [(0.310, 2800)]],
-        'ASN': [spl("P5"),              [(0.250,61000)]],
+        'ASN': [spl("P5"),              [(0.250, None)]],
         'PRO': [spl("C2"),              [(0.190, None)]],
         'GLN': [spl("P4"),              [(0.300, 2400)]],
         'SER': [spl("P1"),              [(0.195, None)]],
@@ -2053,10 +2072,11 @@ class elnedyn:
         # For HIS the order of bonds is changed and a bond with fc=0 is added.
         self.connectivity = {
         #RES       BONDS                                     ANGLES                            DIHEDRALS       V-SITE
-        "TRP":     [[(0, 1), (1, 2), (2, 4), (4, 3), (3, 1)],[(0, 1, 2), (0, 1, 4), (0, 1, 3)],[(1, 2, 3, 4)]],
+        "TRP":     [[(0, 1), (1, 2), (2, 4), (4, 3), (3, 1), (1, 4)],[(0, 1, 2), (0, 1, 4), (0, 1, 3)],[(1, 2, 3, 4)]],
         "TYR":     [[(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)],[(0, 1, 2), (0, 1, 3)]],
         "PHE":     [[(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)],[(0, 1, 2), (0, 1, 3)]],
-        "HIS":     [[(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)],[(0, 1, 2), (0, 1, 3)]],
+        "HIS":     [[(0, 1), (1, 2), (1, 3), (2, 3)],        [(0, 1, 2), (0, 1, 3)]],
+        "HIH":     [[(0, 1), (1, 2), (1, 3), (2, 3)],        [(0, 1, 2), (0, 1, 3)]],
         "GLN":     [[(0,1)]],
         "ASN":     [[(0,1)]],
         "SER":     [[(0,1)]],
@@ -2148,6 +2168,11 @@ class elnedyn:
     def messages(self):
         '''Prints any force-field specific logging messages.'''
         import logging
+        logging.info('The Elnedyn forcefield has been implemented with some changes compared to the published parameters:')
+        logging.info('- Backbone-Backbone bonds are constraints in stead of high force constant bonds.')
+        #logging.info('- Backbone-Backbone bonds use high force constant bonds instead of constraints.')
+        logging.info('- Trp has an extra constrain added to the sidechain.')
+        logging.info('- The Backbone sidechain bonds with high force constants are replaced by constraints except for Trp and His.')
         logging.warning('Elnedyn topologies might not give numerical stable simulations with a 20fs timestep.')
         logging.warning('This can be solved by setting all S-type bead masses to 72amu.') 
         pass
@@ -2156,13 +2181,18 @@ class elnedyn:
 ################################
 
 class elnedyn22:
+    '''The forcefield has been implemented with some changes compared to the published parameters:
+    - Backbone-Backbone bonds are constraints in stead of strong bonds.
+    - Trp has an extra constrain added to the sidechain
+    - The Backbone-Sidechain bonds with high force constants are replaced by constraints except for Trp and His.
+    '''
     def __init__(self):
 
         # parameters are defined here for the following (protein) forcefields:
         self.name = 'elnedyn22'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "RQd":1, "AQa":-1}                                                           #@#
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                                                           #@#
         
         
         #----+---------------------+
@@ -2253,16 +2283,17 @@ class elnedyn22:
         'TRP': [spl("SC4 SNd SC5 SC5"), [(0.255,73000), (0.220,None), (0.250,None), (0.280,None), (0.255,None), (0.35454,None)], [(142,30), (143,20), (104,50)], [(180,200)]],
         'TYR': [spl("SC4 SC4 SP1"),     [(0.335, 6000), (0.335,6000), (0.240,None), (0.310,None), (0.310,None)], [(70,100), (130, 50)]],
         'PHE': [spl("SC5 SC5 SC5"),     [(0.340, 7500), (0.340,7500), (0.240,None), (0.240,None), (0.240,None)], [(70,100), (125,100)]],
-        'HIS': [spl("SC4 SP1 SP1"),     [(0.195, None), (0.340,   0), (0.193,None), (0.295,None), (0.216,None)], [(135,100),(115, 50)]],
+        'HIS': [spl("SC4 SP1 SP1"),     [(0.195,94000), (0.193,None), (0.295,None), (0.216,None)],               [(135,100),(115, 50)]],
+        'HIH': [spl("SC4 SP1 SQd"),     [(0.195,94000), (0.193,None), (0.295,None), (0.216,None)],               [(135,100),(115, 50)]],
         'ARG': [spl("N0 Qd"),           [(0.250,12500), (0.350,6200)],                                           [(150,15)]],
         'LYS': [spl("C3 Qd"),           [(0.250,12500), (0.300,9700)],                                           [(150,20)]],
-        'CYS': [spl("C5"),              [(0.240,94000)]],
-        'ASP': [spl("Qa"),              [(0.255,65000)]],
+        'CYS': [spl("C5"),              [(0.240, None)]],
+        'ASP': [spl("Qa"),              [(0.255, None)]],
         'GLU': [spl("Qa"),              [(0.310, 2500)]],
         'ILE': [spl("C1"),              [(0.225,13250)]],
-        'LEU': [spl("C1"),              [(0.265,81500)]],
+        'LEU': [spl("C1"),              [(0.265, None)]],
         'MET': [spl("C5"),              [(0.310, 2800)]],
-        'ASN': [spl("P5"),              [(0.250,61000)]],
+        'ASN': [spl("P5"),              [(0.250, None)]],
         'PRO': [spl("C3"),              [(0.190, None)]],
         'GLN': [spl("P4"),              [(0.300, 2400)]],
         'SER': [spl("P1"),              [(0.195, None)]],
@@ -2289,11 +2320,12 @@ class elnedyn22:
         # Connectivity records for Elnedyn (read from cg-2.1.dat). 
         # For HIS the order of bonds is changed and a bond with fc=0 is added.
         self.connectivity = {
-        #RES       BONDS                                     ANGLES                            DIHEDRALS       V-SITE
-        "TRP":     [[(0, 1), (1, 2), (2, 4), (4, 3), (3, 1)],[(0, 1, 2), (0, 1, 4), (0, 1, 3)],[(1, 2, 3, 4)]],
-        "TYR":     [[(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)],[(0, 1, 2), (0, 1, 3)]],
-        "PHE":     [[(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)],[(0, 1, 2), (0, 1, 3)]],
-        "HIS":     [[(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)],[(0, 1, 2), (0, 1, 3)]],
+        #RES       BONDS                                             ANGLES                            DIHEDRALS       V-SITE
+        "TRP":     [[(0, 1), (1, 2), (2, 4), (4, 3), (3, 1), (1, 4)],[(0, 1, 2), (0, 1, 4), (0, 1, 3)],[(1, 2, 3, 4)]],
+        "TYR":     [[(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)],        [(0, 1, 2), (0, 1, 3)]],
+        "PHE":     [[(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)],        [(0, 1, 2), (0, 1, 3)]],
+        "HIS":     [[(0, 1), (1, 2), (1, 3), (2, 3)],        [(0, 1, 2), (0, 1, 3)]],
+        "HIH":     [[(0, 1), (1, 2), (1, 3), (2, 3)],        [(0, 1, 2), (0, 1, 3)]],
         "GLN":     [[(0,1)]],
         "ASN":     [[(0,1)]],
         "SER":     [[(0,1)]],
@@ -2384,6 +2416,11 @@ class elnedyn22:
     def messages(self):
         '''Prints any force-field specific logging messages.'''
         import logging
+        logging.info('The elnedyn forcefield has been implemented with some changes compared to the published parameters:')
+        logging.info('- Backbone-Backbone bonds are constraints in stead of high force constant bonds.')
+        #logging.info('- Backbone-Backbone bonds use high force constant bonds instead of constraints.')
+        logging.info('- Trp has an extra constrain added to the sidechain.')
+        logging.info('- The Backbone sidechain bonds with high force constants are replaced by constraints except for Trp and His.')
         logging.warning('Elnedyn topologies might not give numerical stable simulations with a 20fs timestep.')
         logging.warning('This can be solved by setting all S-type bead masses to 72amu.')
         logging.warning('Martini version 2.2 is in beta release. It has not been extensively tested and problems might occur.')
@@ -2399,7 +2436,7 @@ class elnedyn22p:
         self.name = 'elnedyn22p'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "RQd":1, "AQa":-1}                                                           #@#
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                                                           #@#
         
         
         #----+---------------------+
@@ -2490,18 +2527,19 @@ class elnedyn22p:
         'TRP': [spl("SC4 SNd SC5 SC5"), [(0.255,73000), (0.220,None), (0.250,None), (0.280,None), (0.255,None), (0.35454,None)], [(142,30), (143,20), (104,50)], [(180,200)]],
         'TYR': [spl("SC4 SC4 SP1"),     [(0.335, 6000), (0.335,6000), (0.240,None), (0.310,None), (0.310,None)],                 [(70,100), (130, 50)]],
         'PHE': [spl("SC5 SC5 SC5"),     [(0.340, 7500), (0.340,7500), (0.240,None), (0.240,None), (0.240,None)],                 [(70,100), (125,100)]],
-        'HIS': [spl("SC4 SP1 SP1"),     [(0.195, None), (0.340,   0), (0.193,None), (0.295,None), (0.216,None)],                 [(135,100),(115, 50)]],
+        'HIS': [spl("SC4 SP1 SP1"),     [(0.195,94000), (0.193,None), (0.295,None), (0.216,None)],                               [(135,100),(115, 50)]],
+        'HIH': [spl("SC4 SP1 SQd"),     [(0.195,94000), (0.193,None), (0.295,None), (0.216,None), (0.11,None)],                  [(135,100),(115, 50)]],
         'GLN': [spl("Nda D D"),         [(0.300, 2400), (0.280,None)],                                                           [],                             [],         [(0.5,)]],
         'ASN': [spl("Nda D D"),         [(0.250,61000), (0.280,None)],                                                           [],                             [],         [(0.5,)]],
         'SER': [spl("N0 D D"),          [(0.195,94000), (0.280,None)],                                                           [],                             [],         [(0.5,)]],
         'THR': [spl("N0 D D"),          [(0.195,94000), (0.280,None)],                                                           [],                             [],         [(0.5,)]],
         'ARG': [spl("N0 Qd D"),         [(0.250,12500), (0.350,6200), (0.110,None)],                                             [(150,15)]],
         'LYS': [spl("C3 Qd D"),         [(0.250,12500), (0.300,9700), (0.110,None)],                                             [(150,20)]],
-        'ASP': [spl("Qa D"),            [(0.255,65000), (0.110,None)]],
+        'ASP': [spl("Qa D"),            [(0.255, None), (0.110,None)]],
         'GLU': [spl("Qa D"),            [(0.310, 2500), (0.110,None)]],
-        'CYS': [spl("C5"),              [(0.240,94000)]],
+        'CYS': [spl("C5"),              [(0.240, None)]],
         'ILE': [spl("C1"),              [(0.225,13250)]],
-        'LEU': [spl("C1"),              [(0.265,81500)]],
+        'LEU': [spl("C1"),              [(0.265, None)]],
         'MET': [spl("C5"),              [(0.310, 2800)]],
         'PRO': [spl("C3"),              [(0.190, None)]],
         'HYP': [spl("P1"),              [(0.190, None)]],
@@ -2516,7 +2554,7 @@ class elnedyn22p:
 
         # Martini 2.2p has polar and charged residues with seperate charges.
         self.polar   = ["GLN","ASN","SER","THR"]
-        self.charged = ["ARG","LYS","ASP","GLU"]
+        self.charged = ["ARG","LYS","ASP","GLU","HIH"]
 
         # If masses or charged diverge from standard (45/72 and -/+1) they are defined here.
         self.mass_charge = {
@@ -2527,32 +2565,36 @@ class elnedyn22p:
         "THR":[[0,36,36],         [0,0.36,-0.36]],
         "ARG":[[72,36,36],        [0,0,1]],
         "LYS":[[72,36,36],        [0,0,1]],
+        "HIH":[[72,72,36,36],    [0,0,0,1]],
         "ASP":[[36,36],           [0,-1]],
         "GLU":[[36,36],           [0,-1]],
         }
 
         # Defines the connectivity between between beads
+        # The polar sidechains have charged dummy beads, connected with a constraint
+        # The charged sidechains have a charged dummy bead.
         self.connectivity = {
-        #RES       BONDS                                   ANGLES             DIHEDRALS              V-SITE
-        "TRP":     [[(0,1),(1,2),(1,3),(2,3),(2,4),(3,4)], [(0,1,2),(0,1,3)], [(0,2,3,1),(1,2,4,3)]],
-        "TYR":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
-        "PHE":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
-        "HIS":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
-        "GLN":     [[(0,1),(2,3)],                         [],                [],                    [(1,2,3)]],
-        "ASN":     [[(0,1),(2,3)],                         [],                [],                    [(1,2,3)]],
-        "SER":     [[(0,1),(2,3)],                         [],                [],                    [(1,2,3)]],
-        "THR":     [[(0,1),(2,3)],                         [],                [],                    [(1,2,3)]],
-        "ARG":     [[(0,1),(1,2),(2,3)],                   [(0,1,2)]],
-        "LYS":     [[(0,1),(1,2),(2,3)],                   [(0,1,2)]],
-        "ASP":     [[(0,1),(1,2)]],
-        "GLU":     [[(0,1),(1,2)]],
-        "CYS":     [[(0,1)]],
-        "ILE":     [[(0,1)]],
-        "LEU":     [[(0,1)]],
-        "MET":     [[(0,1)]],
-        "PRO":     [[(0,1)]],
-        "HYP":     [[(0,1)]],
-        "VAL":     [[(0,1)]],
+        #RES       BONDS                                              ANGLES                            DIHEDRALS       V-SITE
+        "TRP":     [[(0, 1), (1, 2), (2, 4), (4, 3), (3, 1), (1, 4)],[(0, 1, 2), (0, 1, 4), (0, 1, 3)],[(1, 2, 3, 4)]],
+        "TYR":     [[(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)],        [(0, 1, 2), (0, 1, 3)]],
+        "PHE":     [[(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)],        [(0, 1, 2), (0, 1, 3)]],
+        "HIS":     [[(0, 1), (1, 2), (1, 3), (2, 3)],                [(0, 1, 2), (0, 1, 3)]],
+        "HIH":     [[(0, 1), (1, 2), (1, 3), (2, 3), (3, 4)],        [(0, 1, 2), (0, 1, 3)],           [(0, 2, 3, 1)]],
+        "GLN":     [[(0, 1), (2, 3)],                                [],                               [],              [(1,2,3)]],
+        "ASN":     [[(0, 1), (2, 3)],                                [],                               [],              [(1,2,3)]],
+        "SER":     [[(0, 1), (2, 3)],                                [],                               [],              [(1,2,3)]],
+        "THR":     [[(0, 1), (2, 3)],                                [],                               [],              [(1,2,3)]],
+        "ARG":     [[(0, 1), (1, 2), (2, 3)],                        [(0,1,2)]],
+        "LYS":     [[(0, 1), (1, 2), (2, 3)],                        [(0,1,2)]],
+        "ASP":     [[(0, 1), (1, 2)]],
+        "GLU":     [[(0, 1), (1, 2)]],
+        "CYS":     [[(0, 1)]],
+        "ILE":     [[(0, 1)]],
+        "LEU":     [[(0, 1)]],
+        "MET":     [[(0, 1)]],
+        "PRO":     [[(0, 1)]],
+        "HYP":     [[(0, 1)]],
+        "VAL":     [[(0, 1)]],
         "ALA":     [],
         "GLY":     [],
         }
@@ -2618,7 +2660,7 @@ class elnedyn22p:
     def bbGetBond(self,r,ca,ss):
         import math
         # The 150000 forceconstant gave an error message, turning to constraints would be better.
-        return ( math.sqrt(distance2(ca[0],ca[1]))/10., None )
+        return ( math.sqrt(distance2(ca[0],ca[1]))/10., None   )
     
     def bbGetAngle(self,r,ca,ss):
         import math
@@ -2628,6 +2670,11 @@ class elnedyn22p:
     def messages(self):
         '''Prints any force-field specific logging messages.'''
         import logging
+        logging.info('The elnedyn forcefield has been implemented with some changes compared to the published parameters:')
+        #logging.info('- Backbone-Backbone bonds are constraints in stead of high force constant bonds.')
+        logging.info('- Backbone-Backbone bonds use high force constant bonds instead of constraints.')
+        logging.info('- Trp has an extra constrain added to the sidechain.')
+        logging.info('- The Backbone sidechain bonds with high force constants are replaced by constraints except for Trp and His and the polar sidechains.')
         logging.warning('Elnedyn topologies might not give numerical stable simulations with a 20fs timestep.')
         logging.warning('This can be solved by setting all S-type bead masses to 72amu.')
         logging.warning('Martini version 2.2 is in beta release. It has not been extensively tested and problems might occur.')
@@ -2812,6 +2859,17 @@ def groFrameIterator(streamIterator):
 ## C | GENERAL I/O |
 #----+-------------+
 
+# It is not entirely clear where this fits in best.
+# Called from main. 
+def getChargeType(resname,resid,choices):
+    '''Get user input for the charge of residues, based on list with choises.'''
+    print 'Which %s type do you want for residue %s:'%(resname,resid+1)
+    for i,choice in choices.iteritems():
+        print '%s. %s'%(i,choice)
+    choice = None
+    while choice not in choices.keys():
+        choice = input('Type a number:')
+    return choices[choice]
 
 # *NOTE*: This should probably be a CheckableStream class that
 # reads in lines until either of a set of specified conditions
@@ -2902,6 +2960,8 @@ def residueDistance2(r1,r2):
 def breaks(residuelist,selection=("N","CA","C"),cutoff=2.5):
     # Extract backbone atoms coordinates
     bb = [[atom[4:] for atom in residue if atom[0] in selection] for residue in residuelist]
+    # Needed to remove waters residues from mixed residues.
+    bb = [res for res in bb if res != []]
 
     # We cannot rely on some standard order for the backbone atoms.
     # Therefore breaks are inferred from the minimal distance between
@@ -3036,8 +3096,7 @@ def check_merge(chains, m_list=[], l_list=[], ss_cutoff=0):
 
 
 ## !! NOTE !! ##
-## The chain class needs to be simplified by extracting things to separate functions/classes
-
+## XXX The chain class needs to be simplified by extracting things to separate functions/classes
 class Chain:
     # Attributes defining a chain
     # When copying a chain, or slicing, the attributes in this list have to
@@ -3071,7 +3130,7 @@ class Chain:
         # BREAKS: List of indices of residues where a new fragment starts
         # Only when polymeric (protein, DNA, RNA, ...)
         # For now, let's remove it for the Nucleic acids...
-        self.breaks     = self.type() in ("Protein") and breaks(self.residues) or []
+        self.breaks     = self.type() in ("Protein","Mixed") and breaks(self.residues) or []
 
         # LINKS:  List of pairs of pairs of indices of linked residues/atoms
         # This list is used for cysteine bridges and peptide bonds involving side chains
@@ -3141,6 +3200,12 @@ class Chain:
         # Extract the slices from all lists
         for attr in self._attributes:           
             setattr(newchain, attr, getattr(self,attr)[i:j])
+        # Breaks that fall within the start and end of this chain need to be passed on.
+        # Residue numbering is increased by 20 bits!!
+        # XXX I don't know if this works.
+        ch_sta,ch_end = newchain.residues[0][0][2],newchain.residues[-1][0][2]
+        newchain.breaks     = [crack for crack in self.breaks if ch_sta < (crack<<20) < ch_end]
+        newchain.links     = [link for link in self.links if ch_sta < (link<<20) < ch_end]
         newchain.multiscale = self.multiscale
         newchain.natoms     = len(newchain.atoms())
         newchain.type()
@@ -3192,6 +3257,7 @@ class Chain:
         chainStart = 0
         for i in range(len(self.sequence)-1):
             if residueTypes.get(self.sequence[i],"Unknown") != residueTypes.get(self.sequence[i+1],"Unknown"):
+                # Use the __getslice__ method to take a part of the chain.
                 chains.append(self[chainStart:i+1])
                 chainStart = i+1
         if chains:
@@ -3252,7 +3318,10 @@ class Chain:
         atid     = 1
         bb       = [1]
         fail     = False
-        for residue,rss in zip(self.residues,self.sstypes):
+        for residue,rss,resname in zip(self.residues,self.sstypes,self.sequence):
+            # Check if residues have change, might happen if the user sets things interactively
+            residue = [(atom[0],resname)+atom[2:] for atom in residue]
+            # Water we can't handle yet.
             if residue[0][1] in ("SOL","HOH","TIP"):
                 continue
             if not residue[0][1] in CoarseGrained.mapping.keys():
@@ -3311,7 +3380,6 @@ class Chain:
 import logging,math
 
 # This is a generic class for Topology Bonded Type definitions
-# Clement, it'd be nice to have proper docstrings for classes :)
 class Bonded:
     # The init method is generic to the bonded types,
     # but may call the set method if atoms are given
@@ -3580,7 +3648,10 @@ class Topology:
         if self.multiscale:
              out  = [ '; MARTINI (%s) Multiscale virtual sites topology section for "%s"' %(self.options['ForceField'].name,self.name) ]
         else:
-             out  = [ '; MARTINI (%s) Coarse Grained topology file for "%s"' %(self.options['ForceField'].name, self.name) ]
+             string  = '; MARTINI (%s) Coarse Grained topology file for "%s"' %(self.options['ForceField'].name, self.name)
+             string += '\n; Created by py version %s \n; Using the following options:  ' %(self.options['Version'])
+             string += ' '.join(self.options['Arguments'])
+             out  = [ string ]
         if self.sequence:
             out += [
                 '; Sequence:',
@@ -3758,7 +3829,14 @@ class Topology:
             bbid.append(bbid[-1]+len(i)+1)
 
         # Calpha positions, to get Elnedyn BBB-angles and BB-bond lengths
-        positionCa = [residue[1][4:] for residue in chain.residues]
+        # positionCa = [residue[1][4:] for residue in chain.residues]
+        # The old method (line above) assumed no hydrogens: Ca would always be
+        # the second atom of the residue. Now we look at the name.
+        positionCa = []
+        for residue in chain.residues:
+            for atom in residue:
+                if atom[0] == "CA":
+                    positionCa.append(atom[4:])
 
         # Residue numbers for this moleculetype topology
         resid = range(startResi,startResi+len(self.sequence))     
@@ -3948,7 +4026,6 @@ def main(options):
     # inferring the file type, without consuming lines already
     inStream = streamTag(options["-f"] and options["-f"].value or sys.stdin)
     
-    
     # The streamTag iterator first yields the file type, which 
     # is used to specify the function for reading frames
     fileType = inStream.next()
@@ -3957,9 +4034,7 @@ def main(options):
     else:
         frameIterator = pdbFrameIterator
     
-    
     ## ITERATE OVER FRAMES IN STRUCTURE FILE ##
-    
     # Now iterate over the frames in the stream
     # This should become a StructureFile class with a nice .next method
     model     = 1
@@ -3970,7 +4045,7 @@ def main(options):
     
         if fileType == "PDB":
             # The PDB file can have chains, in which case we list and process them specifically
-            # TER statements are interpreted as chain separators
+            # TER statements are also interpreted as chain separators
             # A chain may have breaks in which case the breaking residues are flagged
             chains = [ Chain(options,[i for i in residues(chain)]) for chain in pdbChains(atoms) ]        
         else:
@@ -3999,6 +4074,7 @@ def main(options):
         # Note that in some cases HETATM residues are part of a 
         # chain. This will get problematic. But we cannot cover
         # all, probably.
+        # This is not yet active, but might be if we get to mixed protein/DNA.
         if not options['MixedChains']:
             demixedChains = []
             for chain in chains:
@@ -4018,22 +4094,30 @@ def main(options):
                 logging.info("Removing %d water molecules (chain %s)."%(len(chain),chain.id))
             elif chain.type() in ("Protein","Nucleic"):
                 keep.append(chain)
+            # This is currently not active:
             elif options['RetainHETATM']:
                 keep.append(chain)
             else:
                 logging.info("Removing HETATM chain %s consisting of %d residues."%(chain.id,len(chain)))
         chains = keep
+
+        # Here we interactively check the charge state of resides
+        # Can be easily expanded to residues other than HIS
+        for chain in chains:
+            for i,resname in enumerate(chain.sequence):
+                 if resname == 'HIS' and options['chHIS']:
+                     choices = {0:'HIH',1:'HIS'}
+                     choice = getChargeType(resname,i,choices)
+                     chain.sequence[i] = choice
+
     
-        
         # Check which chains need merging
         if model == 1:
             order, merge = check_merge(chains, options['mergeList'], options['linkList'], options['CystineCheckBonds'] and options['CystineMaxDist2'])
     
-    
         # Get the total length of the sequence
         seqlength = sum([len(chain) for chain in chains])
         logging.info('Total size of the system: %s residues.'%seqlength)
-    
     
         ## SECONDARY STRUCTURE
         ss = '' 
@@ -4042,9 +4126,10 @@ def main(options):
                 chain.set_ss("F")
                 ss += chain.ss
         elif options["-ss"]:
+            # XXX We need error-catching here, 
+            # in case the file doesn't excist, or the string contains bogus.
             # If the string given for the sequence consists strictly of upper case letters
             # and does not appear to be a file, assume it is the secondary structure
-            # Is that safe or silly?
             ss = options["-ss"].value.replace('~','L').replace(' ','L')
             if ss.isalnum() and ss.isupper() and not os.path.exists(options["-ss"].value):
                 ss = options["-ss"].value
@@ -4128,13 +4213,17 @@ def main(options):
         model += 1
     
     
-    # Write the index file if requested
+    # Write the index file if requested.
+    # Mainly of interest for multiscaling.
+    # Could be improved by adding separte groups for BB, SC, etc.
     if options["-n"].value:
         logging.info("Writing index file.")
+        # Lists for All-atom, Virtual sites and Coarse Grain.
         NAA,NVZ,NCG = [],[],[]
         atid = 1
         for i in order:
             ci = chains[i]
+            # Convert to coarse grain.
             coarseGrained = ci.cg()
             if ci.multiscale:
                 NAA.extend([" %5d"%(a+atid) for a in range(ci.natoms)]) 
@@ -4176,14 +4265,12 @@ def main(options):
         ssAver = "".join(ssAver)
         logging.info('(Average) Secondary structure has been determined (see head of .itp-file).')
         
-        
         # Divide the secondary structure according to the division in chains
         # This will set the secondary structure types to be used for the 
         # topology.
         for chain in chains:
             chain.set_ss(ssAver[:len(chain)])
             ssAver = ssAver[len(chain):]
-        
         
         # Now the chains are complete, each consisting of a residuelist, 
         # and a secondary structure designation if the chain is of type 'Protein'.
@@ -4198,9 +4285,7 @@ def main(options):
         # If there are merges to be done, the order of things may be changed, in which
         # case the coarse grained structure will not match with the topology...
         
-        
         ## CYSTINE BRIDGES ##
-        
         # Extract the cysteine coordinates (for all frames) and the cysteine identifiers
         if options['CystineCheckBonds']:
             logging.info("Checking for cystine bridges, based on sulphur (SG) atoms lying closer than %.4f nm"%math.sqrt(options['CystineMaxDist2']/100))
@@ -4226,7 +4311,6 @@ def main(options):
         
         
         ## REAL ITP STUFF ##
-        
         # Check whether we have identical chains, in which case we 
         # only write the ITP for one...
         # This means making a distinction between chains and 
@@ -4243,7 +4327,7 @@ def main(options):
         # In addition we write a master topology file, using the value of
         # options["-o"], with an added extension ".top" if not given.
         
-        # *NOTE*: This should probably be gathered in a 'Universe' class
+        # XXX *NOTE*: This should probably be gathered in a 'Universe' class
         itp = 0
         moleculeTypes = {}
         for mi in range(len(molecules)):
@@ -4252,7 +4336,6 @@ def main(options):
             # If not, generate the topology from the chain definition
             if not mol in moleculeTypes or options['SeparateTop']:
                 # Name of the moleculetype
-                # NOTE: The naming should be changed; now it becomes Protein_X+Protein_Y+...
                 name = "+".join([chain.getname(options['-name'].value) for chain in mol])
                 moleculeTypes[mol] = name
     
@@ -4266,7 +4349,7 @@ def main(options):
                 mcg, coords = zip(*[(j[:4],j[4:7]) for m in mol for j in m.cg()])
                 mcg         = list(mcg)
         
-                # Run through the link list and add connections
+                # Run through the link list and add connections (links = cys bridges or hand specified links)
                 for atomA,atomB,bondlength,forceconst in options['linkListCG']:
                     if bondlength == -1 and forceconst == -1:
                         bondlength, forceconst = options['ForceField'].special[(atomA[:2],atomB[:2])]
@@ -4307,15 +4390,7 @@ def main(options):
         
         logging.info('Written %d ITP file%s'%(itp,itp>1 and "s" or ""))
                 
-        
-        
-        #----+--------------------------------------------
-        ## B # MORE WORK -- WRITING THE MASTER TOPOLOGY ##
-        #----+--------------------------------------------
-        
-        
-        # Processing stuff
-        
+        # WRITING THE MASTER TOPOLOGY
         # Output stream
         top  = options["-o"] and open(options['-o'].value,'w') or sys.stdout
         
@@ -4326,16 +4401,15 @@ def main(options):
         logging.info("Output contains %d molecules:"%len(molecules))
         n = 1
         for molecule in molecules:
-            stuff = (n, moleculeTypes[molecule], len(molecule)>1 and "s" or " ", " ".join([i.id for i in molecule]))
-            logging.info("  %2d->  %s (chain%s %s)"%stuff)
+            chainInfo = (n, moleculeTypes[molecule], len(molecule)>1 and "s" or " ", " ".join([i.id for i in molecule]))
+            logging.info("  %2d->  %s (chain%s %s)"%chainInfo)
             n += 1
         molecules   = '\n'.join(['%s \t 1'%moleculeTypes[molecule] for molecule in molecules])
         
         # Set a define if we are to use rubber bands
         useRubber   = options['ElasticNetwork'] and "#define RUBBER_BANDS" or ""
-        
-        # Do not set a define for position restrains here, as people are more used to do it in mdp file?
-        
+       
+        # XXX Specify a better, version specific base-itp name.
         top.write(
 '''#include "martini.itp"
     
@@ -4349,8 +4423,7 @@ Martini system from %s
     
 [ molecules ]
 ; name        number
-%s
-        ''' % (useRubber, itps, options["-f"] and options["-f"].value or "stdin", molecules))
+%s''' % (useRubber, itps, options["-f"] and options["-f"].value or "stdin", molecules))
     
         logging.info('Written topology files')
     
@@ -4359,11 +4432,8 @@ Martini system from %s
 
     # The following lines are always printed (if no errors occur).
     print "\n\tThere you are. One MARTINI. Shaken, not stirred.\n"
-    
     Q = martiniq.pop(random.randint(0,len(martiniq)-1))
     print "\n", Q[1], "\n%80s"%("--"+Q[0]), "\n"
-    
-    
 if __name__ == '__main__':
     import sys,logging
     args = sys.argv[1:]

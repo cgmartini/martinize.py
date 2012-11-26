@@ -116,9 +116,10 @@ sstd = dict([ (i,ord(i)*null+i+(255-ord(i))*null) for i in cgss ])
 
 # Pattern substitutions
 def typesub(seq,patterns,types):                                                            
+    seq = null+seq+null
     for i,j in zip(patterns,types):                                                         
         seq = seq.replace(i,j)                                                              
-    return seq                                                                              
+    return seq[1:-1]                                                                              
 
 
 # The following function translates a string encoding the secondary structure

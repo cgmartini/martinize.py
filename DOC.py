@@ -34,24 +34,27 @@ lists = {
     'multi'   : [],
     }
 
-# List of 
+# List of Help text and options. 
+# This way we can simply print this list if the user wants help. 
 options = [
 #   NOTE: Options marked with (+) can be given multiple times on the command line
 #   option              type number default description
     """
+MARTINIZE.py is a script to create Coarse Grain Martini input files of
+proteins, ready for use in the molecular dynamics simulations package 
+Gromacs. For more information on the Martini forcefield, see:
+www.cgmartini.nl
+and read our papers:
+Monticelli et al., J. Chem. Theory Comput., 2008, 4(5), 819-834
+de Jong et al., J. Chem. Theory Comput., 2013, DOI:10.1021/ct300646g
+
 Primary input/output
 --------------------
 The input file (-f) should be a coordinate file in PDB or GROMOS
-format. The format is inferred from the structure of the file, also
-allowing reading MEAD/GRASP (.pqr) files. The input can also be
-provided through stdin, allowing piping of structures, e.g. using grep
-or sed to make a selection of atoms. This can be useful for removing
-HETATM records: 
-
-grep -v '^HETATM' input.pdb | martinize.py
-
-The input structure can have multiple frames/models. If an output
-structure file (-x) is given, each frame will be coarsegrained,
+format. The format is inferred from the structure of the file. The 
+input can also be provided through stdin, allowing piping of 
+structures. The input structure can have multiple frames/models. If an output
+structure file (-x) is given, each frame will be coarse grained,
 resulting in a multimodel output structure. Having multiple frames may
 also affect the topology. If secondary structure is determined
 internally, the structure will be averaged over the frames. Likewise,
@@ -63,14 +66,7 @@ be used for the master topology, using #include statements to link the
 moleculetype definitions, which are written to separate files. If no
 output filename is given, the topology and the moleculetype
 definitions are written to stdout.
-""",
-    ("-f",        Option(str,             1,     None, "Input file (PDB|GRO)")),
-    ("-o",        Option(str,             1,     None, "Output topology (TOP)")),
-    ("-x",        Option(str,             1,     None, "Output coarse grained structure (PDB)")),
-    ("-n",        Option(str,             1,     None, "Output index file")),
-    ("-v",        Option(bool,            0,    False, "Verbose. Be load and noisy.")), 
-    ("-h",        Option(bool,            0,    False, "Display this help.")),
-    """
+
 Secondary structure
 -------------------
 The secondary structure plays a central role in the assignment of atom
@@ -84,21 +80,14 @@ The option -collagen will set the whole structure to collagen. If this
 is not what you want (eg only part of the structure is collagen, you
 can give a secondary structure file/string (-ss) and specifiy collagen
 as "F". Parameters for collagen are taken from: Gautieri et al., 
-J. Chem. Theory Comput, 2010, 6, 1210-1218. 
+J. Chem. Theory Comput., 2010, 6, 1210-1218. 
 With multimodel input files, the secondary structure as determined with
-DSSP or PyMOL will be averaged over the frames. In this case, a cutoff
+DSSP will be averaged over the frames. In this case, a cutoff
 can be specified (-ssc) indicating the fraction of frames to match a
 certain secondary structure type for designation.
-""",
-    ("-ss",       Option(str,             1,     None, "Secondary structure (File or string)")),
-    ("-ssc",      Option(float,           1,      0.5, "Cutoff fraction for ss in case of ambiguity (default: 0.5).")),
-    ("-dssp",     Option(str,             1,     None, "DSSP executable for determining structure")),
-#    ("-pymol",    Option(str,             1,     None, "PyMOL executable for determining structure")),
-    ("-collagen", Option(bool,            0,    False, "Use collagen parameters")),
-    """
+
 Topology
 --------
-
 Several options are available to tune the resulting topology. By
 default, termini are charged, and chain breaks are kept neutral. This
 behaviour can be changed using -nt and -cb, respectively.
@@ -153,46 +142,18 @@ Different forcefields can be specified with -ff. All the parameters and
 options belonging to that forcefield  will be set (eg. bonded interactions,
 BB-bead positions, Elastic Network, etc.). By default martini 2.1 is
 used.
-""",
-    ("-nt",       Option(bool,                     0,      False, "Set neutral termini (charged is default)")), 
-    ("-cb",       Option(bool,                     0,      False, "Set charges at chain breaks (neutral is default)")), 
-    ("-cys",      Option(lists['cystines'].append, 1,       None, "Disulphide bond (+)")),
-    ("-link",     Option(lists['links'].append,    1,       None, "Link (+)")),
-    ("-merge",    Option(lists['merges'].append,   1,       None, "Merge chains: e.g. -merge A,B,C (+)")),
-#    ("-mixed",    Option(bool,                     0,      False, "Allow chains of mixed type (default: False)")),
-    ("-name",     Option(str,                      1,       None, "Moleculetype name")),
-    ("-p",        Option(str,                      1,     'None', "Output position restraints (None/All/Backbone) (default: None)")),
-    ("-pf",       Option(float,                    1,       1000, "Position restraints force constant (default: 1000 kJ/mol/nm^2)")),
-    ("-ed",       Option(bool,                     0,      False, "Use dihedrals for extended regions rather than elastic bonds)")),
-    ("-sep",      Option(bool,                     0,      False, "Write separate topologies for identical chains.")),
-    ("-ff",       Option(str,                      1,'martini21', "Which forcefield to use: "+' ,'.join(n for n in martinize.forcefields))),
-    """
+
 Elastic network
 ---------------
-
 Martinize can write an elastic network for atom pairs within a cutoff
 distance. The force constant (-ef) and the upper distance bound (-eu) 
 can be speficied. If a force field with an intrinsic Elastic
 network is specified (eg. Elnedyn) with -ff, -elastic in implied and
 the default values for the force constant and upper cutoff are used.
 However, these can be overwritten.
-""",
-# Fij = Fc exp( -a (rij - lo)**p )
-    ("-elastic",  Option(bool,            0,    False, "Write elastic bonds")),
-#    ("-elnedyn",  Option(bool,            0,    False, "Use Elnedyn mapping and parameters with elastic network")),
-    ("-ef",       Option(float,           1,      500, "Elastic bond force constant Fc")),
-    ("-el",       Option(float,           1,        0, "Elastic bond lower cutoff: F = Fc if rij < lo")),
-    ("-eu",       Option(float,           1,     0.90, "Elastic bond upper cutoff: F = 0  if rij > up")),
-    ("-ea",       Option(float,           1,        0, "Elastic bond decay factor a")),
-    ("-ep",       Option(float,           1,        1, "Elastic bond decay power p")),
-    ("-em",       Option(float,           1,        0, "Remove elastic bonds with force constant lower than this")),
-    ("-eb",       Option(str,             1,     'BB', "Comma separated list of bead names for elastic bonds")),
-#    ("-cgo",      Option(str,             1,     None, "PyMOL CGO file for elastic network visualization")), 
-#    ("-hetatm",   Option(bool,            0,    False, "Include HETATM records from PDB file (Use with care!)")),
-    """
+
 Multiscaling
 ------------
-
 Martinize can process a structure to yield a multiscale system,
 consisting of a coordinate file with atomistic parts and
 corresponding, overlaid coarsegrained parts. For chains that are
@@ -202,9 +163,43 @@ be appended to the atomistic moleculetype definitions.
 The option -multi can be specified multiple times, and takes a chain
 identifier as argument. Alternatively, the keyword 'all' can be given
 as argument, causing all chains to be multiscaled.
+========================================================================\n
 """,
+    ("-f",        Option(str,                      1,     None, "Input file (PDB|GRO)")),
+    ("-o",        Option(str,                      1,     None, "Output topology (TOP)")),
+    ("-x",        Option(str,                      1,     None, "Output coarse grained structure (PDB)")),
+    ("-n",        Option(str,                      1,     None, "Output index file")),
+    ("-v",        Option(bool,                     0,    False, "Verbose. Be load and noisy.")), 
+    ("-h",        Option(bool,                     0,    False, "Display this help.")),
+    ("-ss",       Option(str,                      1,     None, "Secondary structure (File or string)")),
+    ("-ssc",      Option(float,                    1,      0.5, "Cutoff fraction for ss in case of ambiguity (default: 0.5).")),
+    ("-dssp",     Option(str,                      1,     None, "DSSP executable for determining structure")),
+#    ("-pymol",    Option(str,                      1,     None, "PyMOL executable for determining structure")),
+    ("-collagen", Option(bool,                     0,    False, "Use collagen parameters")),
+    ("-his",      Option(bool,                     0,    False, "Interactively set the charge of each His-residue.")),
+    ("-nt",       Option(bool,                     0,    False, "Set neutral termini (charged is default)")), 
+    ("-cb",       Option(bool,                     0,    False, "Set charges at chain breaks (neutral is default)")), 
+    ("-cys",      Option(lists['cystines'].append, 1,     None, "Disulphide bond (+)")),
+    ("-link",     Option(lists['links'].append,    1,     None, "Link (+)")),
+    ("-merge",    Option(lists['merges'].append,   1,     None, "Merge chains: e.g. -merge A,B,C (+)")),
+#    ("-mixed",    Option(bool,                     0,    False, "Allow chains of mixed type (default: False)")),
+    ("-name",     Option(str,                      1,     None, "Moleculetype name")),
+    ("-p",        Option(str,                      1,   'None', "Output position restraints (None/All/Backbone) (default: None)")),
+    ("-pf",       Option(float,                    1,     1000, "Position restraints force constant (default: 1000 kJ/mol/nm^2)")),
+    ("-ed",       Option(bool,                     0,    False, "Use dihedrals for extended regions rather than elastic bonds)")),
+    ("-sep",      Option(bool,                     0,    False, "Write separate topologies for identical chains.")),
+    ("-ff",       Option(str,                      1,'martini21', "Which forcefield to use: "+' ,'.join(n for n in martinize.forcefields))),
+# Fij = Fc exp( -a (rij - lo)**p )
+    ("-elastic",  Option(bool,                     0,    False, "Write elastic bonds")),
+    ("-ef",       Option(float,                    1,      500, "Elastic bond force constant Fc")),
+    ("-el",       Option(float,                    1,        0, "Elastic bond lower cutoff: F = Fc if rij < lo")),
+    ("-eu",       Option(float,                    1,     0.90, "Elastic bond upper cutoff: F = 0  if rij > up")),
+    ("-ea",       Option(float,                    1,        0, "Elastic bond decay factor a")),
+    ("-ep",       Option(float,                    1,        1, "Elastic bond decay power p")),
+    ("-em",       Option(float,                    1,        0, "Remove elastic bonds with force constant lower than this")),
+    ("-eb",       Option(str,                      1,     'BB', "Comma separated list of bead names for elastic bonds")),
+#    ("-hetatm",   Option(bool,                     0,    False, "Include HETATM records from PDB file (Use with care!)")),
     ("-multi",    Option(lists['multi'].append,    1,     None, "Chain to be set up for multiscaling (+)")),
-"========================================================================\n"
     ]
 
 ## Martini Quotes
@@ -228,6 +223,7 @@ martiniq = [
 desc = ""
     
 def help():
+    """Print help text and list of options and end the program."""
     import sys
     from martinize import forcefields
     for item in options:
@@ -238,4 +234,3 @@ def help():
             print "%10s  %s"%(item[0],item[1].description)
     print
     sys.exit()
-    

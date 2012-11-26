@@ -5,7 +5,6 @@ import IO,FUNC,MAP
 import logging,math
 
 # This is a generic class for Topology Bonded Type definitions
-# Clement, it'd be nice to have proper docstrings for classes :)
 class Bonded:
     # The init method is generic to the bonded types,
     # but may call the set method if atoms are given
@@ -274,7 +273,10 @@ class Topology:
         if self.multiscale:
              out  = [ '; MARTINI (%s) Multiscale virtual sites topology section for "%s"' %(self.options['ForceField'].name,self.name) ]
         else:
-             out  = [ '; MARTINI (%s) Coarse Grained topology file for "%s"' %(self.options['ForceField'].name, self.name) ]
+             string  = '; MARTINI (%s) Coarse Grained topology file for "%s"' %(self.options['ForceField'].name, self.name)
+             string += '\n; Created by martinize.py version %s \n; Using the following options:  ' %(self.options['Version'])
+             string += ' '.join(self.options['Arguments'])
+             out  = [ string ]
         if self.sequence:
             out += [
                 '; Sequence:',
@@ -452,7 +454,14 @@ class Topology:
             bbid.append(bbid[-1]+len(i)+1)
 
         # Calpha positions, to get Elnedyn BBB-angles and BB-bond lengths
-        positionCa = [residue[1][4:] for residue in chain.residues]
+        # positionCa = [residue[1][4:] for residue in chain.residues]
+        # The old method (line above) assumed no hydrogens: Ca would always be
+        # the second atom of the residue. Now we look at the name.
+        positionCa = []
+        for residue in chain.residues:
+            for atom in residue:
+                if atom[0] == "CA":
+                    positionCa.append(atom[4:])
 
         # Residue numbers for this moleculetype topology
         resid = range(startResi,startResi+len(self.sequence))     

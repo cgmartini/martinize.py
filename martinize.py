@@ -4,12 +4,11 @@
 # EDITABLE SECTIONS ARE MARKED WITH #@# 
 
 
-version="2.0.1"
-authors=["Tsjerk A. Wassenaar","Djurre de Jong", "Clement Arnarez"]
+version="2.2"
+authors=["Djurre de Jong", "Tsjerk A. Wassenaar"]
 
 # Parameters are defined for the following (protein) forcefields:
-#forcefields = ['martini21','martini21p','martini22','martini22p','elnedyn_old','elnedyn','elnedyn22','elnedyn22p']
-forcefields = ['martini21','martini21p','martini22','martini22p','elnedyn','elnedyn22','elnedyn22p','martini22dna']
+forcefields = ['martini21','martini21p','martini22','martini22p','elnedyn','elnedyn22','elnedyn22p']
 
 
 notes = [
@@ -43,6 +42,15 @@ notes = [
     ("DdJ240712","Added FF specific message definition."),
     ("DdJ240712","Added exclusions for p-FFs. Changed naming of dummy beads."),
     ("DdJ220812","Bug fixing bond lengths, ss for multiple chains and print message in itp."),
+    ("DdJ140912","Fixed wrong combining of position restraints when merging proteins."),
+    ("DdJ140912","Fixed bug in TYR/HIS in elnedyn forcefields."),
+    ("DdJ140912","Added warning about differing beadnames and printing commandline arguments to itp."),
+    ("DdJ270912","The Ca position is now determined based on atom name (CA) iso second atom of residue."),
+    ("DdJ280912","Fixed more bugs in the elnedyn definition."),
+    ("DdJ221112","Clean help text and some code."),
+    ("DdJ221112","Fixed that crashed the break checking code if water chain name == protein chain name."),
+    ("DdJ231112","Fixed bug when helix was starting at first residue."),
+    ("DdJ261112","Added capability to interactively choose HIS-charge state."),
     ]
 
 # 

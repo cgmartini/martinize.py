@@ -3,16 +3,9 @@
 ##########################
 import FUNC
 
-
-dnares3 = " DA DC DG DT" 
-dnares1 = " dA dC dG dT"
-rnares3 = "  A  C  G  U"
-rnares1 = " rA rC rG rU" # 
-
-# Amino acid nucleic acid codes:                                                                                 
-# The naming (AA and '3') is not strictly correct when adding DNA/RNA, but we keep it like this for consistincy.
-AA3     = FUNC.spl("TRP TYR PHE HIS ARG LYS CYS ASP GLU ILE LEU MET ASN PRO HYP GLN SER THR VAL ALA GLY"+dnares3+rnares3) #@#
-AA1     = FUNC.spl("  W   Y   F   H   R   K   C   D   E   I   L   M   N   P   O   Q   S   T   V   A   G"+dnares1+rnares1) #@#
+# Amino acid codes:                                                                                  
+AA3     = FUNC.spl("TRP TYR PHE HIS HIH ARG LYS CYS ASP GLU ILE LEU MET ASN PRO HYP GLN SER THR VAL ALA GLY") #@#
+AA1     = FUNC.spl("  W   Y   F   H   H   R   K   C   D   E   I   L   M   N   P   O   Q   S   T   V   A   G") #@#
 
 
 # Dictionaries for conversion from one letter code to three letter code v.v.                         
@@ -79,6 +72,7 @@ class CoarseGrained:
         "PHE":  FUNC.nsplit(bb,"CB CG CD1 HD1","CD2 HD2 CE2 HE2","CE1 HE1 CZ HZ"),
         "GLY":  FUNC.nsplit(bb),
         "HIS":  FUNC.nsplit(bb,"CB CG","CD2 HD2 NE2 HE2","ND1 HD1 CE1 HE1"),
+        "HIH":  FUNC.nsplit(bb,"CB CG","CD2 HD2 NE2 HE2","ND1 HD1 CE1 HE1"),     # Charged Histidine.
         "ILE":  FUNC.nsplit(bb,"CB CG1 CG2 CD CD1"),
         "LYS":  FUNC.nsplit(bb,"CB CG CD","CE NZ HZ1 HZ2 HZ3"),
         "LEU":  FUNC.nsplit(bb,"CB CG CD1 CD2"),
