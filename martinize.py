@@ -5,10 +5,10 @@
 
 
 version="2.2"
-authors=["Djurre de Jong", "Tsjerk A. Wassenaar"]
+authors=["Djurre de Jong", "Jaakko J. Uusitalo", "Tsjerk A. Wassenaar"]
 
 # Parameters are defined for the following (protein) forcefields:
-forcefields = ['martini21','martini21p','martini22','martini22p','elnedyn','elnedyn22','elnedyn22p']
+forcefields = ['martini21','martini21p','martini22','martini22p','elnedyn','elnedyn22','elnedyn22p','martini22dna']
 
 
 notes = [
@@ -51,6 +51,7 @@ notes = [
     ("DdJ221112","Fixed that crashed the break checking code if water chain name == protein chain name."),
     ("DdJ231112","Fixed bug when helix was starting at first residue."),
     ("DdJ261112","Added capability to interactively choose HIS-charge state."),
+    ("JJU261112","Update basic DNA capabilities")
     ]
 
 # 

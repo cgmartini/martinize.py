@@ -1,7 +1,7 @@
 #######################
 ## 8 # STRUCTURE I/O ##  -> @IO <-
 #######################
-import logging,math,random
+import logging,math,random,sys
 import MAP,SS,FUNC
 
 #----+---------+
@@ -433,7 +433,8 @@ class Chain:
         
     def __len__(self):
         # Return the number of residues
-        return len(self.seq)
+        # DNA/RNA contain non-CAP d/r to indicate type. We remove those first.
+        return len(''.join(i for i in self.seq if i.isupper()))
 
     def __add__(self,other):
         newchain = Chain(name=self.id+"+"+other.id)
@@ -590,7 +591,7 @@ class Chain:
 
 
     # XXX The following (at least the greater part of it) should be made a separate function, put under "MAPPING"
-    def cg(self,force=False):
+    def cg(self,force=False,com=False):
         # Generate the coarse grained structure
         # Set the b-factor field to something that reflects the secondary structure
         
@@ -602,10 +603,27 @@ class Chain:
         atid     = 1
         bb       = [1]
         fail     = False
+        previous = ''
         for residue,rss,resname in zip(self.residues,self.sstypes,self.sequence):
-            # Check if residues have change, might happen if the user sets things interactively
+            # For DNA we need to get the O3' to the following residue when calculating COM
+            # The force and com options ensure that this part does not affect itp generation or anything else
+            if com:
+                # Just an initialization, this should complain if it isn't updated in the loop
+                store = 0
+                for ind, i in enumerate(residue):
+                    if i[0] == "O3'":
+                        if previous != '':
+                            residue[ind] = previous
+                            previous = i
+                        else:
+                            store = ind
+                            previous = i
+                # We couldn't remove the O3' from the 5' end residue during the loop so we do it now
+                if store > 0:
+                    del residue[store]
+
+            # Check if residues names has changed, for example because user has set residues interactively.
             residue = [(atom[0],resname)+atom[2:] for atom in residue]
-            # Water we can't handle yet.
             if residue[0][1] in ("SOL","HOH","TIP"):
                 continue
             if not residue[0][1] in MAP.CoarseGrained.mapping.keys():
@@ -625,7 +643,7 @@ class Chain:
                 elif residue[0][1] in self.options['ForceField'].charged:
                     beads = add_dummy(beads,dist=0.11,n=1)
             except ValueError:
-                logging.error("Too many atoms missing from residue %s %d%s:",residue[0][1],residue[0][2],residue[0][3])
+                logging.error("Too many atoms missing from residue %s %d(ch:%s):",residue[0][1],residue[0][2]>>20,residue[0][3])
                 logging.error(repr([ i[0] for i in residue ]))
                 fail = True
 

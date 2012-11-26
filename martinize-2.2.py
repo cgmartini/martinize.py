@@ -5,10 +5,10 @@
 
 
 version="2.2"
-authors=["Djurre de Jong", "Tsjerk A. Wassenaar"]
+authors=["Djurre de Jong", "Jaakko J. Uusitalo", "Tsjerk A. Wassenaar"]
 
 # Parameters are defined for the following (protein) forcefields:
-forcefields = ['martini21','martini21p','martini22','martini22p','elnedyn','elnedyn22','elnedyn22p']
+forcefields = ['martini21','martini21p','martini22','martini22p','elnedyn','elnedyn22','elnedyn22p']#,'martini22dna']
 
 
 notes = [
@@ -51,6 +51,7 @@ notes = [
     ("DdJ221112","Fixed that crashed the break checking code if water chain name == protein chain name."),
     ("DdJ231112","Fixed bug when helix was starting at first residue."),
     ("DdJ261112","Added capability to interactively choose HIS-charge state."),
+    ("JJU261112","Update basic DNA capabilities")
     ]
 
 # 
@@ -580,9 +581,16 @@ def distance2(a,b):
 ## 4 # FG -> CG MAPPING ##  -> @MAP <-
 ##########################
 
-# Amino acid codes:                                                                                  
-AA3     = spl("TRP TYR PHE HIS HIH ARG LYS CYS ASP GLU ILE LEU MET ASN PRO HYP GLN SER THR VAL ALA GLY") #@#
-AA1     = spl("  W   Y   F   H   H   R   K   C   D   E   I   L   M   N   P   O   Q   S   T   V   A   G") #@#
+
+dnares3 = " DA DC DG DT" 
+dnares1 = " dA dC dG dT"
+rnares3 = "  A  C  G  U"
+rnares1 = " rA rC rG rU" # 
+
+# Amino acid nucleic acid codes:                                                                                 
+# The naming (AA and '3') is not strictly correct when adding DNA/RNA, but we keep it like this for consistincy.
+AA3     = spl("TRP TYR PHE HIS HIH ARG LYS CYS ASP GLU ILE LEU MET ASN PRO HYP GLN SER THR VAL ALA GLY"+dnares3+rnares3) #@#
+AA1     = spl("  W   Y   F   H   H   R   K   C   D   E   I   L   M   N   P   O   Q   S   T   V   A   G"+dnares1+rnares1) #@#
 
 
 # Dictionaries for conversion from one letter code to three letter code v.v.                         
@@ -670,14 +678,16 @@ class CoarseGrained:
         "POPG": phosphatidylglycerol     + palmitoyl1 + oleyl2,
         "DOPG": phosphatidylglycerol     + oleyl1     + oleyl2,
         "DPPG": phosphatidylglycerol     + palmitoyl1 + palmitoyl2,
-        "DA": nsplit("P OP1 OP2 O5' O3'","C5' O4' C4'","C3' O3' C2' C1'","N9 C4","C8 N7 C5","C6 N6 N1","C2 N3"),
-        "DG": nsplit("P OP1 OP2 O5' O3'","C5' O4' C4'","C3' O3' C2' C1'","N9 C4","C8 N7 C5","C6 O6 N1","C2 N3 N2"),
-        "DC": nsplit("P OP1 OP2 O5' O3'","C5' O4' C4'","C3' O3' C2' C1'","N1 C6","C2 O2 N3","C4 O4 C5"),
-        "DT": nsplit("P OP1 OP2 O5' O3'","C5' O4' C4'","C3' O3' C2' C1'","N1 C6","C2 O2 N3","C4 O4 C5 C7"),
+        "DA": nsplit("P OP1 OP2 O5' O3' O1P O2P","C5' O4' C4'","C3' C2' C1'","N9 C4","C8 N7 C5","C6 N6 N1","C2 N3"),
+        "DG": nsplit("P OP1 OP2 O5' O3' O1P O2P","C5' O4' C4'","C3' C2' C1'","N9 C4","C8 N7 C5","C6 O6 N1","C2 N2 N3"),
+        "DC": nsplit("P OP1 OP2 O5' O3' O1P O2P","C5' O4' C4'","C3' C2' C1'","N1 C6","C5 C4 N4","N3 C2 O2"),
+        "DT": nsplit("P OP1 OP2 O5' O3' O1P O2P","C5' O4' C4'","C3' C2' C1'","N1 C6","C5 C4 O4 C7 C5M","N3 C2 O2"),
         }
 
     # Generic names for side chain beads
     residue_bead_names = spl("BB SC1 SC2 SC3 SC4")
+    # Generic names for DNA beads
+    residue_bead_names_dna = spl("BB1 BB2 BB3 SC1 SC2 SC3 SC4")
 
     # This dictionary contains the bead names for all residues,
     # following the order in 'mapping'
@@ -731,6 +741,14 @@ def map(r,ca2bb = False):
     # Bead positions      
     return zip(*[aver(i) for i in q])
 
+# Mapping for index file
+def mapIndex(r,ca2bb = False):
+    p = CoarseGrained.mapping[r[0][1]]                                             # Mapping for this residue 
+    if ca2bb: p[0] = ["CA"]                                                        # Elnedyn maps BB to CA, ca2bb is False or True
+    # Get the name, mass and coordinates for all atoms in the residue
+    a = [(i[0],CoarseGrained.mass.get(i[0][0],0),i[4:]) for i in r]                    
+    # Store weight, coordinate and index for atoms that match a bead
+    return [[(m,coord,a.index((atom,m,coord))) for atom,m,coord in a if atom in i] for i in p]
 #############################
 ## 5 # SECONDARY STRUCTURE ##  -> @SS <-
 #############################
@@ -2718,7 +2736,7 @@ def rubberBands(atomList,lowerBound,upperBound,decayFactor,decayPower,forceConst
 #######################
 ## 8 # STRUCTURE I/O ##  -> @IO <-
 #######################
-import logging,math,random
+import logging,math,random,sys
 
 #----+---------+
 ## A | PDB I/O |
@@ -3149,7 +3167,8 @@ class Chain:
         
     def __len__(self):
         # Return the number of residues
-        return len(self.seq)
+        # DNA/RNA contain non-CAP d/r to indicate type. We remove those first.
+        return len(''.join(i for i in self.seq if i.isupper()))
 
     def __add__(self,other):
         newchain = Chain(name=self.id+"+"+other.id)
@@ -3306,7 +3325,7 @@ class Chain:
 
 
     # XXX The following (at least the greater part of it) should be made a separate function, put under "MAPPING"
-    def cg(self,force=False):
+    def cg(self,force=False,com=False):
         # Generate the coarse grained structure
         # Set the b-factor field to something that reflects the secondary structure
         
@@ -3318,10 +3337,27 @@ class Chain:
         atid     = 1
         bb       = [1]
         fail     = False
+        previous = ''
         for residue,rss,resname in zip(self.residues,self.sstypes,self.sequence):
-            # Check if residues have change, might happen if the user sets things interactively
+            # For DNA we need to get the O3' to the following residue when calculating COM
+            # The force and com options ensure that this part does not affect itp generation or anything else
+            if com:
+                # Just an initialization, this should complain if it isn't updated in the loop
+                store = 0
+                for ind, i in enumerate(residue):
+                    if i[0] == "O3'":
+                        if previous != '':
+                            residue[ind] = previous
+                            previous = i
+                        else:
+                            store = ind
+                            previous = i
+                # We couldn't remove the O3' from the 5' end residue during the loop so we do it now
+                if store > 0:
+                    del residue[store]
+
+            # Check if residues names has changed, for example because user has set residues interactively.
             residue = [(atom[0],resname)+atom[2:] for atom in residue]
-            # Water we can't handle yet.
             if residue[0][1] in ("SOL","HOH","TIP"):
                 continue
             if not residue[0][1] in CoarseGrained.mapping.keys():
@@ -3341,7 +3377,7 @@ class Chain:
                 elif residue[0][1] in self.options['ForceField'].charged:
                     beads = add_dummy(beads,dist=0.11,n=1)
             except ValueError:
-                logging.error("Too many atoms missing from residue %s %d%s:",residue[0][1],residue[0][2],residue[0][3])
+                logging.error("Too many atoms missing from residue %s %d(ch:%s):",residue[0][1],residue[0][2]>>20,residue[0][3])
                 logging.error(repr([ i[0] for i in residue ]))
                 fail = True
 
@@ -3604,10 +3640,10 @@ class Topology:
         elif isinstance(other,Chain):
             if other.type() == "Protein":
                 self.fromAminoAcidSequence(other)
-            elif other.type == "Nucleic":
+            elif other.type() == "Nucleic":
                 # Currently there are no Martini Nucleic Acids
                 self.fromNucleicAcidSequence(other)
-            elif other.type == "Mixed":
+            elif other.type() == "Mixed":
                 logging.warning('Mixed Amino Acid /Nucleic Acid chains are not yet implemented')
                 # How can you have a mixed chain?
                 # Well, you could get a covalently bound lipid or piece of DNA to a protein :S
@@ -4008,9 +4044,214 @@ class Topology:
         if chain and self.multiscale:
             self.natoms += len(chain.atoms())
 
-    def fromNucleicAcidSequence(self,other):
-        logging.warning('Nucleic Acid parameters are not available in MARTINI. Maybe *you* should create them?')
-        pass
+    def fromNucleicAcidSequence(self,sequence,secstruc=None,links=None,breaks=None,
+                              mapping=None,rubber=False,multi=False):
+
+        # Shift for the atom numbers of the atomistic part in a chain 
+        # that is being multiscaled
+        shift = 0
+        # First check if we get a sequence or a Chain instance
+        if isinstance(sequence, Chain):
+            chain         = sequence
+            links         = chain.links
+            breaks        = chain.breaks
+            # If the mapping is not specified, the actual mapping is taken,
+            # used to construct the coarse grained system from the atomistic one.
+            # The function argument "mapping" could be used to use a default 
+            # mapping scheme in stead, like the mapping for the GROMOS96 force field.
+            mapping = mapping           or chain.mapping
+            multi   = self.options['multi']  or chain.multiscale
+            self.secstruc = chain.sstypes or len(chain)*"C"
+            self.sequence = chain.sequence
+            # If anything hints towards multiscaling, do multiscaling
+            self.multiscale = self.multiscale or chain.multiscale or multi
+            if self.multiscale:
+                shift        = self.natoms
+                self.natoms += len(chain.atoms())
+        elif not secstruc:
+            # If no secondary structure is provided, set all to coil
+            chain         = None
+            self.secstruc = len(self.sequence)*"C"
+        else:
+            # If a secondary structure is provided, use that. chain is none.
+            chain         = None
+            self.secstruc = secstruc
+
+        logging.debug(self.secstruc)
+        logging.debug(self.sequence)
+
+        # Fetch the base information 
+        # Pad with empty lists for atoms, bonds, angles 
+        # and dihedrals, and take the first five lists out
+        # This will avoid errors for residues for which 
+        # these are not defined.
+
+        sc = [(self.options['ForceField'].bases[res]+6*[[]])[:6] for res in self.sequence]
+
+        # ID of the first atom/residue
+        # The atom number and residue number follow from the last 
+        # atom c.q. residue id in the list processed in the topology
+        # thus far. In the case of multiscaling, the real atoms need 
+        # also be accounted for.
+        startAtom = self.natoms + 1 
+        startResi = self.atoms and self.atoms[-1][2]+1 or 1
+
+        # Backbone bead atom IDs
+        bbid = [[startAtom,startAtom+1,startAtom+2]]
+        for i in zip(*sc)[0]:
+            bbid1 = bbid[-1][0]+len(i)+3
+            bbid.append([bbid1,bbid1+1,bbid1+2])
+            #bbid.append(bbid[-1]+len(i)+1)
+
+        # Residue numbers for this moleculetype topology
+        resid = range(startResi,startResi+len(self.sequence))     
+
+        # This contains the information for deriving backbone bead types,
+        # bb bond types, bbb/bbs angle types, and bbbb dihedral types.
+        seqss = zip(bbid,self.sequence,self.secstruc)
+
+        # Fetch the proper backbone beads          
+        # Since there are three beads we need to split these to the list
+        bb = [self.options['ForceField'].bbGetBead(res,typ) for num,res,typ in seqss]
+        bb3 = [i for j in bb for i in j]
+
+        # This is going to be usefull for the type of the last backbone bead.
+        # If termini need to be charged, change the bead types
+        #if not self.options['NeutralTermini']:
+        #    bb[0]  ="Qd"
+        #    bb[-1] = "Qa"
+
+        # If breaks need to be charged, change the bead types 
+        #if self.options['ChargesAtBreaks']:
+        #    for i in breaks:
+        #        bb[i]   = "Qd"
+        #        bb[i-1] = "Qa"
+
+        # For backbone parameters, iterate over fragments, inferred from breaks
+        for i,j in zip([0]+breaks,breaks+[-1]):
+            # Extract the fragment
+            frg = j==-1 and seqss[i:] or seqss[i:j]
+            # Expand the 3 bb beads per residue into one long list
+            # Resulting list contains three tuples per residue 
+            # We use the useless ca parameter to get the correct backbone bond from bbGetBond 
+            frg = [(j[0][i],j[1],j[2],i) for j in frg for i in range(len(j[0]))]
+
+            # Iterate over backbone bonds
+            self.bonds.extend([Bond(pair,category="BB",options=self.options,) for pair in zip(frg,frg[1:])])
+
+            # Iterate over backbone angles
+            # Don't skip the first and last residue in the fragment
+            self.angles.extend([Angle(triple,options=self.options,category="BBB") for triple in zip(frg,frg[1:],frg[2:])])
+
+            # Get backbone quadruples
+            quadruples = zip(frg,frg[1:],frg[2:],frg[3:])
+
+            # No i-1,i,i+1,i+2 interactions defined for Elnedyn
+            # Process dihedrals
+            for q in quadruples:
+                id,rn,ss,ca = zip(*q)
+                # Since dihedrals can return None, we first collect them separately and then
+                # add the non-None ones to the list
+                dihed = Dihedral(q,options=self.options,category="BBBB")
+                if dihed:
+                    self.dihedrals.append(dihed)
+
+        # Now do the atom list, and take the sidechains along
+        #
+        atid  = startAtom
+        # We need to do some trickery to get all 3 bb beads in to these lists
+        # This adds each element to a list three times, feel free to shorten up
+        resid3 = [i for i in resid for j in range(3)]
+        sequence3 = [i for i in self.sequence for j in range(3)]
+        sc3 = [i for i in sc for j in range(3)]
+        secstruc3 = [i for i in self.secstruc for j in range(3)]
+        count = 0
+        for resi,resname,bbb,sidechn,ss in zip(resid3,sequence3,bb3,sc3,secstruc3):
+            # We only want one side chain per three backbone beads so this skips the others
+            if (count % 3) == 0:    
+                # Note added impropers in contrast to aa
+                scatoms, bon_par, ang_par, dih_par, imp_par, vsite_par = sidechn
+
+                # Side chain bonded terms
+                # Collect bond, angle and dihedral connectivity
+                # Impropers needed to be added here for DNA
+                bon_con,ang_con,dih_con,imp_con,vsite_con = (self.options['ForceField'].connectivity[resname]+5*[[]])[:5]
+
+                # Side Chain Bonds/Constraints
+                for atids,par in zip(bon_con,bon_par):
+                    if par[1] == None:
+                        self.bonds.append(Bond(options=self.options,atoms=atids,parameters=[par[0]],type=1,
+                                               comments=resname,category="Constraint"))
+                    else:
+                        self.bonds.append(Bond(options=self.options,atoms=atids,parameters=par,type=1,
+                                               comments=resname,category="SC"))
+                    # Shift the atom numbers
+                    self.bonds[-1] += atid
+
+                # Side Chain Angles
+                for atids,par in zip(ang_con,ang_par):
+                    self.angles.append(Angle(options=self.options,atoms=atids,parameters=par,type=2,
+                                             comments=resname,category="SC"))
+                    # Shift the atom numbers
+                    self.angles[-1] += atid
+
+                # Side Chain Dihedrals
+                for atids,par in zip(dih_con,dih_par):
+                    self.dihedrals.append(Dihedral(options=self.options,atoms=atids,parameters=par,type=1,
+                                                   comments=resname,category="BSC"))
+                    # Shift the atom numbers
+                    self.dihedrals[-1] += atid
+
+                # Side Chain Impropers
+                for atids,par in zip(imp_con,imp_par):
+                    self.dihedrals.append(Dihedral(options=self.options,atoms=atids,parameters=par,type=2,
+                                                   comments=resname,category="SC"))
+                    # Shift the atom numbers
+                    self.dihedrals[-1] += atid
+
+                # Side Chain V-Sites
+                for atids,par in zip(vsite_con,vsite_par):
+                    self.vsites.append(Vsite(options=self.options,atoms=atids,parameters=par,type=1,
+                                                   comments=resname,category="SC"))
+                    # Shift the atom numbers
+                    self.vsites[-1] += atid
+
+                # Currently DNA needs exclusions for the base
+                # The loop runs over the first backbone bead so 3 needs to be added to the indices
+                for i in range(len(scatoms)):
+                    for j in range(i+1, len(scatoms)):
+                        self.exclusions.append(Exclusion(options=self.options,atoms=(i+atid+3,j+atid+3),comments='%s(%s)'%(resname,resi),parameters=(None,)))
+                
+                # All residue atoms
+                counter = 0  # Counts over beads
+                # Need to tweak this to get all the backbone beads to the list with the side chain
+                bbbset = [bb3[count], bb3[count+1], bb3[count+2]]
+                for atype,aname in zip(bbbset+list(scatoms),CoarseGrained.residue_bead_names_dna):
+                    if self.multiscale:
+                        atype,aname = "v"+atype,"v"+aname
+                    self.atoms.append((atid,atype,resi,resname,aname,atid,self.options['ForceField'].charges.get(atype,0),ss))
+                    # Doing this here saves going over all the atoms onesmore.
+                    # Generate position restraints for all atoms or Backbone beads only.
+                    if 'all' in self.options['PosRes']:
+                        self.posres.append((atid)) 
+                    elif aname in self.options['PosRes']:
+                        self.posres.append((atid))
+                    if mapping:
+                        self.mapping.append((atid,[i+shift for i in mapping[counter]]))
+                    atid    += 1
+                    counter += 1
+            count += 1
+
+        # One more thing, we need to remove dihedrals (2) and an angle (1)  that reach beyond the 3' end
+        # This is stupid to do now but the total number of atoms seems not to be available before
+        # This iterate the list in reverse order so that removals don't affect later checks
+        for i in range(len(self.dihedrals)-1,-1,-1):
+            if (max(self.dihedrals[i].atoms) > self.atoms[-1][0]):
+                del self.dihedrals[i]
+        for i in range(len(self.angles)-1,-1,-1):
+            if (max(self.angles[i].atoms) > self.atoms[-1][0]):
+                del self.angles[i]
+
 
     def fromMoleculeList(self,other):
         pass
@@ -4026,6 +4267,7 @@ def main(options):
     # inferring the file type, without consuming lines already
     inStream = streamTag(options["-f"] and options["-f"].value or sys.stdin)
     
+
     # The streamTag iterator first yields the file type, which 
     # is used to specify the function for reading frames
     fileType = inStream.next()
@@ -4034,7 +4276,9 @@ def main(options):
     else:
         frameIterator = pdbFrameIterator
     
+
     ## ITERATE OVER FRAMES IN STRUCTURE FILE ##
+
     # Now iterate over the frames in the stream
     # This should become a StructureFile class with a nice .next method
     model     = 1
@@ -4058,7 +4302,7 @@ def main(options):
             # where i and j are the start and end of the chain, and 
             # k is a chain identifier
             chains = zip([0]+broken,broken+[len(residuelist)],range(len(broken)+1))
-            chains = [ Chain(residuelist[i:j],name=chr(65+k)) for i,j,k in chains ]
+            chains = [ Chain(options,residuelist[i:j],name=chr(65+k)) for i,j,k in chains ]
     
         for chain in chains:
             chain.multiscale = "all" in options['multi'] or chain.id in options['multi']
@@ -4074,7 +4318,6 @@ def main(options):
         # Note that in some cases HETATM residues are part of a 
         # chain. This will get problematic. But we cannot cover
         # all, probably.
-        # This is not yet active, but might be if we get to mixed protein/DNA.
         if not options['MixedChains']:
             demixedChains = []
             for chain in chains:
@@ -4111,14 +4354,17 @@ def main(options):
                      chain.sequence[i] = choice
 
     
+
         # Check which chains need merging
         if model == 1:
             order, merge = check_merge(chains, options['mergeList'], options['linkList'], options['CystineCheckBonds'] and options['CystineMaxDist2'])
     
+
         # Get the total length of the sequence
         seqlength = sum([len(chain) for chain in chains])
         logging.info('Total size of the system: %s residues.'%seqlength)
     
+
         ## SECONDARY STRUCTURE
         ss = '' 
         if options['Collagen']:
@@ -4192,7 +4438,7 @@ def main(options):
                             resi -= insc<<20
                             cgOutPDB.write(pdbAtomLine%(atid,name,resn[:3],chain,resi,chr(insc),x,y,z,1,0))
                             atid += 1
-                coarseGrained = ci.cg()
+                coarseGrained = ci.cg(com=True)
                 if coarseGrained:
                     for name,resn,resi,chain,x,y,z,ssid in coarseGrained:
                         insc  = resi>>20
@@ -4223,8 +4469,7 @@ def main(options):
         atid = 1
         for i in order:
             ci = chains[i]
-            # Convert to coarse grain.
-            coarseGrained = ci.cg()
+            coarseGrained = ci.cg(force=True)
             if ci.multiscale:
                 NAA.extend([" %5d"%(a+atid) for a in range(ci.natoms)]) 
                 atid += ci.natoms
@@ -4239,6 +4484,42 @@ def main(options):
         outNDX.write("\n[ VZ ]\n"+"\n".join([" ".join(NVZ[i:i+15]) for i in range(0,len(NVZ),15)]))
         outNDX.write("\n[ CG ]\n"+"\n".join([" ".join(NCG[i:i+15]) for i in range(0,len(NCG),15)]))
         outNDX.close()
+
+    
+    # Write the index file for mapping AA trajectory if requested
+    if options["-n"].value:
+        logging.info("Writing trajectory index file.")
+        atid = 1
+        outNDX   = open(options["-n"].value,"w")
+        # Get all AA atoms as lists of atoms in residues
+        # First we skip hetatoms and unknowns then iterate over beads
+        # In DNA the O3' atom is mapped together with atoms from the next residue
+        # This stores it until we get to the next residue
+        o3_shift = ''
+        for i_count, i in enumerate(residues(atoms)):
+            if i[0][1] in ("SOL","HOH","TIP"):
+                continue
+            if not i[0][1] in CoarseGrained.mapping.keys():
+                continue
+            nra = 0
+            names = [j[0] for j in i]
+            # This gives out a list of atoms in residue, each tuple has other 
+            # stuff in it that's needed elsewhere so we just take the last 
+            # element which is the atom index (in that residue)
+            for j_count, j in enumerate(mapIndex(i)):
+                outNDX.write('[ Bead %i of residue %i ]\n'%(j_count+1,i_count+1))
+                line = ''
+                for k in j:
+                    if names[k[2]] == "O3'":
+                        line += '%s '%(str(o3_shift)) 
+                        o3_shift = k[2]+atid
+                    else:
+                        line += '%i '%(k[2]+atid) 
+                line += '\n'
+                nra += len(j)
+                outNDX.write(line)
+            atid += nra
+
     
     # Evertything below here we only need, if we need to write a Topology
     if options['-o']:
@@ -4265,12 +4546,14 @@ def main(options):
         ssAver = "".join(ssAver)
         logging.info('(Average) Secondary structure has been determined (see head of .itp-file).')
         
+
         # Divide the secondary structure according to the division in chains
         # This will set the secondary structure types to be used for the 
         # topology.
         for chain in chains:
             chain.set_ss(ssAver[:len(chain)])
             ssAver = ssAver[len(chain):]
+
         
         # Now the chains are complete, each consisting of a residuelist, 
         # and a secondary structure designation if the chain is of type 'Protein'.
@@ -4336,6 +4619,7 @@ def main(options):
             # If not, generate the topology from the chain definition
             if not mol in moleculeTypes or options['SeparateTop']:
                 # Name of the moleculetype
+                # NOTE: The naming should be changed; now it becomes Protein_X+Protein_Y+...
                 name = "+".join([chain.getname(options['-name'].value) for chain in mol])
                 moleculeTypes[mol] = name
     
@@ -4346,7 +4630,7 @@ def main(options):
     
                 # Have to add the connections, like the connecting network
                 # Gather coordinates
-                mcg, coords = zip(*[(j[:4],j[4:7]) for m in mol for j in m.cg()])
+                mcg, coords = zip(*[(j[:4],j[4:7]) for m in mol for j in m.cg(force=True)])
                 mcg         = list(mcg)
         
                 # Run through the link list and add connections (links = cys bridges or hand specified links)
@@ -4410,6 +4694,7 @@ def main(options):
         useRubber   = options['ElasticNetwork'] and "#define RUBBER_BANDS" or ""
        
         # XXX Specify a better, version specific base-itp name.
+        # Do not set a define for position restrains here, as people are more used to do it in mdp file?
         top.write(
 '''#include "martini.itp"
     

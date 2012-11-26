@@ -3,9 +3,16 @@
 ##########################
 import FUNC
 
-# Amino acid codes:                                                                                  
-AA3     = FUNC.spl("TRP TYR PHE HIS HIH ARG LYS CYS ASP GLU ILE LEU MET ASN PRO HYP GLN SER THR VAL ALA GLY") #@#
-AA1     = FUNC.spl("  W   Y   F   H   H   R   K   C   D   E   I   L   M   N   P   O   Q   S   T   V   A   G") #@#
+
+dnares3 = " DA DC DG DT" 
+dnares1 = " dA dC dG dT"
+rnares3 = "  A  C  G  U"
+rnares1 = " rA rC rG rU" # 
+
+# Amino acid nucleic acid codes:                                                                                 
+# The naming (AA and '3') is not strictly correct when adding DNA/RNA, but we keep it like this for consistincy.
+AA3     = FUNC.spl("TRP TYR PHE HIS HIH ARG LYS CYS ASP GLU ILE LEU MET ASN PRO HYP GLN SER THR VAL ALA GLY"+dnares3+rnares3) #@#
+AA1     = FUNC.spl("  W   Y   F   H   H   R   K   C   D   E   I   L   M   N   P   O   Q   S   T   V   A   G"+dnares1+rnares1) #@#
 
 
 # Dictionaries for conversion from one letter code to three letter code v.v.                         
@@ -93,14 +100,16 @@ class CoarseGrained:
         "POPG": phosphatidylglycerol     + palmitoyl1 + oleyl2,
         "DOPG": phosphatidylglycerol     + oleyl1     + oleyl2,
         "DPPG": phosphatidylglycerol     + palmitoyl1 + palmitoyl2,
-        "DA": FUNC.nsplit("P OP1 OP2 O5' O3'","C5' O4' C4'","C3' O3' C2' C1'","N9 C4","C8 N7 C5","C6 N6 N1","C2 N3"),
-        "DG": FUNC.nsplit("P OP1 OP2 O5' O3'","C5' O4' C4'","C3' O3' C2' C1'","N9 C4","C8 N7 C5","C6 O6 N1","C2 N3 N2"),
-        "DC": FUNC.nsplit("P OP1 OP2 O5' O3'","C5' O4' C4'","C3' O3' C2' C1'","N1 C6","C2 O2 N3","C4 O4 C5"),
-        "DT": FUNC.nsplit("P OP1 OP2 O5' O3'","C5' O4' C4'","C3' O3' C2' C1'","N1 C6","C2 O2 N3","C4 O4 C5 C7"),
+        "DA": FUNC.nsplit("P OP1 OP2 O5' O3' O1P O2P","C5' O4' C4'","C3' C2' C1'","N9 C4","C8 N7 C5","C6 N6 N1","C2 N3"),
+        "DG": FUNC.nsplit("P OP1 OP2 O5' O3' O1P O2P","C5' O4' C4'","C3' C2' C1'","N9 C4","C8 N7 C5","C6 O6 N1","C2 N2 N3"),
+        "DC": FUNC.nsplit("P OP1 OP2 O5' O3' O1P O2P","C5' O4' C4'","C3' C2' C1'","N1 C6","C5 C4 N4","N3 C2 O2"),
+        "DT": FUNC.nsplit("P OP1 OP2 O5' O3' O1P O2P","C5' O4' C4'","C3' C2' C1'","N1 C6","C5 C4 O4 C7 C5M","N3 C2 O2"),
         }
 
     # Generic names for side chain beads
     residue_bead_names = FUNC.spl("BB SC1 SC2 SC3 SC4")
+    # Generic names for DNA beads
+    residue_bead_names_dna = FUNC.spl("BB1 BB2 BB3 SC1 SC2 SC3 SC4")
 
     # This dictionary contains the bead names for all residues,
     # following the order in 'mapping'
@@ -154,3 +163,11 @@ def map(r,ca2bb = False):
     # Bead positions      
     return zip(*[aver(i) for i in q])
 
+# Mapping for index file
+def mapIndex(r,ca2bb = False):
+    p = CoarseGrained.mapping[r[0][1]]                                             # Mapping for this residue 
+    if ca2bb: p[0] = ["CA"]                                                        # Elnedyn maps BB to CA, ca2bb is False or True
+    # Get the name, mass and coordinates for all atoms in the residue
+    a = [(i[0],CoarseGrained.mass.get(i[0][0],0),i[4:]) for i in r]                    
+    # Store weight, coordinate and index for atoms that match a bead
+    return [[(m,coord,a.index((atom,m,coord))) for atom,m,coord in a if atom in i] for i in p]

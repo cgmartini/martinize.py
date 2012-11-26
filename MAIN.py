@@ -2,7 +2,7 @@
 ## 8 # MAIN #  -> @MAIN <-
 #############
 import sys,logging,random,math,os,re
-import IO,TOP,DOC,ELN,FUNC
+import IO,TOP,DOC,ELN,FUNC,MAP
 
 def main(options):
     # Check whether to read from a gro/pdb file or from stdin
@@ -10,6 +10,7 @@ def main(options):
     # inferring the file type, without consuming lines already
     inStream = IO.streamTag(options["-f"] and options["-f"].value or sys.stdin)
     
+
     # The streamTag iterator first yields the file type, which 
     # is used to specify the function for reading frames
     fileType = inStream.next()
@@ -18,7 +19,9 @@ def main(options):
     else:
         frameIterator = IO.pdbFrameIterator
     
+
     ## ITERATE OVER FRAMES IN STRUCTURE FILE ##
+
     # Now iterate over the frames in the stream
     # This should become a StructureFile class with a nice .next method
     model     = 1
@@ -42,7 +45,7 @@ def main(options):
             # where i and j are the start and end of the chain, and 
             # k is a chain identifier
             chains = zip([0]+broken,broken+[len(residuelist)],range(len(broken)+1))
-            chains = [ IO.Chain(residuelist[i:j],name=chr(65+k)) for i,j,k in chains ]
+            chains = [ IO.Chain(options,residuelist[i:j],name=chr(65+k)) for i,j,k in chains ]
     
         for chain in chains:
             chain.multiscale = "all" in options['multi'] or chain.id in options['multi']
@@ -58,7 +61,6 @@ def main(options):
         # Note that in some cases HETATM residues are part of a 
         # chain. This will get problematic. But we cannot cover
         # all, probably.
-        # This is not yet active, but might be if we get to mixed protein/DNA.
         if not options['MixedChains']:
             demixedChains = []
             for chain in chains:
@@ -95,14 +97,17 @@ def main(options):
                      chain.sequence[i] = choice
 
     
+
         # Check which chains need merging
         if model == 1:
             order, merge = IO.check_merge(chains, options['mergeList'], options['linkList'], options['CystineCheckBonds'] and options['CystineMaxDist2'])
     
+
         # Get the total length of the sequence
         seqlength = sum([len(chain) for chain in chains])
         logging.info('Total size of the system: %s residues.'%seqlength)
     
+
         ## SECONDARY STRUCTURE
         ss = '' 
         if options['Collagen']:
@@ -176,7 +181,7 @@ def main(options):
                             resi -= insc<<20
                             cgOutPDB.write(IO.pdbAtomLine%(atid,name,resn[:3],chain,resi,chr(insc),x,y,z,1,0))
                             atid += 1
-                coarseGrained = ci.cg()
+                coarseGrained = ci.cg(com=True)
                 if coarseGrained:
                     for name,resn,resi,chain,x,y,z,ssid in coarseGrained:
                         insc  = resi>>20
@@ -207,8 +212,7 @@ def main(options):
         atid = 1
         for i in order:
             ci = chains[i]
-            # Convert to coarse grain.
-            coarseGrained = ci.cg()
+            coarseGrained = ci.cg(force=True)
             if ci.multiscale:
                 NAA.extend([" %5d"%(a+atid) for a in range(ci.natoms)]) 
                 atid += ci.natoms
@@ -223,6 +227,42 @@ def main(options):
         outNDX.write("\n[ VZ ]\n"+"\n".join([" ".join(NVZ[i:i+15]) for i in range(0,len(NVZ),15)]))
         outNDX.write("\n[ CG ]\n"+"\n".join([" ".join(NCG[i:i+15]) for i in range(0,len(NCG),15)]))
         outNDX.close()
+
+    
+    # Write the index file for mapping AA trajectory if requested
+    if options["-n"].value:
+        logging.info("Writing trajectory index file.")
+        atid = 1
+        outNDX   = open(options["-n"].value,"w")
+        # Get all AA atoms as lists of atoms in residues
+        # First we skip hetatoms and unknowns then iterate over beads
+        # In DNA the O3' atom is mapped together with atoms from the next residue
+        # This stores it until we get to the next residue
+        o3_shift = ''
+        for i_count, i in enumerate(IO.residues(atoms)):
+            if i[0][1] in ("SOL","HOH","TIP"):
+                continue
+            if not i[0][1] in MAP.CoarseGrained.mapping.keys():
+                continue
+            nra = 0
+            names = [j[0] for j in i]
+            # This gives out a list of atoms in residue, each tuple has other 
+            # stuff in it that's needed elsewhere so we just take the last 
+            # element which is the atom index (in that residue)
+            for j_count, j in enumerate(MAP.mapIndex(i)):
+                outNDX.write('[ Bead %i of residue %i ]\n'%(j_count+1,i_count+1))
+                line = ''
+                for k in j:
+                    if names[k[2]] == "O3'":
+                        line += '%s '%(str(o3_shift)) 
+                        o3_shift = k[2]+atid
+                    else:
+                        line += '%i '%(k[2]+atid) 
+                line += '\n'
+                nra += len(j)
+                outNDX.write(line)
+            atid += nra
+
     
     # Evertything below here we only need, if we need to write a Topology
     if options['-o']:
@@ -249,12 +289,14 @@ def main(options):
         ssAver = "".join(ssAver)
         logging.info('(Average) Secondary structure has been determined (see head of .itp-file).')
         
+
         # Divide the secondary structure according to the division in chains
         # This will set the secondary structure types to be used for the 
         # topology.
         for chain in chains:
             chain.set_ss(ssAver[:len(chain)])
             ssAver = ssAver[len(chain):]
+
         
         # Now the chains are complete, each consisting of a residuelist, 
         # and a secondary structure designation if the chain is of type 'Protein'.
@@ -320,18 +362,18 @@ def main(options):
             # If not, generate the topology from the chain definition
             if not mol in moleculeTypes or options['SeparateTop']:
                 # Name of the moleculetype
+                # NOTE: The naming should be changed; now it becomes Protein_X+Protein_Y+...
                 name = "+".join([chain.getname(options['-name'].value) for chain in mol])
                 moleculeTypes[mol] = name
     
                 # Write the molecule type topology
                 top = TOP.Topology(mol[0],options=options,name=name)
-                print top.sequence
                 for m in mol[1:]:
                     top += TOP.Topology(m,options=options)
     
                 # Have to add the connections, like the connecting network
                 # Gather coordinates
-                mcg, coords = zip(*[(j[:4],j[4:7]) for m in mol for j in m.cg()])
+                mcg, coords = zip(*[(j[:4],j[4:7]) for m in mol for j in m.cg(force=True)])
                 mcg         = list(mcg)
         
                 # Run through the link list and add connections (links = cys bridges or hand specified links)
@@ -395,6 +437,7 @@ def main(options):
         useRubber   = options['ElasticNetwork'] and "#define RUBBER_BANDS" or ""
        
         # XXX Specify a better, version specific base-itp name.
+        # Do not set a define for position restrains here, as people are more used to do it in mdp file?
         top.write(
 '''#include "martini.itp"
     

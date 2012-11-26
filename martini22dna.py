@@ -18,7 +18,7 @@ class martini22dna:
         self.name = 'martini22dna'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "RQd":1, "AQa":-1}                                                           #@#
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                                                           #@#
         
         
         #----+---------------------+
@@ -57,7 +57,7 @@ class martini22dna:
                     "HYP": FUNC.spl(" C5    N0    C5    N0    N0    N0    N0    P4    P4")  # HYP specific    #@#
         }                                                                                   #                 #@#
         ## BONDS ##                                                                         #                 
-        self.bbldef   =             (.365, .350, .320, .320, .320, .320, .350, .350, .350)  # BB bond lengths #@#
+        self.bbldef   =             (.365, .350, .310, .310, .310, .310, .350, .350, .350)  # BB bond lengths #@#
         self.bbkb     =             (1250, 1250, None, None, None, None, 1250, 1250, 1250)  # BB bond kB      #@#
         self.bbltyp   = {}                                                                  #                 #@#
         self.bbkbtyp  = {}                                                                  #                 #@#
@@ -110,6 +110,7 @@ class martini22dna:
             "TYR": [FUNC.spl("SC4 SC4 SP1"),    [(0.320,5000), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
             "PHE": [FUNC.spl("SC5 SC5 SC5"),    [(0.310,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
             "HIS": [FUNC.spl("SC4 SP1 SP1"),    [(0.320,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
+            "HIH": [FUNC.spl("SC4 SP1 SQd"),    [(0.320,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
             "ARG": [FUNC.spl("N0 Qd"),          [(0.330,5000), (0.340,5000)],                           [(180,25)]],
             "LYS": [FUNC.spl("C3 Qd"),          [(0.330,5000), (0.280,5000)],                           [(180,25)]],
             "CYS": [FUNC.spl("C5"),             [(0.310,7500)]],
@@ -149,6 +150,7 @@ class martini22dna:
         "TYR":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]], 
         "PHE":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
         "HIS":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
+        "HIH":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
         "GLN":     [[(0,1)]],
         "ASN":     [[(0,1)]],
         "SER":     [[(0,1)]],
@@ -174,12 +176,12 @@ class martini22dna:
 
         self.dna_bb = {
             'atoms'  : FUNC.spl("Q0 C2 N0"),
-            'bonds'  : [(0.320,5000),(0.320,5000),(0.320,5000),(0.320,5000),],
-            'angles' : [],
-            'dih'    : [],
+            'bonds'  : [(0.120,5000),(0.220,5000),(0.320,5000)],
+            'angles' : [(10.0, 100), (20.0, 100), (30.0, 100)],
+            'dih'    : [(10.0, 100, 10), (20.0, 100, 10), (30.0, 100, 10),],
         }
         self.dna_con  = {
-            'bonds'  : [(0,1),(1,2),(2,3),(3,4)],
+            'bonds'  : [(0,1),(1,2),(2,3)],
             'angles' : [],
             'dih'    : [],
         }
@@ -188,18 +190,50 @@ class martini22dna:
         self.bases = {
             #RES#   BEADS                   BONDS                                                   ANGLES              DIHEDRALS
             #                               BB-SC          SC-SC                                        BB-SC-SC  SC-SC-SC
-            "DA": [FUNC.spl("SNa SNa SNda SPa"),    [(0.320,5000),(0.320,5000),(0.320,5000),(0.320,5000),],    [],        []],
-            "DC": [FUNC.spl("SNa SNa SNda"),        [(0.320,5000),(0.320,5000),(0.320,5000),],                 [],        []],
-            "DG": [FUNC.spl("SNa SNa SNda SPa"),    [(0.320,5000),(0.320,5000),(0.320,5000),(0.320,5000),],    [],        []],
-            "DT": [FUNC.spl("SNa SNa SNda"),        [(0.320,5000),(0.320,5000),(0.320,5000),],                 [],        []],
+            "DA": [FUNC.spl("SNa SNa SP1 SNa"),
+                   [(0.120,5000),(0.220,5000),(0.320,5000),(0.420,5000),(0.520,5000),],    
+                   [(10.0, 100),(20.0, 100),(30.0, 100),(40.0, 100),(50.0, 100),(60.0, 100),(70.0, 100),(80.0, 100)],
+                   [(10.0, 100, 10),(20.0, 100, 10),(30.0, 100, 10),(40.0, 100, 10)],
+                   [(50.0, 100)]],
+            "DC": [FUNC.spl("SNa SPa SPd"),
+                   [(0.120,5000),(0.220,5000),(0.320,5000),(0.420,5000),],
+                   [(10.0, 100),(20.0, 100),(30.0, 100),(40.0, 100),(50.0, 100),(60.0, 100),(70.0, 100)],
+                   [(10.0, 100, 10),(20.0, 100, 10),(30.0, 100, 10),(40.0, 100, 10)],
+                   []],
+            "DG": [FUNC.spl("SNa SPd SP1 SNa"),
+                   [(0.120,5000),(0.220,5000),(0.320,5000),(0.420,5000),(0.520,5000),],
+                   [(10.0, 100),(20.0, 100),(30.0, 100),(40.0, 100),(50.0, 100),(60.0, 100),(70.0, 100),(80.0, 100)],
+                   [(10.0, 100, 10),(20.0, 100, 10),(30.0, 100, 10),(40.0, 100, 10)],
+                   [(50.0, 100)]],
+            "DT": [FUNC.spl("SNa SP1 Pa"),
+                   [(0.120,5000),(0.220,5000),(0.320,5000),(0.420,5000),],
+                   [(10.0, 100),(20.0, 100),(30.0, 100),(40.0, 100),(50.0, 100),(60.0, 100),(70.0, 100)],
+                   [(10.0, 100, 10),(20.0, 100, 10),(30.0, 100, 10),(40.0, 100, 10)],
+                   []],
             }
 
         self.base_connectivity = {
-            #RES     BONDS                                   ANGLES             DIHEDRALS              V-SITE
-            "DA":   [[(4,5),(5,6),(6,7),(7,4)],[],[],[]],
-            "DC":   [[(4,5),(5,6),(6,4)],      [],[],[]],
-            "DG":   [[(4,5),(5,6),(6,7),(7,4)],[],[],[]],
-            "DT":   [[(4,5),(5,6),(6,4)],      [],[],[]],
+            #RES     BONDS                                   ANGLES             DIHEDRALS      IMPROPERS        V-SITE
+            "DA":   [[(2,3),(3,4),(4,5),(5,6),(6,3)],
+                     [(1,2,3), (2,3,4), (2,3,6), (3,4,5), (3,2,7), (4,3,6), (4,5,6), (5,6,3)],
+                     [(0,1,2,3), (1,2,3,4), (7,2,3,4), (3,2,7,8)],
+                     [(3,4,5,6)],
+                     []],
+            "DC":   [[(2,3),(3,4),(4,5),(5,3)],
+                     [(1,2,3), (2,3,4), (2,3,5), (3,4,5), (3,2,6), (4,3,5), (4,5,3)],
+                     [(0,1,2,3), (1,2,3,4), (6,2,3,4), (3,2,6,7)],
+                     [],
+                     []],
+            "DG":   [[(2,3),(3,4),(4,5),(5,6),(6,3)],
+                     [(1,2,3), (2,3,4), (2,3,6), (3,4,5), (3,2,7), (4,3,6), (4,5,6), (5,6,3)],
+                     [(0,1,2,3), (1,2,3,4), (7,2,3,4), (3,2,7,8)],
+                     [(3,4,5,6)],
+                     []],
+            "DT":   [[(2,3),(3,4),(4,5),(5,3)],
+                     [(1,2,3), (2,3,4), (2,3,5), (3,4,5), (3,2,6), (4,3,5), (4,5,3)],
+                     [(0,1,2,3), (1,2,3,4), (6,2,3,4), (3,2,6,7)],
+                     [],
+                     []],
             }
 
         #----+----------------+
@@ -269,11 +303,17 @@ class martini22dna:
             return self.bbBeadDictS.get(r1,self.bbBeadDictD).get(ss,self.bbBeadDictD.get(ss))                      
     
     
-    def bbGetBond(self,r,a,ss):
+    def bbGetBond(self,r,ca,ss):
         # Retrieve parameters for each residue from table defined above
         import MAP
         if r[0] in MAP.dnares3:
-            return self.dna_bb['bonds']
+            if ca == (0, 1):
+                return self.dna_bb['bonds'][0]
+            elif ca == (1, 2):
+                return self.dna_bb['bonds'][1]
+            else: 
+                return self.dna_bb['bonds'][2]
+        # This is not implemented properly yet
         elif r[0] in MAP.rnares3:
             return self.rna_bb['bonds']
         else:
@@ -283,21 +323,46 @@ class martini22dna:
             return ( (b1[0]+b2[0])/2, min(b1[1],b2[1]) )
     
     def bbGetAngle(self,r,ca,ss):
-        # PRO in helices is dominant
-        if r[1] == "PRO" and ss[1] in "H123":
-            return self.bbAngleDictS["PRO"].get(ss[1])
+        import MAP
+        if r[0] in MAP.dnares3:
+            if ca == (0, 1, 2):
+                return self.dna_bb['angles'][0]
+            elif ca == (1, 2, 0):
+                return self.dna_bb['angles'][1]
+            else: 
+                return self.dna_bb['angles'][2]
+        # This is not implemented properly yet
+        elif r[0] in MAP.rnares3:
+            return self.rna_bb['angles']
         else:
-            # Retrieve parameters for each residue from table defined above
-            a = [ self.bbAngleDictS.get(r[0],self.bbAngleDictD).get(ss[0],self.bbAngleDictD.get(ss[0])),
-                  self.bbAngleDictS.get(r[1],self.bbAngleDictD).get(ss[1],self.bbAngleDictD.get(ss[1])),
-                  self.bbAngleDictS.get(r[2],self.bbAngleDictD).get(ss[2],self.bbAngleDictD.get(ss[2])) ]
-            # Sort according to force constant
-            a.sort(key=lambda i: (i[1],i[0]))
-            # This selects the set with the smallest force constant and the smallest angle
-            return a[0]
+            # PRO in helices is dominant
+            if r[1] == "PRO" and ss[1] in "H123":
+                return self.bbAngleDictS["PRO"].get(ss[1])
+            else:
+                # Retrieve parameters for each residue from table defined above
+                a = [ self.bbAngleDictS.get(r[0],self.bbAngleDictD).get(ss[0],self.bbAngleDictD.get(ss[0])),
+                      self.bbAngleDictS.get(r[1],self.bbAngleDictD).get(ss[1],self.bbAngleDictD.get(ss[1])),
+                      self.bbAngleDictS.get(r[2],self.bbAngleDictD).get(ss[2],self.bbAngleDictD.get(ss[2])) ]
+                # Sort according to force constant
+                a.sort(key=lambda i: (i[1],i[0]))
+                # This selects the set with the smallest force constant and the smallest angle
+                return a[0]
+
+    def bbGetDihedral(self,r,ca,ss):
+        import MAP
+        if r[0] in MAP.dnares3:
+            if ca == (0, 1, 2, 0):
+                return self.dna_bb['dih'][0]
+            elif ca == (1, 2, 0, 1):
+                return self.dna_bb['dih'][1]
+            else: 
+                return self.dna_bb['dih'][2]
+        # This is not implemented properly yet
+        elif r[0] in MAP.rnares3:
+            return self.rna_bb['angles']
         
     def messages(self):
         '''Prints any force-field specific logging messages.'''
         import logging
-        logging.warning('Martini version 2.2 is in beta release. It has not been extensively tested and problems might occur.')
+        logging.warning('Martini version 2.2dna is not yet finished.')
         pass
