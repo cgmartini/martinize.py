@@ -20,7 +20,7 @@ AA123, AA321 = FUNC.hash(AA1,AA3),FUNC.hash(AA3,AA1)
 
 
 # Residue classes:
-protein = AA3
+protein = AA3[:-8]   # remove eight to get rid of DNA/RNA here.
 water   = FUNC.spl("HOH SOL TIP")
 lipids  = FUNC.spl("DPP DHP DLP DMP DSP POP DOP DAP DUP DPP DHP DLP DMP DSP PPC DSM DSD DSS")
 nucleic = FUNC.spl("DAD DCY DGU DTH ADE CYT GUA THY URA DA DC DG DT")

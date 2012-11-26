@@ -393,7 +393,7 @@ class Chain:
         self.sequence   = [residue[0][1] for residue in residuelist]
         # *NOTE*: Check for unknown residues and remove them if requested
         #         before proceeding.
-        self.seq        = "".join([MAP.AA321.get(i,"x") for i in self.sequence])
+        self.seq        = "".join([MAP.AA321.get(i,"X") for i in self.sequence])
         self.ss         = ""
         self.ssclass    = ""
         self.sstypes    = ""
@@ -402,7 +402,7 @@ class Chain:
         self.options    = options
 
         # Unknown residues
-        self.unknowns   = "x" in self.seq
+        self.unknowns   = "X" in self.seq
 
         # Determine the type of chain
         self._type      = ""

@@ -70,7 +70,7 @@ def main(options):
         n = 1
         logging.info("Found %d chains:"%len(chains))
         for chain in chains:
-            logging.info("  %2d:   %s (%s), %d atoms in %d residues."%(n,chain.id,chain.type(),chain.natoms,len(chain)))
+            logging.info("  %2d:   %s (%s), %d atoms in %d residues."%(n,chain.id,chain._type,chain.natoms,len(chain)))
             n += 1
     
         # Check all chains
@@ -230,10 +230,10 @@ def main(options):
 
     
     # Write the index file for mapping AA trajectory if requested
-    if options["-n"].value:
+    if options["-nmap"].value:
         logging.info("Writing trajectory index file.")
         atid = 1
-        outNDX   = open(options["-n"].value,"w")
+        outNDX   = open(options["-nmap"].value,"w")
         # Get all AA atoms as lists of atoms in residues
         # First we skip hetatoms and unknowns then iterate over beads
         # In DNA the O3' atom is mapped together with atoms from the next residue
