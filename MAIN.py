@@ -84,6 +84,16 @@ def main(options):
             else:
                 logging.info("Removing HETATM chain %s consisting of %d residues."%(chain.id,len(chain)))
         chains = keep
+
+        # Here we interactively check the charge state of resides
+        # Can be easily expanded to residues other than HIS
+        for chain in chains:
+            for i,resname in enumerate(chain.sequence):
+                 if resname == 'HIS' and options['chHIS']:
+                     choices = {0:'HIH',1:'HIS'}
+                     choice = IO.getChargeType(resname,i,choices)
+                     chain.sequence[i] = choice
+
     
         # Check which chains need merging
         if model == 1:

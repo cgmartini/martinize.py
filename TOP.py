@@ -5,7 +5,6 @@ import IO,FUNC,MAP
 import logging,math
 
 # This is a generic class for Topology Bonded Type definitions
-# Clement, it'd be nice to have proper docstrings for classes :)
 class Bonded:
     # The init method is generic to the bonded types,
     # but may call the set method if atoms are given

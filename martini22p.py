@@ -107,18 +107,19 @@ class martini22p:
         
         # To be compatible with Elnedyn, all parameters are explicitly defined, even if they are double.
         self.sidechains = {
-          #RES#   BEADS                       BONDS                                                   ANGLES                      DIHEDRALS        V-SITES
-          #                                   BB-SC          SC-SC                                    BB-SC-SC  SC-SC-SC
-          "TRP": [FUNC.spl("SC4 SNd SC5 SC5"),[(0.300,5000)]+[(0.270,None) for i in range(5)],        [(210,50),(90,50),(90,50)], [(0,50),(0,200)]],
-          "TYR": [FUNC.spl("SC4 SC4 SP1"),    [(0.320,5000), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
-          "PHE": [FUNC.spl("SC5 SC5 SC5"),    [(0.310,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
-          "HIS": [FUNC.spl("SC4 SP1 SP1"),    [(0.320,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
-          "GLN": [FUNC.spl("Nda D D"),        [(0.400,5000), (0.280,None)],                           [],                         [],              [(0.5,)]],
-          "ASN": [FUNC.spl("Nda D D"),        [(0.320,5000), (0.280,None)],                           [],                         [],              [(0.5,)]],
-          "SER": [FUNC.spl("N0 D D"),         [(0.250,7500), (0.280,None)],                           [],                         [],              [(0.5,)]],
-          "THR": [FUNC.spl("N0 D D"),         [(0.260,9000), (0.280,None)],                           [],                         [],              [(0.5,)]],
-          "ARG": [FUNC.spl("N0 Qd D"),        [(0.330,5000), (0.340,5000), (0.110,None)],             [(180,25)]],
-          "LYS": [FUNC.spl("C3 Qd D"),        [(0.330,5000), (0.280,5000), (0.110,None)],             [(180,25)]],
+          #RES#   BEADS                       BONDS                                                                   ANGLES                      DIHEDRALS        V-SITES
+          #                                   BB-SC          SC-SC                                                    BB-SC-SC  SC-SC-SC
+          "TRP": [FUNC.spl("SC4 SNd SC5 SC5"),[(0.300,5000)]+[(0.270,None) for i in range(5)],                    [(210,50),(90,50),(90,50)], [(0,50),(0,200)]],
+          "TYR": [FUNC.spl("SC4 SC4 SP1"),    [(0.320,5000), (0.270,None), (0.270,None),(0.270,None)],            [(150,50),(150,50)],        [(0,50)]],
+          "PHE": [FUNC.spl("SC5 SC5 SC5"),    [(0.310,7500), (0.270,None), (0.270,None),(0.270,None)],            [(150,50),(150,50)],        [(0,50)]],
+          "HIS": [FUNC.spl("SC4 SP1 SP1"),    [(0.320,7500), (0.270,None), (0.270,None),(0.270,None)],            [(150,50),(150,50)],        [(0,50)]],
+          "HIH": [FUNC.spl("SC4 SP1 SQd D"),  [(0.320,7500), (0.270,None), (0.270,None),(0.270,None),(0.11,None)],[(150,50),(150,50)],        [(0,50)]],
+          "GLN": [FUNC.spl("Nda D D"),        [(0.400,5000), (0.280,None)],                                       [],                         [],              [(0.5,)]],
+          "ASN": [FUNC.spl("Nda D D"),        [(0.320,5000), (0.280,None)],                                       [],                         [],              [(0.5,)]],
+          "SER": [FUNC.spl("N0 D D"),         [(0.250,7500), (0.280,None)],                                       [],                         [],              [(0.5,)]],
+          "THR": [FUNC.spl("N0 D D"),         [(0.260,9000), (0.280,None)],                                       [],                         [],              [(0.5,)]],
+          "ARG": [FUNC.spl("N0 Qd D"),        [(0.330,5000), (0.340,5000), (0.110,None)],                         [(180,25)]],
+          "LYS": [FUNC.spl("C3 Qd D"),        [(0.330,5000), (0.280,5000), (0.110,None)],                         [(180,25)]],
           "ASP": [FUNC.spl("Qa D"),           [(0.320,7500), (0.110,None)]],
           "GLU": [FUNC.spl("Qa D"),           [(0.400,5000), (0.110,None)]],
           "CYS": [FUNC.spl("C5"),             [(0.310,7500)]],
@@ -138,7 +139,7 @@ class martini22p:
 
         # Martini 2.2p has polar and charged residues with seperate charges.
         self.polar   = ["GLN","ASN","SER","THR"]
-        self.charged = ["ARG","LYS","ASP","GLU"]
+        self.charged = ["ARG","LYS","ASP","GLU","HIH"]
 
         # If masses or charged diverge from standard (45/72 and -/+1) they are defined here.
         self.mass_charge = {
@@ -149,6 +150,7 @@ class martini22p:
         "THR":[[0,36,36],         [0,0.36,-0.36]],
         "ARG":[[72,36,36],        [0,0,1]],
         "LYS":[[72,36,36],        [0,0,1]],
+        "HIH":[[45,45,36,36],     [0,0,0,1]],
         "ASP":[[36,36],           [0,-1]],
         "GLU":[[36,36],           [0,-1]],
         }
@@ -159,6 +161,7 @@ class martini22p:
         "TYR":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]], 
         "PHE":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
         "HIS":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
+        "HIH":     [[(0,1),(1,2),(1,3),(2,3),(3,4)],       [(0,1,2),(0,1,3)], [(0,2,3,1)]],
         "GLN":     [[(0,1),(2,3)],                         [],                [],                    [(1,2,3)]],
         "ASN":     [[(0,1),(2,3)],                         [],                [],                    [(1,2,3)]],
         "SER":     [[(0,1),(2,3)],                         [],                [],                    [(1,2,3)]],

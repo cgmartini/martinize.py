@@ -10,7 +10,7 @@ class elnedyn22p:
         self.name = 'elnedyn22p'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "RQd":1, "AQa":-1}                                                           #@#
+        self.charges = {"Qd":1, "Qa":-1, "sQd":1, "sQa":-1, "RQd":1, "AQa":-1}                                                           #@#
         
         
         #----+---------------------+
@@ -102,6 +102,7 @@ class elnedyn22p:
         'TYR': [FUNC.spl("SC4 SC4 SP1"),     [(0.335, 6000), (0.335,6000), (0.240,None), (0.310,None), (0.310,None)],                 [(70,100), (130, 50)]],
         'PHE': [FUNC.spl("SC5 SC5 SC5"),     [(0.340, 7500), (0.340,7500), (0.240,None), (0.240,None), (0.240,None)],                 [(70,100), (125,100)]],
         'HIS': [FUNC.spl("SC4 SP1 SP1"),     [(0.195,94000), (0.193,None), (0.295,None), (0.216,None)],                               [(135,100),(115, 50)]],
+        'HIH': [FUNC.spl("SC4 SP1 SQd"),     [(0.195,94000), (0.193,None), (0.295,None), (0.216,None), (0.11,None)],                  [(135,100),(115, 50)]],
         'GLN': [FUNC.spl("Nda D D"),         [(0.300, 2400), (0.280,None)],                                                           [],                             [],         [(0.5,)]],
         'ASN': [FUNC.spl("Nda D D"),         [(0.250,61000), (0.280,None)],                                                           [],                             [],         [(0.5,)]],
         'SER': [FUNC.spl("N0 D D"),          [(0.195,94000), (0.280,None)],                                                           [],                             [],         [(0.5,)]],
@@ -127,7 +128,7 @@ class elnedyn22p:
 
         # Martini 2.2p has polar and charged residues with seperate charges.
         self.polar   = ["GLN","ASN","SER","THR"]
-        self.charged = ["ARG","LYS","ASP","GLU"]
+        self.charged = ["ARG","LYS","ASP","GLU","HIH"]
 
         # If masses or charged diverge from standard (45/72 and -/+1) they are defined here.
         self.mass_charge = {
@@ -138,6 +139,7 @@ class elnedyn22p:
         "THR":[[0,36,36],         [0,0.36,-0.36]],
         "ARG":[[72,36,36],        [0,0,1]],
         "LYS":[[72,36,36],        [0,0,1]],
+        "HIH":[[72,,72,36,36],    [0,0,0,1]],
         "ASP":[[36,36],           [0,-1]],
         "GLU":[[36,36],           [0,-1]],
         }
@@ -151,6 +153,7 @@ class elnedyn22p:
         "TYR":     [[(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)],        [(0, 1, 2), (0, 1, 3)]],
         "PHE":     [[(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)],        [(0, 1, 2), (0, 1, 3)]],
         "HIS":     [[(0, 1), (1, 2), (1, 3), (2, 3)],                [(0, 1, 2), (0, 1, 3)]],
+        "HIH":     [[(0, 1), (1, 2), (1, 3), (2, 3), (3, 4)],        [(0, 1, 2), (0, 1, 3)],           [(0, 2, 3, 1)]],
         "GLN":     [[(0, 1), (2, 3)],                                [],                               [],              [(1,2,3)]],
         "ASN":     [[(0, 1), (2, 3)],                                [],                               [],              [(1,2,3)]],
         "SER":     [[(0, 1), (2, 3)],                                [],                               [],              [(1,2,3)]],
@@ -243,8 +246,8 @@ class elnedyn22p:
     def messages(self):
         '''Prints any force-field specific logging messages.'''
         import logging
-        #logging.info('The elnedyn forcefield has been implemented with some changes compared to the published parameters:')
-        logging.info('- Backbone-Backbone bonds are constraints in stead of high force constant bonds.')
+        logging.info('The elnedyn forcefield has been implemented with some changes compared to the published parameters:')
+        #logging.info('- Backbone-Backbone bonds are constraints in stead of high force constant bonds.')
         logging.info('- Backbone-Backbone bonds use high force constant bonds instead of constraints.')
         logging.info('- Trp has an extra constrain added to the sidechain.')
         logging.info('- The Backbone sidechain bonds with high force constants are replaced by constraints except for Trp and His and the polar sidechains.')

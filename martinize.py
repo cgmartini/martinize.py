@@ -50,6 +50,7 @@ notes = [
     ("DdJ221112","Clean help text and some code."),
     ("DdJ221112","Fixed that crashed the break checking code if water chain name == protein chain name."),
     ("DdJ231112","Fixed bug when helix was starting at first residue."),
+    ("DdJ261112","Added capability to interactively choose HIS-charge state."),
     ]
 
 # 

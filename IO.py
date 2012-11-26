@@ -143,6 +143,17 @@ def groFrameIterator(streamIterator):
 ## C | GENERAL I/O |
 #----+-------------+
 
+# It is not entirely clear where this fits in best.
+# Called from main. 
+def getChargeType(resname,resid,choices):
+    '''Get user input for the charge of residues, based on list with choises.'''
+    print 'Which %s type do you want for residue %s:'%(resname,resid+1)
+    for i,choice in choices.iteritems():
+        print '%s. %s'%(i,choice)
+    choice = None
+    while choice not in choices.keys():
+        choice = input('Type a number:')
+    return choices[choice]
 
 # *NOTE*: This should probably be a CheckableStream class that
 # reads in lines until either of a set of specified conditions
@@ -591,7 +602,10 @@ class Chain:
         atid     = 1
         bb       = [1]
         fail     = False
-        for residue,rss in zip(self.residues,self.sstypes):
+        for residue,rss,resname in zip(self.residues,self.sstypes,self.sequence):
+            # Check if residues have change, might happen if the user sets things interactively
+            residue = [(atom[0],resname)+atom[2:] for atom in residue]
+            # Water we can't handle yet.
             if residue[0][1] in ("SOL","HOH","TIP"):
                 continue
             if not residue[0][1] in MAP.CoarseGrained.mapping.keys():
