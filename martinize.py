@@ -4,7 +4,7 @@
 # EDITABLE SECTIONS ARE MARKED WITH #@# 
 
 
-version="2.2"
+version="2.3"
 authors=["Djurre de Jong", "Jaakko J. Uusitalo", "Tsjerk A. Wassenaar"]
 
 # Parameters are defined for the following (protein) forcefields:
@@ -53,6 +53,7 @@ notes = [
     ("DdJ261112","Added capability to interactively choose HIS-charge state."),
     ("JJU261112","Update basic DNA capabilities"),
     ("JJU261112","Fixed bug recognizing water chain type"),
+    ("DdJ271112","V2.2"),
     ]
 
 # 

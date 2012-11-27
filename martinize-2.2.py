@@ -53,6 +53,7 @@ notes = [
     ("DdJ261112","Added capability to interactively choose HIS-charge state."),
     ("JJU261112","Update basic DNA capabilities"),
     ("JJU261112","Fixed bug recognizing water chain type"),
+    ("DdJ271112","V2.2"),
     ]
 
 # 
@@ -268,7 +269,8 @@ as argument, causing all chains to be multiscaled.
     ("-f",        Option(str,                      1,     None, "Input file (PDB|GRO)")),
     ("-o",        Option(str,                      1,     None, "Output topology (TOP)")),
     ("-x",        Option(str,                      1,     None, "Output coarse grained structure (PDB)")),
-    ("-n",        Option(str,                      1,     None, "Output index file")),
+    ("-n",        Option(str,                      1,     None, "Output index file with CG (and multiscale) beads.")),
+    ("-nmap",     Option(str,                      1,     None, "Output index file containing per bead mapping.")),
     ("-v",        Option(bool,                     0,    False, "Verbose. Be load and noisy.")), 
     ("-h",        Option(bool,                     0,    False, "Display this help.")),
     ("-ss",       Option(str,                      1,     None, "Secondary structure (File or string)")),
@@ -4851,10 +4853,10 @@ def main(options):
 
     
     # Write the index file for mapping AA trajectory if requested
-    if options["-n"].value:
+    if options["-nmap"].value:
         logging.info("Writing trajectory index file.")
         atid = 1
-        outNDX   = open(options["-n"].value,"w")
+        outNDX   = open(options["-nmap"].value,"w")
         # Get all AA atoms as lists of atoms in residues
         # First we skip hetatoms and unknowns then iterate over beads
         # In DNA the O3' atom is mapped together with atoms from the next residue
