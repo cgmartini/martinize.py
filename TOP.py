@@ -101,11 +101,12 @@ class Bond(Bonded):
         self.comments   = "%s(%s)-%s(%s)" % (r[0],ss[0],r[1],ss[1])
         # The category can be used to keep bonds sorted
         self.category   = kwargs.get("category")
-
-        self.parameters = self.options['ForceField'].bbGetBond(r,ca,ss)
+       
+        if not self.parameters:
+            self.parameters = self.options['ForceField'].bbGetBond(r,ca,ss)
         # Backbone bonds also can be constraints. We could change the type further on, but this is more general.
         # Even better would be to add a new type: BB-Constraint
-        if self.parameters[1] == None:
+        if self.parameters and self.parameters[1] == None:
             self.category = 'Constraint'
 
     # Overriding __str__ method to suppress printing of bonds with Fc of 0
@@ -126,6 +127,8 @@ class Angle(Bonded):
         self.category   = kwargs.get("category")
         
         self.parameters = self.options['ForceField'].bbGetAngle(r,ca,ss)
+        if self.parameters and len(self.parameters) > 2:
+            self.type, self.parameters = self.parameters[0], self.parameters[1:]
 
 # Similar to the preceding class
 class Vsite(Bonded):
@@ -137,6 +140,12 @@ class Vsite(Bonded):
         self.comments   = "%s"% (r[0])
         self.category   = kwargs.get("category")
         self.parameters = kwargs.get("parameters") 
+        if not self.parameters:
+            self.parameters = self.options['ForceField'].bbGetVsite(r,ca,ss)
+            # This assumes type one virtual sites, COM of two beads
+            if self.parameters and len(self.paramters>1):
+                self.atoms += self.parameters[:-1]
+                self.parameters = self.parameters[-1]
 
 # Similar to the preceding class
 class Exclusion(Bonded):
@@ -147,6 +156,12 @@ class Exclusion(Bonded):
         self.comments   = "%s"% (r[0])
         self.category   = kwargs.get("category")
         self.parameters = kwargs.get("parameters") 
+        if not self.parameters:
+            atoms = self.options['ForceField'].bbGetExclusion(r,ca,ss)
+            if atoms: self.atoms += atoms
+
+    def __nonzero__(self):
+        return len(self.atoms) > 1 and True or False
 
 # Similar to the preceding class
 class Dihedral(Bonded):
@@ -157,18 +172,23 @@ class Dihedral(Bonded):
         self.positionCa = ca
         self.comments   = "%s(%s)-%s(%s)-%s(%s)-%s(%s)" % (r[0],ss[0],r[1],ss[1],r[2],ss[2],r[3],ss[3])
         self.category   = kwargs.get("category")
+        if not self.parameters:
+            self.parameters = self.options['ForceField'].bbGetDihedral(r,ca,ss)
+        if self.parameters and len(self.parameters)>2:
+            self.type,self.parameters = self.parameters[0],self.parameters[1:]
 
-        if ''.join(i for i in ss) == 'FFFF':
-            # Collagen
-            self.parameters = self.options['ForceField'].bbDihedDictD['F']
-        elif ''.join(i for i in ss) == 'EEEE' and self.options['ExtendedDihedrals']:
-            # Use dihedrals
-            self.parameters = self.options['ForceField'].bbDihedDictD['E']
-        elif set(ss).issubset("H123"):
-            # Helix
-            self.parameters = self.options['ForceField'].bbDihedDictD['H']
-        else:
-            self.parameters = None
+        # XXX Move this to force field files to accommodate polbb and dna dihedrals in a uniform way
+        # if ''.join(i for i in ss) == 'FFFF':
+        #    # Collagen
+        #    self.parameters = self.options['ForceField'].bbDihedDictD['F']
+        #elif ''.join(i for i in ss) == 'EEEE' and self.options['ExtendedDihedrals']:
+        #    # Use dihedrals
+        #    self.parameters = self.options['ForceField'].bbDihedDictD['E']
+        #elif set(ss).issubset("H123"):
+        #    # Helix
+        #    self.parameters = self.options['ForceField'].bbDihedDictD['H']
+        #else:
+        #    self.parameters = None
 
 
 # This list allows to retrieve Bonded class items based on the category
@@ -227,7 +247,9 @@ class Topology:
             for attrib in ["atoms","vsites","bonds","angles","dihedrals","impropers","constraints","posres"]:
                 setattr(self,attrib,getattr(other,attrib,[]))
         elif isinstance(other,IO.Chain):
-            if other.type() == "Protein":
+            if other.type() == "Protein" and other.options['ForceField'].name in ['polbb']:
+                self.fromAminoAcidSequencePolBB(other)
+            elif other.type() == "Protein":
                 self.fromAminoAcidSequence(other)
             elif other.type() == "Nucleic":
                 # Currently there are no Martini Nucleic Acids
@@ -840,6 +862,232 @@ class Topology:
         for i in range(len(self.angles)-1,-1,-1):
             if (max(self.angles[i].atoms) > self.atoms[-1][0]):
                 del self.angles[i]
+
+    def fromAminoAcidSequencePolBB(self,sequence,secstruc=None,links=None,breaks=None,
+                              mapping=None,rubber=False,multi=False):
+
+        # Shift for the atom numbers of the atomistic part in a chain 
+        # that is being multiscaled
+        shift = 0
+        # First check if we get a sequence or a Chain instance
+        if isinstance(sequence, IO.Chain):
+            chain         = sequence
+            links         = chain.links
+            breaks        = chain.breaks
+            # If the mapping is not specified, the actual mapping is taken,
+            # used to construct the coarse grained system from the atomistic one.
+            # The function argument "mapping" could be used to use a default 
+            # mapping scheme in stead, like the mapping for the GROMOS96 force field.
+            mapping = mapping           or chain.mapping
+            multi   = self.options['multi']  or chain.multiscale
+            self.secstruc = chain.sstypes or len(chain)*"C"
+            self.sequence = chain.sequence
+            # If anything hints towards multiscaling, do multiscaling
+            self.multiscale = self.multiscale or chain.multiscale or multi
+            if self.multiscale:
+                shift        = self.natoms
+                self.natoms += len(chain.atoms())
+        elif not secstruc:
+            # If no secondary structure is provided, set all to coil
+            chain         = None
+            self.secstruc = len(self.sequence)*"C"
+        else:
+            # If a secondary structure is provided, use that. chain is none.
+            chain         = None
+            self.secstruc = secstruc
+
+        logging.debug(self.secstruc)
+        logging.debug(self.sequence)
+
+        # Fetch the base information 
+        # Pad with empty lists for atoms, bonds, angles 
+        # and dihedrals, and take the first five lists out
+        # This will avoid errors for residues for which 
+        # these are not defined.
+
+        sc = [(self.options['ForceField'].sidechains[res]+6*[[]])[:6] for res in self.sequence]
+
+        # ID of the first atom/residue
+        # The atom number and residue number follow from the last 
+        # atom c.q. residue id in the list processed in the topology
+        # thus far. In the case of multiscaling, the real atoms need 
+        # also be accounted for.
+        startAtom = self.natoms + 1 
+        startResi = self.atoms and self.atoms[-1][2]+1 or 1
+
+        # Backbone bead atom IDs
+        bbid = [[startAtom+i for i in range(4)]]
+        for i in zip(*sc)[0]:
+            bbid1 = bbid[-1][0]+len(i)+4
+            bbid.append([bbid1+i for i in range(4)])
+            #bbid.append(bbid[-1]+len(i)+1)
+
+        # Residue numbers for this moleculetype topology
+        resid = range(startResi,startResi+len(self.sequence))     
+
+        # This contains the information for deriving backbone bead types,
+        # bb bond types, bbb/bbs angle types, and bbbb dihedral types.
+        seqss = zip(bbid,self.sequence,self.secstruc)
+
+        # Fetch the proper backbone beads          
+        # Since there are three beads we need to split these to the list
+        bb = [self.options['ForceField'].bbGetBead(res,typ) for num,res,typ in seqss]
+        bbMulti = [i for j in bb for i in j]
+
+        # This is going to be usefull for the type of the last backbone bead.
+        # If termini need to be charged, change the bead types
+        #if not self.options['NeutralTermini']:
+        #    bb[0]  ="Qd"
+        #    bb[-1] = "Qa"
+
+        # If breaks need to be charged, change the bead types 
+        #if self.options['ChargesAtBreaks']:
+        #    for i in breaks:
+        #        bb[i]   = "Qd"
+        #        bb[i-1] = "Qa"
+
+        # For backbone parameters, iterate over fragments, inferred from breaks
+        for i,j in zip([0]+breaks,breaks+[-1]):
+            # Extract the fragment
+            frg = j==-1 and seqss[i:] or seqss[i:j]
+            # Expand the N bb beads per residue into one long list
+            # Resulting list contains three tuples per residue 
+            # We use the useless ca parameter to get the correct backbone bond from bbGetBond 
+            frg = [(j[0][i],j[1],j[2],j[0][i]) for j in frg for i in range(len(j[0]))]
+
+            # Iterate over backbone bonds, two loops are needed because there are multipe cross bonds in the BB.
+            # Number of backbone beads hardcoded to 4
+            for ind,k in enumerate(frg):
+                # Virtual site we check per bead
+                vsite = Vsite((k,),category="BB",options=self.options,)
+                if vsite.parameters:
+                     self.vsites.append(vsite)
+                # Exlusions have their own Bool check.
+                excl = Exclusion((k,),category="BB",options=self.options,)
+                if excl:
+                    self.exclusions.append(excl)
+                
+                for l in frg[ind:ind+5]:
+                    # Since bonded interactions can return None, we first collect them separately and then
+                    # add the non-None ones to the list
+                    bond = Bond((k,l),category="BB",options=self.options,)
+                    if bond.parameters:
+                        self.bonds.append(bond)
+
+                    # The angles need a third loop.
+                    for m in frg[ind:ind+9]:
+                        angle = Angle((k,l,m,),options=self.options,category="BBB")
+                        if angle.parameters:
+                            self.angles.append(angle)
+
+                        # The dihedrals need a fourth loop.
+                        for n in frg[ind:ind+9]:
+                            dihed = Dihedral((k,l,m,n,),options=self.options,category="BBBB")
+                            if dihed:
+                                self.dihedrals.append(dihed)
+
+        # Now do the atom list, and take the sidechains along
+        #
+        atid  = startAtom
+        # We need to do some trickery to get all N bb beads in to these lists
+        # This adds each element to a list three times, feel free to shorten up
+        residMulti = [i for i in resid for j in range(len(bb[0]))]
+        sequenceMulti = [i for i in self.sequence for j in range(len(bb[0]))]
+        scMulti = [i for i in sc for j in range(len(bb[0]))]
+        secstrucMulti = [i for i in self.secstruc for j in range(len(bb[0]))]
+        count = 0
+        for resi,resname,bbb,sidechn,ss in zip(residMulti,sequenceMulti,bbMulti,scMulti,secstrucMulti):
+            # We only want one side chain per three backbone beads so this skips the others
+            if (count % len(bb[0])) == 0:    
+                # Note added impropers in contrast to aa
+                scatoms, bon_par, ang_par, dih_par, imp_par, vsite_par = sidechn
+
+                # Side chain bonded terms
+                # Collect bond, angle and dihedral connectivity
+                bon_con,ang_con,dih_con,imp_con,vsite_con = (self.options['ForceField'].connectivity[resname]+5*[[]])[:5]
+
+                # Side Chain Bonds/Constraints
+                for atids,par in zip(bon_con,bon_par):
+                    if par[1] == None:
+                        self.bonds.append(Bond(options=self.options,atoms=atids,parameters=[par[0]],type=1,
+                                               comments=resname,category="Constraint"))
+                    else:
+                        self.bonds.append(Bond(options=self.options,atoms=atids,parameters=par,type=1,
+                                               comments=resname,category="SC"))
+                    # Shift the atom numbers
+                    self.bonds[-1] += atid
+
+                # Side Chain Angles
+                for atids,par in zip(ang_con,ang_par):
+                    self.angles.append(Angle(options=self.options,atoms=atids,parameters=par,type=2,
+                                             comments=resname,category="SC"))
+                    # Shift the atom numbers
+                    self.angles[-1] += atid
+
+                # Side Chain Dihedrals
+                for atids,par in zip(dih_con,dih_par):
+                    self.dihedrals.append(Dihedral(options=self.options,atoms=atids,parameters=par,type=2,
+                                                   comments=resname,category="SC"))
+                    # Shift the atom numbers
+                    self.dihedrals[-1] += atid
+
+                # Side Chain Impropers
+                for atids,par in zip(imp_con,imp_par):
+                    self.dihedrals.append(Dihedral(options=self.options,atoms=atids,parameters=par,type=2,
+                                                   comments=resname,category="SC"))
+                    # Shift the atom numbers
+                    self.dihedrals[-1] += atid
+
+                # Side Chain V-Sites
+                for atids,par in zip(vsite_con,vsite_par):
+                    self.vsites.append(Vsite(options=self.options,atoms=atids,parameters=par,type=1,
+                                                   comments=resname,category="SC"))
+                    # Shift the atom numbers
+                    self.vsites[-1] += atid
+            
+                # Side Chain exclusions
+                # The new polarizable forcefield give problems with the charges in the sidechain, if the backbone is also charged.
+                # To avoid that, we add explicit exclusions
+                # XXX Rewrite for backbone charge exclusions
+                if bbb in self.options['ForceField'].charges.keys() and resname in self.options['ForceField'].mass_charge.keys():
+                    for i in [i for i, d in enumerate(scatoms) if d=='D']:
+                        self.exclusions.append(Exclusion(options=self.options,atoms=(atid,i+atid+1),comments='%s(%s)'%(resname,resi),parameters=(None,)))
+
+                # All residue atoms
+                counter = 0  # Counts over beads
+                bbbset = [bbMulti[count+i] for i in range(len(bb[0]))]
+                for atype,aname in zip(bbbset+list(scatoms),MAP.CoarseGrained.residue_bead_names_polBB):
+                    if self.multiscale:
+                        atype,aname = "v"+atype,"v"+aname
+                    # If mass or charge diverse, we adopt it here. 
+                    # We don't want to do this for BB beads because of charged termini.
+                    if resname in self.options['ForceField'].mass_charge.keys() and counter != 0:
+                        M,Q = self.options['ForceField'].mass_charge[resname]
+                        aname = Q[counter-1]>0 and 'SCP' or Q[counter-1]<0 and 'SCN' or aname
+                        self.atoms.append((atid,atype,resi,resname,aname,atid,Q[counter-1],M[counter-1],ss))
+                    else:
+                        self.atoms.append((atid,atype,resi,resname,aname,atid,self.options['ForceField'].charges.get(atype,0),ss))
+                    # Doing this here save going over all the atoms onesmore.
+                    # Generate position restraints for all atoms or Backbone beads only.
+                    if 'all' in self.options['PosRes']:
+                        self.posres.append((atid)) 
+                    elif aname in self.options['PosRes']:
+                        self.posres.append((atid))
+                    if mapping:
+                        self.mapping.append((atid,[i+shift for i in mapping[counter]]))
+                    atid    += 1
+                    counter += 1
+            count += 1
+
+#        # One more thing, we need to remove dihedrals (2) and an angle (1)  that reach beyond the 3' end
+#        # This is stupid to do now but the total number of atoms seems not to be available before
+#        # This iterate the list in reverse order so that removals don't affect later checks
+#        for i in range(len(self.dihedrals)-1,-1,-1):
+#            if (max(self.dihedrals[i].atoms) > self.atoms[-1][0]):
+#                del self.dihedrals[i]
+#        for i in range(len(self.angles)-1,-1,-1):
+#            if (max(self.angles[i].atoms) > self.atoms[-1][0]):
+#                del self.angles[i]
 
 
     def fromMoleculeList(self,other):

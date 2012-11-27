@@ -110,6 +110,8 @@ class CoarseGrained:
     residue_bead_names = FUNC.spl("BB SC1 SC2 SC3 SC4")
     # Generic names for DNA beads
     residue_bead_names_dna = FUNC.spl("BB1 BB2 BB3 SC1 SC2 SC3 SC4")
+    # Generic name for polarizable backbone Proteins
+    residue_bead_names_polBB = FUNC.spl("BB DIM DIP DBB SC1 SC2 SC3 SC4")
 
     # This dictionary contains the bead names for all residues,
     # following the order in 'mapping'
