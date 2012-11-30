@@ -15,25 +15,12 @@ class polbb:
         self.name = 'polbb'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                                                           #@#
-        
+        self.charges      = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                              #@#
+        self.dummycharges = {"DIM":-0.40, "DIP":0.40,}                                                           #@#
         
         #----+---------------------+
         ## A | BACKBONE PARAMETERS |
         #----+---------------------+
-        #
-        # bbss  lists the one letter secondary structure code
-        # bbdef lists the corresponding default backbone beads
-        # bbtyp lists the corresponding residue specific backbone beads
-        #
-        # bbd   lists the structure specific backbone bond lengths
-        # bbkb  lists the corresponding bond force constants
-        #
-        # bba   lists the structure specific angles
-        # bbka  lists the corresponding angle force constants
-        #
-        # bbd   lists the structure specific dihedral angles
-        # bbkd  lists the corresponding force constants
         #
         # -=NOTE=- 
         #  if the secondary structure types differ between bonded atoms
@@ -45,41 +32,54 @@ class polbb:
         #
         
         ###############################################################################################
-        ## BEADS ##                                                                          #                 
         #                               F     E     H     1     2     3     T     S     C    # SS one letter   
-        self.bbdef    =     FUNC.spl(" N0   Nda    N0    Nd    Na   Nda   Nda    P5    P5")  # Default beads   #@#
-        self.bbtyp    = {                                                                    #                 #@#
-                     "ALA": FUNC.spl(" C5    N0    C5    N0    N0    N0    N0    P4    P4"), # ALA specific    #@#
-                     "PRO": FUNC.spl(" C5    N0    C5    N0    Na    N0    N0    P4    P4"), # PRO specific    #@#
-                     "HYP": FUNC.spl(" C5    N0    C5    N0    N0    N0    N0    P4    P4")  # HYP specific    #@#
-        }                                                                                    #                 #@#
+        ## BEADS ##                                                                          #                 
         ## BONDS ##                                                                          #                 
-        self.bbldef   =             (.365, .350, .350, .350, .350, .350, .350, .350, .350)   # BB bond lengths #@#
-        self.bbkb     =             (1250, 1250, 1250, 1250, 1250, 1250,  500,  400,  400)   # BB bond kB      #@#
-        self.bbltyp   = {}                                                                   #                 #@#
-        self.bbkbtyp  = {}                                                                   #                 #@#
+        ## PAIRS ##                                                                          #
+        self.bbpk     = {
+                      'F':  FUNC.spl("0.40 0.30  0.90  0.90  0.90  0.90  0.30  0.30  0.20"), # Default beads   #@#
+                      'E':  FUNC.spl("0.40 0.30  0.90  0.90  0.90  0.90  0.30  0.30  0.20"), # Default beads   #@#
+                      'H':  FUNC.spl("0.90 0.90  0.90  0.90  0.90  0.90  0.90  0.90  0.90"), # Default beads   #@#
+                      '1':  FUNC.spl("0.90 0.90  0.90  0.90  0.90  0.90  0.90  0.90  0.90"), # Default beads   #@#
+                      '2':  FUNC.spl("0.90 0.90  0.90  0.90  0.90  0.90  0.90  0.90  0.90"), # Default beads   #@#
+                      '3':  FUNC.spl("0.90 0.90  0.90  0.90  0.90  0.90  0.90  0.90  0.90"), # Default beads   #@#
+                      'T':  FUNC.spl("0.40 0.30  0.90  0.90  0.90  0.90  0.30  0.30  0.20"), # Default beads   #@#
+                      'S':  FUNC.spl("0.40 0.30  0.90  0.90  0.90  0.90  0.30  0.30  0.20"), # Default beads   #@#
+                      'C':  FUNC.spl("0.40 0.30  0.90  0.90  0.90  0.90  0.30  0.30  0.20"), # Default beads   #@#
+                        }
         ## ANGLES ##                                                                         #                 
-        self.bbadef   =             (119.2, 134,   96,   96,   96,   96,  100,  130,  127)   # BBB angles      #@#
-        self.bbka     =             ( 150,   25,  700,  700,  700,  700,   25,   25,   25)   # BBB angle kB    #@#
-        self.bbatyp   = {                                                                    #                 #@#
-                    "PRO":          ( 119.2,134,   98,   98,   98,   98,  100,  130,  127),  # PRO specific    #@#
-                    "HYP":          ( 119.2,134,   98,   98,   98,   98,  100,  130,  127)   # PRO specific    #@#
-        }                                                                                    #                 #@#
-        self.bbkatyp  = {                                                                    #                 #@#
-                    "PRO":          ( 150,   25,  100,  100,  100,  100,   25,   25,   25),  # PRO specific    #@#
-                    "HYP":          ( 150,   25,  100,  100,  100,  100,   25,   25,   25)   # PRO specific    #@#
-        }                                                                                    #                 #@#
         ## DIHEDRALS ##                                                                      #                 
-        self.bbddef   =             (90.7,    0, -120, -120, -120, -120)                     # BBBB dihedrals  #@#
-        self.bbkd     =             ( 100,   10,  400,  400,  400,  400)                     # BBBB kB         #@#
-        self.bbdmul   =             (   1,    1,    1,    1,    1,    1)                     # BBBB mltplcty   #@#
-        self.bbdtyp   = {}                                                                   #                 #@#
-        self.bbkdtyp  = {}                                                                   #                 #@#
-                                                                                             #                 
         ###############################################################################################               
         
+        # In a polarizable backbone there are 4 beads in the backbone. 
+        # Parameters are dependent on which bead it is.
+        # Only the pair interactions are dependent on secondary structure
+        self.pol_bb = {
+        #                        BAS DIM DBB DIP   
+            'atom'   : FUNC.spl("BAS DIM DBB DIP"),
+            'bond'   : [(0.215,50000),(0.236,50000),(0.249,50000),(0.206,50000),(0.249,50000),(0.380,None),],
+            'angle'  : [(8,0,2.0),(1,95,1.5),],
+            'dih'    : [(8,1,0.2),(8,5,0.8),],
+            'imp'    : [(2,0,100),],
+            'vsite'  : [(2,4,0.5),],
+            'excl'   : [(6,8),(6,8)],
+            'pair'   : [(-0.40,-0.40,0.0,1e-7),(-0.40,0.40,0.0,1e-7),(0.40,-0.40,0.0,1e-7),(0.40,0.40,0.0,1e-7)]
+        }
+        # connectivity using atoms number in first residue.
+        # First bead is zero, to make 'remainder' calculation possible.
+        self.pol_con  = {
+            'bond'   : [(0,1),(0,3),(1,4),(3,4),(1,3),(0,4)],
+            'angle'  : [(0,4,8),(3,4,8)],
+            'dih'    : [(1,3,4,8),(1,3,5,7)],
+            'imp'    : [(0,4,1,3)],
+            'vsite'  : [(2,)],
+            'excl'   : [(1,5,7),(3,5,7)],
+            'pair'   : [(1,5),(1,7),(3,5),(3,7)],
+        }
+
         # Some Forcefields use the Ca position to position the BB-bead (me like!)
-        self.ca2bb = True 
+        # Setting puts extra beads in the coarse grain
+        self.ca2bb = 'polBB' 
         
         # BBS angle, equal for all ss types                                                         
         # Connects BB(i-1),BB(i),SC(i), except for first residue: BB(i+1),BB(i),SC(i)               
@@ -92,8 +92,6 @@ class polbb:
                'short': [ .640, 2500],                                                              #@#
                'long' : [ .970, 2500]                                                               #@#
         }                                                                                           #@#
-        
-        
         #----+-----------------------+
         ## B | SIDE CHAIN PARAMETERS |
         #----+-----------------------+
@@ -172,23 +170,6 @@ class polbb:
         ## C | DNA/RNA bases  |
         #----+----------------+
 
-        self.pol_bb = {
-            'atom'   : FUNC.spl("BAS DIM DIP DBB"),
-            'bond'   : [(0.215,50000),(0.236,50000),(0.249,50000),(0.206,50000),(0.249,50000),(0.380,None),],
-            'angle'  : [(8,0,2.0),(1,95,1.5),],
-            'dih'    : [(8,1,0.2),(8,5,0.8),],
-            'imp'    : [(2,0,100),],
-            'vsite'  : [(2,3,0.5),],
-            'excl'   : [(6,7),(6,7)],
-        }
-        self.pol_con  = {
-            'bond'  :  [(1,2),(1,3),(2,5),(3,5),(2,3),(1,5)],
-            'angle' :  [(1,5,9),(3,5,9)],
-            'dih'    : [(2,3,5,9),(2,3,6,7)],
-            'imp'    : [(1,5,2,3)],
-            'vsite'  : [(4,)],
-            'excl'   : [(2,),(3,)],
-        }
         #----+----------------+
         ## C | SPECIAL BONDS  |
         #----+----------------+
@@ -209,38 +190,15 @@ class polbb:
         #----+----------------+
         ## D | INTERNAL STUFF |
         #----+----------------+
-        
-        
-        ## BACKBONE BEAD TYPE ##                                                                    
-        # Dictionary of default bead types (*D)                                                     
-        self.bbBeadDictD  = FUNC.hash(SS.bbss,self.bbdef)                                                             
-        # Dictionary of dictionaries of types for specific residues (*S)                            
-        self.bbBeadDictS  = dict([(i,FUNC.hash(SS.bbss,self.bbtyp[i])) for i in self.bbtyp.keys()])                        
-         
-        ## BB BOND TYPE ##                                                                          
-        # Dictionary of default abond types (*D)                                                    
-        self.bbBondDictD = FUNC.hash(SS.bbss,zip(self.bbldef,self.bbkb))                                                   
-        # Dictionary of dictionaries for specific types (*S)                                        
-        # This is tricky to read, but it gives the right bondlength/force constant
-        self.bbBondDictS = dict([(i,FUNC.hash(SS.bbss,zip(self.bbltyp[i],self.bbkbtyp[i]))) for i in self.bbltyp.keys()])       
+
         # Dictionary to get the right bond given a connectivity for pol BB.
         # We might not neede the two Dictionaries above anymore in this FF-file.
         self.bbBondDictC = dict(zip(self.pol_con['bond'],self.pol_bb['bond']))
 
-        ## BBB ANGLE TYPE ##                                                                        
-        # Dictionary of default angle types (*D)                                                    
-        self.bbAngleDictD = FUNC.hash(SS.bbss,zip(self.bbadef,self.bbka))                                                  
-        # Dictionary of dictionaries for specific types (*S)                                        
-        self.bbAngleDictS = dict([(i,FUNC.hash(SS.bbss,zip(self.bbatyp[i],self.bbkatyp[i]))) for i in self.bbatyp.keys()])      
         # Dictionary to get the right angle given a connectivity for pol BB.
         # We might not neede the two Dictionaries above anymore in this FF-file.
         self.bbAngleDictC = dict(zip(self.pol_con['angle'],self.pol_bb['angle']))
        
-        ## BBBB DIHEDRAL TYPE ##                                                                    
-        # Dictionary of default dihedral types (*D)                                                 
-        self.bbDihedDictD = FUNC.hash(SS.bbss,zip(self.bbddef,self.bbkd,self.bbdmul))                                           
-        # Dictionary of dictionaries for specific types (*S)                                        
-        self.bbDihedDictS = dict([(i,FUNC.hash(SS.bbss,zip(self.bbdtyp[i],self.bbkdtyp[i]))) for i in self.bbdtyp.keys()])      
         # Dictionary to get the right dictionary given a connectivity for pol BB.
         # We might not neede the two Dictionaries above anymore in this FF-file.
         self.bbDihedDictC = dict(zip(self.pol_con['dih']+self.pol_con['imp'],self.pol_bb['dih']+self.pol_bb['imp']))
@@ -248,6 +206,14 @@ class polbb:
         ## BB VSITE AND EXCLUSION TYPE ##
         self.bbVsiteDictC = dict(zip(self.pol_con['vsite'],self.pol_bb['vsite']))
         self.bbExclusionDictC = dict(zip(self.pol_con['excl'],self.pol_bb['excl']))
+
+        ## BB PAIR TYPE ## 
+        # Dictionary of default dihedral types (*D)                                                 
+        self.bbPairDictD = dict([(i,FUNC.hash(SS.bbss,self.bbpk[i])) for i in self.bbpk.keys()])
+        self.bbPairDictC = dict(zip(self.pol_con['pair'],self.pol_bb['pair']))
+        # Dictionary of dictionaries for specific types (*S)                                        
+        # self.bbDihedDictS = dict([(i,FUNC.hash(SS.bbss,zip(self.bbdtyp[i],self.bbkdtyp[i]))) for i in self.bbdtyp.keys()])
+
 
     # The following function returns the backbone bead for a given residue and                   
     # secondary structure type.                                                                 
@@ -257,40 +223,40 @@ class polbb:
     # If the secondary structure is not listed (in the residue specific                         
     # dictionary) revert to the default.                                                        
     def bbGetBead(self,r1,ss="C"):                                                                   
-        #return self.bbBeadDictS.get(r1,self.bbBeadDictD).get(ss,self.bbBeadDictD.get(ss))+self.pol_bb['atoms']                      
         return self.pol_bb['atom']                      
     
-    # For Elnedyn we need something else to get the bond length (much simpler due to Ca position BB's)
     def bbGetBond(self,r,ca,ss):
-        #import FUNC 
-        #import math
-        #return ( math.sqrt(FUNC.distance2(ca[0],ca[1]))/10., None )+self.pol_bb['bonds']
-        # The next line put everything in r back by the amount needed to set the first feeld to be <4
+        # The next line put everything in ca back by the amount needed to set the first feeld to be <5
         ca = tuple([i-(ca[0]-ca[0]%4) for i in ca])
         return ca in self.bbBondDictC.keys() and self.bbBondDictC[ca] or None
     
     def bbGetAngle(self,r,ca,ss):
-        #import FUNC,IO 
-        #import math
-        #return (math.acos(FUNC.cos_angle([i-j for i,j in zip(ca[0],ca[1])],[i-j for i,j in zip(ca[2],ca[1])]))/IO.d2r, 40)+self.pol_bb['angles']
-        # The next line put everything in r back by the amount needed to set the first feeld to be <4
+        # The next line put everything in ca back by the amount needed to set the first feeld to be <5
         ca = tuple([i-(ca[0]-ca[0]%4) for i in ca])
         return ca in self.bbAngleDictC.keys() and self.bbAngleDictC[ca] or None
 
     def bbGetDihedral(self,r,ca,ss):
-        #ca = ca == (0,0,1,2) and (0,4,1,2) or ca
-        #ca = ca == (1,2,0,4) and (2,3,1,2) or ca
-        # The next line put everything in r back by the amount needed to set the first feeld to be <4
+        # The next line put everything in ca back by the amount needed to set the first feeld to be <5
         ca = tuple([i-(ca[0]-ca[0]%4) for i in ca])
         return ca in self.bbDihedDictC.keys() and self.bbDihedDictC[ca] or None
 
     def bbGetVsite(self,r,ca,ss):
+        shift = (ca[0]-ca[0]%4) # Used to put return values at right value.
         ca = tuple([i-(ca[0]-ca[0]%4) for i in ca])
-        return ca in self.bbVsiteDictC.keys() and self.bbVsiteDictC[ca] or None 
+        return ca in self.bbVsiteDictC.keys() and tuple([i+shift for i in self.bbVsiteDictC[ca][:-1]]+list(self.bbVsiteDictC[ca][-1:])) or None 
 
     def bbGetExclusion(self,r,ca,ss):
+        shift = (ca[0]-ca[0]%4) # Used to put return values at right value.
         ca = tuple([i-(ca[0]-ca[0]%4) for i in ca])
-        return ca in self.bbExclusionDictC.keys() and self.bbExclusionDictC[ca] or None 
+        return ca in self.bbExclusionDictC.keys() and tuple([i+shift for i in self.bbExclusionDictC[ca]]) or None 
+
+    def bbGetPair(self,r,ca,ss):
+        ca = tuple([i-(ca[0]-ca[0]%4) for i in ca])
+        # This we have to fancy up, using ss to determine the pair parameters!
+        return ca in self.pol_con['pair'] and ((self.bbPairDictD[ss[0]][ss[1]],)+self.bbPairDictC[ca]) or None 
+
+    def getCharge(self,atype,aname):
+        return self.charges.get(atype,self.dummycharges.get(aname,0))
 
     def messages(self):
         '''Prints any force-field specific logging messages.'''

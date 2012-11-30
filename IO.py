@@ -636,8 +636,21 @@ class Chain:
             # is inferred from the sequence. So this is the best place to raise 
             # an error
             try:
+                # The ca2bb = polBB gives 4 beads in the BB.
+                # The last residue, in the case of a polBB has only a CA-positioned bead.
                 beads, ids = MAP.map(residue,ca2bb=self.options['ForceField'].ca2bb)
-                beads      = zip(MAP.CoarseGrained.names[residue[0][1]],beads,ids)
+                if self.options['ForceField'].ca2bb == "polBB" and residue[0][2] == self.residues[-1][0][2]:
+                    beads,ids = beads[:-2],ids[:-2]
+                    beads      = zip(MAP.CoarseGrained.residue_bead_names_polBB[:-2],beads,ids)
+                elif self.options['ForceField'].ca2bb == "polBB" and residue[0][2] == self.residues[0][0][2]:
+                    beads,ids = beads[1:],ids[1:]
+                    beads      = zip(MAP.CoarseGrained.residue_bead_names_polBB[1:],beads,ids)
+                elif self.options['ForceField'].ca2bb == "polBB":
+                    beads      = zip(MAP.CoarseGrained.residue_bead_names_polBB,beads,ids)
+                else:
+                    beads      = zip(MAP.CoarseGrained.names[residue[0][1]],beads,ids)
+
+                # Check needed for martini 2.2 polar and charged lipids.
                 if residue[0][1] in self.options['ForceField'].polar:
                     beads = add_dummy(beads,dist=0.14,n=2)
                 elif residue[0][1] in self.options['ForceField'].charged:

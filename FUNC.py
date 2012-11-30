@@ -34,7 +34,9 @@ def formatString(i):
         return i                                                              
     if type(i) == int:                                                        
         return "%5d"%i                                                        
-    if type(i) == float:                                                      
+    if type(i) == float and 0<abs(i)<1e-5:                                                      
+        return "%2.1e"%i                                                      
+    elif type(i) == float:                                                      
         return "%8.5f"%i                                                      
     else:                                                                     
         return str(i)                                                         

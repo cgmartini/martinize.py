@@ -111,7 +111,7 @@ class CoarseGrained:
     # Generic names for DNA beads
     residue_bead_names_dna = FUNC.spl("BB1 BB2 BB3 SC1 SC2 SC3 SC4")
     # Generic name for polarizable backbone Proteins
-    residue_bead_names_polBB = FUNC.spl("BB DIM DIP DBB SC1 SC2 SC3 SC4")
+    residue_bead_names_polBB = FUNC.spl("DIP BB DIM DBB SC1 SC2 SC3 SC4")
 
     # This dictionary contains the bead names for all residues,
     # following the order in 'mapping'
@@ -156,7 +156,9 @@ def aver(b):
 # [ name, resname, resid, chain, x, y, z ]
 def map(r,ca2bb = False):
     p = CoarseGrained.mapping[r[0][1]]                                             # Mapping for this residue 
-    if ca2bb: p[0] = ["CA"]                                                        # Elnedyn maps BB to CA, ca2bb is False or True
+    if ca2bb == "polBB": 
+        p = [["N"],["CA"],["O"],["C"]]+p[1:]
+    elif ca2bb: p[0] = ["CA"]                                                      # Elnedyn maps BB to CA, ca2bb is False or True
     # Get the name, mass and coordinates for all atoms in the residue
     a = [(i[0],CoarseGrained.mass.get(i[0][0],0),i[4:]) for i in r]                    
     # Store weight, coordinate and index for atoms that match a bead

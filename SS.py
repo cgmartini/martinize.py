@@ -27,7 +27,6 @@ ss_names = {
  "C": "Coil",                                                                               #@#
 }
 
-bbss = ss_names.keys()
 bbss     =    FUNC.spl("  F     E     H     1     2     3     T     S     C")  # SS one letter 
 
 

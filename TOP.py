@@ -49,7 +49,7 @@ class Bonded:
             self.set(self.atoms,**kwargs)          
 
     def __nonzero__(self):
-        return bool(self.atoms) 
+        return bool(self.atoms) and bool(self.parameters) 
 
     def __str__(self):
         if not self.atoms or not self.parameters:
@@ -143,9 +143,9 @@ class Vsite(Bonded):
         if not self.parameters:
             self.parameters = self.options['ForceField'].bbGetVsite(r,ca,ss)
             # This assumes type one virtual sites, COM of two beads
-            if self.parameters and len(self.paramters>1):
+            if self.parameters and len(self.parameters)>1:
                 self.atoms += self.parameters[:-1]
-                self.parameters = self.parameters[-1]
+                self.parameters = self.parameters[-1:]
 
 # Similar to the preceding class
 class Exclusion(Bonded):
@@ -157,11 +157,19 @@ class Exclusion(Bonded):
         self.category   = kwargs.get("category")
         self.parameters = kwargs.get("parameters") 
         if not self.parameters:
-            atoms = self.options['ForceField'].bbGetExclusion(r,ca,ss)
-            if atoms: self.atoms += atoms
+            self.parameters = self.options['ForceField'].bbGetExclusion(r,ca,ss)
 
-    def __nonzero__(self):
-        return len(self.atoms) > 1 and True or False
+# Similar to the preceding class
+class Pair(Bonded):
+    def set(self,atoms,**kwargs):
+        ids,r,ss,ca     = zip(*atoms)
+        self.atoms      = ids
+        self.positionCa = ca
+        self.comments   = "%s(%s)-%s(%s)"% (r[0],ss[0],r[1],ss[1])
+        self.category   = kwargs.get("category")
+        self.type       = kwargs.get("type") or 1 
+        if not self.parameters:
+            self.parameters = self.options['ForceField'].bbGetPair(r,ca,ss)
 
 # Similar to the preceding class
 class Dihedral(Bonded):
@@ -215,6 +223,7 @@ class Topology:
         self.name        = ''
         self.nrexcl      = 1
         self.atoms       = CategorizedList()
+        self.pairs       = CategorizedList()
         self.vsites      = CategorizedList() 
         self.exclusions  = CategorizedList() 
         self.bonds       = CategorizedList()
@@ -323,11 +332,23 @@ class Topology:
         fs9 = '%5d %5s %5d %5s %5s %5d %7.4f %7.4f ; %s'  
         out.extend([len(i)==9 and fs9%i or fs8%i for i in self.atoms])
 
+        # Print the pairs.
+        pairs = [str(i) for i in self.pairs]
+        if pairs:
+            out.append('\n[ pairs ]')
+            out.extend(pairs)
+
         # Print out the vsites only if they excist. Right now it can only be type 1 virual sites.
-        vsites = [str(i) for i in self.vsites]
-        if vsites:
+        vsitesBB = [str(i) for i in self.vsites["BB"]]
+        vsitesSC = [str(i) for i in self.vsites["SC"]]
+        if vsitesBB or vsitesSC:
             out.append('\n[ virtual_sites2 ]')
-            out.extend(vsites)
+        if vsitesBB:
+            out.append("; Backbone virtual sites.")
+            out.extend(vsitesBB)
+        if vsitesSC:
+            out.append("; Backbone virtual sites.")
+            out.extend(vsitesSC)
 
         # Print out the exclusions only if they excist.
         exclusions = [str(i) for i in self.exclusions]
@@ -916,6 +937,7 @@ class Topology:
         startResi = self.atoms and self.atoms[-1][2]+1 or 1
 
         # Backbone bead atom IDs
+        # XXX Number of backbone beads hardcoded
         bbid = [[startAtom+i for i in range(4)]]
         for i in zip(*sc)[0]:
             bbid1 = bbid[-1][0]+len(i)+4
@@ -928,11 +950,15 @@ class Topology:
         # This contains the information for deriving backbone bead types,
         # bb bond types, bbb/bbs angle types, and bbbb dihedral types.
         seqss = zip(bbid,self.sequence,self.secstruc)
+        # The last residue only has a Calpha in the BB and no dipole.
+        seqss[-1] = (seqss[-1][0][:1],)+seqss[-1][1:]
 
         # Fetch the proper backbone beads          
-        # Since there are three beads we need to split these to the list
+        # Since there are  N beads we need to split these to the list
         bb = [self.options['ForceField'].bbGetBead(res,typ) for num,res,typ in seqss]
-        bbMulti = [i for j in bb for i in j]
+        # bbGetBead always returns all the BB-beads. For the last residue to get out
+        # only the last we preprocess it together with seqss (which does have the right length).
+        bbMulti = [beadname for residue,beads in zip(seqss,bb) for atomid,beadname in zip(residue[0],beads)]
 
         # This is going to be usefull for the type of the last backbone bead.
         # If termini need to be charged, change the bead types
@@ -953,31 +979,34 @@ class Topology:
             # Expand the N bb beads per residue into one long list
             # Resulting list contains three tuples per residue 
             # We use the useless ca parameter to get the correct backbone bond from bbGetBond 
-            frg = [(j[0][i],j[1],j[2],j[0][i]) for j in frg for i in range(len(j[0]))]
+            frg = [(j[0][i],j[1],j[2],j[0][i]-1) for j in frg for i in range(len(j[0]))]
 
             # Iterate over backbone bonds, two loops are needed because there are multipe cross bonds in the BB.
+            # Since bonded interactions can return None, we first collect them separately and then
+            # add the non-None ones to the list
             # Number of backbone beads hardcoded to 4
             for ind,k in enumerate(frg):
-                # Virtual site we check per bead
+                # Virtual site and exclusions we check per bead
                 vsite = Vsite((k,),category="BB",options=self.options,)
-                if vsite.parameters:
+                if vsite:
                      self.vsites.append(vsite)
-                # Exlusions have their own Bool check.
                 excl = Exclusion((k,),category="BB",options=self.options,)
-                if excl:
+                if excl and max(excl.parameters) <= len(bbMulti):
                     self.exclusions.append(excl)
                 
-                for l in frg[ind:ind+5]:
-                    # Since bonded interactions can return None, we first collect them separately and then
-                    # add the non-None ones to the list
+                # Bonds and pairs interate over the second atom.
+                for l in frg[ind:ind+9]:
                     bond = Bond((k,l),category="BB",options=self.options,)
-                    if bond.parameters:
+                    if bond:
                         self.bonds.append(bond)
+                    pair = Pair((k,l),category="BB",options=self.options,type=2,)
+                    if pair:
+                        self.pairs.append(pair)
 
                     # The angles need a third loop.
                     for m in frg[ind:ind+9]:
                         angle = Angle((k,l,m,),options=self.options,category="BBB")
-                        if angle.parameters:
+                        if angle:
                             self.angles.append(angle)
 
                         # The dihedrals need a fourth loop.
@@ -991,10 +1020,11 @@ class Topology:
         atid  = startAtom
         # We need to do some trickery to get all N bb beads in to these lists
         # This adds each element to a list three times, feel free to shorten up
-        residMulti = [i for i in resid for j in range(len(bb[0]))]
-        sequenceMulti = [i for i in self.sequence for j in range(len(bb[0]))]
-        scMulti = [i for i in sc for j in range(len(bb[0]))]
-        secstrucMulti = [i for i in self.secstruc for j in range(len(bb[0]))]
+        residMulti = [res for i,res in enumerate(resid) for j in range(len(bb[i]))]
+        sequenceMulti = [resname for i,resname in enumerate(self.sequence) for j in range(len(bb[i]))]
+        # Would it be easier to only give a sidechain for the beads that connect to one (ie the first)?
+        scMulti = [sidechain for i,sidechain in enumerate(sc) for j in range(len(bb[i]))]
+        secstrucMulti = [secstruc for i,secstruc in enumerate(self.secstruc) for j in range(len(bb[i]))]
         count = 0
         for resi,resname,bbb,sidechn,ss in zip(residMulti,sequenceMulti,bbMulti,scMulti,secstrucMulti):
             # We only want one side chain per three backbone beads so this skips the others
@@ -1048,25 +1078,33 @@ class Topology:
                 # Side Chain exclusions
                 # The new polarizable forcefield give problems with the charges in the sidechain, if the backbone is also charged.
                 # To avoid that, we add explicit exclusions
-                # XXX Rewrite for backbone charge exclusions
                 if bbb in self.options['ForceField'].charges.keys() and resname in self.options['ForceField'].mass_charge.keys():
                     for i in [i for i, d in enumerate(scatoms) if d=='D']:
                         self.exclusions.append(Exclusion(options=self.options,atoms=(atid,i+atid+1),comments='%s(%s)'%(resname,resi),parameters=(None,)))
 
                 # All residue atoms
                 counter = 0  # Counts over beads
-                bbbset = [bbMulti[count+i] for i in range(len(bb[0]))]
-                for atype,aname in zip(bbbset+list(scatoms),MAP.CoarseGrained.residue_bead_names_polBB):
+                # Count it the current backbone bead. bbb is the current backbone residue
+                bbbset = [bbMulti[count+i] for i in range(len(seqss[resi-1][0]))]
+                aNames = MAP.CoarseGrained.residue_bead_names_polBB[1:4]+MAP.CoarseGrained.residue_bead_names_polBB[:1]+MAP.CoarseGrained.residue_bead_names_polBB[4:]
+                for atype,aname in zip(bbbset+list(scatoms),aNames):
                     if self.multiscale:
                         atype,aname = "v"+atype,"v"+aname
                     # If mass or charge diverse, we adopt it here. 
                     # We don't want to do this for BB beads because of charged termini.
                     if resname in self.options['ForceField'].mass_charge.keys() and counter != 0:
+                        logging.error('Polarizable backbones and sidechains are not yet compatible.')
+                        sys.exit()
                         M,Q = self.options['ForceField'].mass_charge[resname]
                         aname = Q[counter-1]>0 and 'SCP' or Q[counter-1]<0 and 'SCN' or aname
                         self.atoms.append((atid,atype,resi,resname,aname,atid,Q[counter-1],M[counter-1],ss))
+                    elif atid in [vSite.atoms[0] for vSite in self.vsites]:
+                        charge = self.options['ForceField'].getCharge(atype,aname)
+                        mass = 0
+                        self.atoms.append((atid,atype,resi,resname,aname,atid,charge,mass,ss))
                     else:
-                        self.atoms.append((atid,atype,resi,resname,aname,atid,self.options['ForceField'].charges.get(atype,0),ss))
+                        charge = self.options['ForceField'].getCharge(atype,aname)
+                        self.atoms.append((atid,atype,resi,resname,aname,atid,charge,ss))
                     # Doing this here save going over all the atoms onesmore.
                     # Generate position restraints for all atoms or Backbone beads only.
                     if 'all' in self.options['PosRes']:
