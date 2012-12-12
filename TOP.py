@@ -142,10 +142,6 @@ class Vsite(Bonded):
         self.parameters = kwargs.get("parameters") 
         if not self.parameters:
             self.parameters = self.options['ForceField'].bbGetVsite(r,ca,ss)
-            # This assumes type one virtual sites, COM of two beads
-            if self.parameters and len(self.parameters)>1:
-                self.atoms += self.parameters[:-1]
-                self.parameters = self.parameters[-1:]
 
 # Similar to the preceding class
 class Exclusion(Bonded):
@@ -158,6 +154,8 @@ class Exclusion(Bonded):
         self.parameters = kwargs.get("parameters") 
         if not self.parameters:
             self.parameters = self.options['ForceField'].bbGetExclusion(r,ca,ss)
+            if self.parameters:
+                self.atoms,self.parameters = self.atoms[:1],self.atoms[1:]
 
 # Similar to the preceding class
 class Pair(Bonded):
@@ -938,26 +936,32 @@ class Topology:
 
         # Backbone bead atom IDs
         # XXX Number of backbone beads hardcoded
-        bbid = [[startAtom+i for i in range(4)]]
+        bbid = [[startAtom+i for i in range(3)]]
+        seqBBid = [[startAtom+i for i in range(3)]]
         for i in zip(*sc)[0]:
-            bbid1 = bbid[-1][0]+len(i)+4
+            bbid1    = bbid[-1][-1]+len(i)+1
+            seqBBid1 = seqBBid[-1][-1]+1
             bbid.append([bbid1+i for i in range(4)])
+            seqBBid.append([seqBBid1+i for i in range(4)])
             #bbid.append(bbid[-1]+len(i)+1)
 
         # Residue numbers for this moleculetype topology
         resid = range(startResi,startResi+len(self.sequence))     
-
         # This contains the information for deriving backbone bead types,
         # bb bond types, bbb/bbs angle types, and bbbb dihedral types.
-        seqss = zip(bbid,self.sequence,self.secstruc)
-        # The last residue only has a Calpha in the BB and no dipole.
-        seqss[-1] = (seqss[-1][0][:1],)+seqss[-1][1:]
+        seqss = zip(bbid,self.sequence,self.secstruc,seqBBid)
+        # The first residue does not start with DIP but CA
+        #seqss[0] = (seqss[0][0][1:],)+seqss[0][1:]
+        # The last residue only has DIP and CA in the BB
+        seqss[-1] = (seqss[-1][0][:2],)+seqss[-1][1:]
 
         # Fetch the proper backbone beads          
         # Since there are  N beads we need to split these to the list
-        bb = [self.options['ForceField'].bbGetBead(res,typ) for num,res,typ in seqss]
-        # bbGetBead always returns all the BB-beads. For the last residue to get out
-        # only the last we preprocess it together with seqss (which does have the right length).
+        bb = [self.options['ForceField'].bbGetBead(res,typ) for num,res,typ,numseq in seqss]
+        # bbGetBead always returns all the BB-beads. For the first residue we do not need
+        # first bead. This we pop out. Then we make it at length with seqss to give also
+        # the last bead the right length.
+        #bb[0] = bb[0][1:]
         bbMulti = [beadname for residue,beads in zip(seqss,bb) for atomid,beadname in zip(residue[0],beads)]
 
         # This is going to be usefull for the type of the last backbone bead.
@@ -979,23 +983,16 @@ class Topology:
             # Expand the N bb beads per residue into one long list
             # Resulting list contains three tuples per residue 
             # We use the useless ca parameter to get the correct backbone bond from bbGetBond 
-            frg = [(j[0][i],j[1],j[2],j[0][i]-1) for j in frg for i in range(len(j[0]))]
+            frg = [(j[0][i],j[1],j[2],j[3][i]-1) for j in frg for i in range(len(j[0]))]
 
             # Iterate over backbone bonds, two loops are needed because there are multipe cross bonds in the BB.
             # Since bonded interactions can return None, we first collect them separately and then
             # add the non-None ones to the list
             # Number of backbone beads hardcoded to 4
             for ind,k in enumerate(frg):
-                # Virtual site and exclusions we check per bead
-                vsite = Vsite((k,),category="BB",options=self.options,)
-                if vsite:
-                     self.vsites.append(vsite)
-                excl = Exclusion((k,),category="BB",options=self.options,)
-                if excl and max(excl.parameters) <= len(bbMulti):
-                    self.exclusions.append(excl)
                 
                 # Bonds and pairs interate over the second atom.
-                for l in frg[ind:ind+9]:
+                for l in frg[max(0,ind-1):ind+9]:
                     bond = Bond((k,l),category="BB",options=self.options,)
                     if bond:
                         self.bonds.append(bond)
@@ -1008,6 +1005,15 @@ class Topology:
                         angle = Angle((k,l,m,),options=self.options,category="BBB")
                         if angle:
                             self.angles.append(angle)
+                        # Virtual site should be done per residue, 
+                        # but that makes getting the right atoms very hard with sidechains.
+                        # This means we can only do exclusions to two other atoms and type-2 v-sites.
+                        vsite = Vsite((k,l,m),category="BB",options=self.options,)
+                        if vsite:
+                             self.vsites.append(vsite)
+                        excl = Exclusion((k,l,m),category="BB",options=self.options,)
+                        if excl and max(excl.parameters) <= len(bbMulti):
+                            self.exclusions.append(excl)
 
                         # The dihedrals need a fourth loop.
                         for n in frg[ind:ind+9]:
@@ -1025,10 +1031,11 @@ class Topology:
         # Would it be easier to only give a sidechain for the beads that connect to one (ie the first)?
         scMulti = [sidechain for i,sidechain in enumerate(sc) for j in range(len(bb[i]))]
         secstrucMulti = [secstruc for i,secstruc in enumerate(self.secstruc) for j in range(len(bb[i]))]
-        count = 0
+        count = 0 
         for resi,resname,bbb,sidechn,ss in zip(residMulti,sequenceMulti,bbMulti,scMulti,secstrucMulti):
             # We only want one side chain per three backbone beads so this skips the others
-            if (count % len(bb[0])) == 0:    
+            #if (count % len(bb[1])) == 0:    
+            if bbb == 'BAS':
                 # Note added impropers in contrast to aa
                 scatoms, bon_par, ang_par, dih_par, imp_par, vsite_par = sidechn
 
@@ -1085,8 +1092,12 @@ class Topology:
                 # All residue atoms
                 counter = 0  # Counts over beads
                 # Count it the current backbone bead. bbb is the current backbone residue
-                bbbset = [bbMulti[count+i] for i in range(len(seqss[resi-1][0]))]
-                aNames = MAP.CoarseGrained.residue_bead_names_polBB[1:4]+MAP.CoarseGrained.residue_bead_names_polBB[:1]+MAP.CoarseGrained.residue_bead_names_polBB[4:]
+                if resi == 1:
+                    bbbset = bbMulti[count:count+3]
+                    aNames = MAP.CoarseGrained.residue_bead_names_polBB[1:]
+                else:
+                    bbbset = bbMulti[count-1:count+3]
+                    aNames = MAP.CoarseGrained.residue_bead_names_polBB
                 for atype,aname in zip(bbbset+list(scatoms),aNames):
                     if self.multiscale:
                         atype,aname = "v"+atype,"v"+aname
@@ -1116,7 +1127,6 @@ class Topology:
                     atid    += 1
                     counter += 1
             count += 1
-
 #        # One more thing, we need to remove dihedrals (2) and an angle (1)  that reach beyond the 3' end
 #        # This is stupid to do now but the total number of atoms seems not to be available before
 #        # This iterate the list in reverse order so that removals don't affect later checks

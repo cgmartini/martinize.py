@@ -53,7 +53,6 @@ class polbb:
         
         # In a polarizable backbone there are 4 beads in the backbone. 
         # Parameters are dependent on which bead it is.
-        # Only the pair interactions are dependent on secondary structure
         self.pol_bb = {
         #                        BAS DIM DBB DIP   
             'atom'   : FUNC.spl("BAS DIM DBB DIP"),
@@ -61,22 +60,33 @@ class polbb:
             'angle'  : [(8,0,2.0),(1,95,1.5),],
             'dih'    : [(8,1,0.2),(8,5,0.8),],
             'imp'    : [(2,0,100),],
-            'vsite'  : [(2,4,0.5),],
-            'excl'   : [(6,8),(6,8)],
+            'vsite'  : [(0.5),],
+            'excl'   : [(True),(True)],
+            'pair'   : [(-0.40,-0.40,0.0,1e-7),(-0.40,0.40,0.0,1e-7),(0.40,-0.40,0.0,1e-7),(0.40,0.40,0.0,1e-7)]
+        }
+       # Only the pair interactions are dependent on secondary structure
+        self.pol_bb = {
+        #                        DIP BAS DIM DBB   
+            'atom'   : FUNC.spl("DIP BAS DIM DBB"),
+            'bond'   : [(0.215,50000),(0.236,50000),(0.249,50000),(0.206,50000),(0.249,50000),(0.380,None),],
+            'angle'  : [(8,0,2.0),(1,95,1.5),],
+            'dih'    : [(8,1,0.2),(8,5,0.8),],
+            'imp'    : [(2,0,100),],
+            'vsite'  : [(0.5,),],
+            'excl'   : [(True),(True)],
             'pair'   : [(-0.40,-0.40,0.0,1e-7),(-0.40,0.40,0.0,1e-7),(0.40,-0.40,0.0,1e-7),(0.40,0.40,0.0,1e-7)]
         }
         # connectivity using atoms number in first residue.
         # First bead is zero, to make 'remainder' calculation possible.
-        self.pol_con  = {
+        self.pol_con = {
             'bond'   : [(0,1),(0,3),(1,4),(3,4),(1,3),(0,4)],
             'angle'  : [(0,4,8),(3,4,8)],
             'dih'    : [(1,3,4,8),(1,3,5,7)],
             'imp'    : [(0,4,1,3)],
-            'vsite'  : [(2,)],
+            'vsite'  : [(2,1,3)],
             'excl'   : [(1,5,7),(3,5,7)],
             'pair'   : [(1,5),(1,7),(3,5),(3,7)],
         }
-
         # Some Forcefields use the Ca position to position the BB-bead (me like!)
         # Setting puts extra beads in the coarse grain
         self.ca2bb = 'polBB' 
@@ -142,26 +152,26 @@ class polbb:
         # For HIS the order of bonds is changed and a bond with fc=0 is added.
         self.connectivity = {
         #RES       BONDS                                             ANGLES                            DIHEDRALS       V-SITE
-        "TRP":     [[(0, 1), (1, 2), (2, 4), (4, 3), (3, 1), (1, 4)],[(0, 1, 2), (0, 1, 4), (0, 1, 3)],[(1, 2, 3, 4)]],
-        "TYR":     [[(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)],        [(0, 1, 2), (0, 1, 3)]],
-        "PHE":     [[(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)],        [(0, 1, 2), (0, 1, 3)]],
-        "HIS":     [[(0, 1), (1, 2), (1, 3), (2, 3)],        [(0, 1, 2), (0, 1, 3)]],
-        "HIH":     [[(0, 1), (1, 2), (1, 3), (2, 3)],        [(0, 1, 2), (0, 1, 3)]],
-        "GLN":     [[(0,1)]],
-        "ASN":     [[(0,1)]],
-        "SER":     [[(0,1)]],
-        "THR":     [[(0,1)]],
-        "ARG":     [[(0,1),(1,2)],                         [(0,1,2)]],
-        "LYS":     [[(0,1),(1,2)],                         [(0,1,2)]],
-        "ASP":     [[(0,1)]],
-        "GLU":     [[(0,1)]],
-        "CYS":     [[(0,1)]],
-        "ILE":     [[(0,1)]],
-        "LEU":     [[(0,1)]],
-        "MET":     [[(0,1)]],
-        "PRO":     [[(0,1)]],
-        "HYP":     [[(0,1)]],
-        "VAL":     [[(0,1)]],
+        "TRP":     [[(0, 3), (3, 4), (4, 6), (6, 5), (5, 3), (3, 6)],[(0, 3, 4), (0, 3, 6), (0, 3, 5)],[(3, 4, 5, 6)]],
+        "TYR":     [[(0, 3), (0, 4), (3, 5), (3, 5), (4, 5)],        [(0, 3, 4), (0, 3, 5)]],
+        "PHE":     [[(0, 3), (0, 4), (3, 4), (3, 5), (4, 5)],        [(0, 3, 4), (0, 3, 5)]],
+        "HIS":     [[(0, 3), (3, 4), (3, 5), (4, 5)],                [(0, 3, 4), (0, 3, 5)]],
+        "HIH":     [[(0, 3), (3, 4), (3, 5), (4, 5)],                [(0, 3, 4), (0, 3, 5)]],
+        "GLN":     [[(0,3)]],
+        "ASN":     [[(0,3)]],
+        "SER":     [[(0,3)]],
+        "THR":     [[(0,3)]],
+        "ARG":     [[(0,3),(3,4)],                         [(0,3,4)]],
+        "LYS":     [[(0,3),(3,4)],                         [(0,3,4)]],
+        "ASP":     [[(0,3)]],
+        "GLU":     [[(0,3)]],
+        "CYS":     [[(0,3)]],
+        "ILE":     [[(0,3)]],
+        "LEU":     [[(0,3)]],
+        "MET":     [[(0,3)]],
+        "PRO":     [[(0,3)]],
+        "HYP":     [[(0,3)]],
+        "VAL":     [[(0,3)]],
         "ALA":     [],
         "GLY":     [],
         }
@@ -241,14 +251,16 @@ class polbb:
         return ca in self.bbDihedDictC.keys() and self.bbDihedDictC[ca] or None
 
     def bbGetVsite(self,r,ca,ss):
-        shift = (ca[0]-ca[0]%4) # Used to put return values at right value.
+        #shift = (ca[0]-ca[0]%4) # Used to put return values at right value.
         ca = tuple([i-(ca[0]-ca[0]%4) for i in ca])
-        return ca in self.bbVsiteDictC.keys() and tuple([i+shift for i in self.bbVsiteDictC[ca][:-1]]+list(self.bbVsiteDictC[ca][-1:])) or None 
+        #return ca in self.bbVsiteDictC.keys() and tuple([i+shift for i in self.bbVsiteDictC[ca][:-1]]+list(self.bbVsiteDictC[ca][-1:])) or None 
+        return ca in self.bbVsiteDictC.keys() and self.bbVsiteDictC[ca] or None
 
     def bbGetExclusion(self,r,ca,ss):
-        shift = (ca[0]-ca[0]%4) # Used to put return values at right value.
+        #shift = (ca[0]-ca[0]%4) # Used to put return values at right value.
         ca = tuple([i-(ca[0]-ca[0]%4) for i in ca])
-        return ca in self.bbExclusionDictC.keys() and tuple([i+shift for i in self.bbExclusionDictC[ca]]) or None 
+        #return ca in self.bbExclusionDictC.keys() and tuple([i+shift for i in self.bbExclusionDictC[ca]]) or None 
+        return ca in self.bbExclusionDictC.keys() and self.bbExclusionDictC[ca] or None
 
     def bbGetPair(self,r,ca,ss):
         ca = tuple([i-(ca[0]-ca[0]%4) for i in ca])
