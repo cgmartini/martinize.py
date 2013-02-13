@@ -4,7 +4,7 @@
 # EDITABLE SECTIONS ARE MARKED WITH #@# 
 
 
-version="2.2"
+version="2.3"
 authors=["Djurre de Jong", "Jaakko J. Uusitalo", "Tsjerk A. Wassenaar"]
 
 # Parameters are defined for the following (protein) forcefields:
@@ -54,6 +54,8 @@ notes = [
     ("JJU261112","Update basic DNA capabilities"),
     ("JJU261112","Fixed bug recognizing water chain type"),
     ("DdJ271112","V2.2"),
+    ("DdJ130213","Fixed bugs: DSSP call, error message for missing atoms and catenating topologies."),
+    ("DdJ130213","V2.3"),
     ]
 
 # 
@@ -907,7 +909,7 @@ def call_dssp(chain,atomlist,executable='dsspcmbi'):
     ssdfile = 'chain_%s.ssd'%chain.id 
 
     try:
-        if os.system(executable+" -V >/dev/null"):
+        if os.system(executable+" -V 2>/dev/null"):
             logging.debug("New version of DSSP; Executing '%s -i /dev/stdin -o %s'"%(executable,ssdfile))
             p = subp.Popen([executable,"-i","/dev/stdin","-o",ssdfile],stderr=subp.PIPE,stdout=subp.PIPE,stdin=subp.PIPE)
         else:
@@ -3743,7 +3745,7 @@ class Chain:
                 elif residue[0][1] in self.options['ForceField'].charged:
                     beads = add_dummy(beads,dist=0.11,n=1)
             except ValueError:
-                logging.error("Too many atoms missing from residue %s %d(ch:%s):",residue[0][1],residue[0][2]>>20,residue[0][3])
+                logging.error("Too many atoms missing from residue %s %d(ch:%s):",residue[0][1],residue[0][2]-(32<<20),residue[0][3])
                 logging.error(repr([ i[0] for i in residue ]))
                 fail = True
 
@@ -4030,11 +4032,15 @@ class Topology:
             other = Topology(other)
         shift     = len(self.atoms)
         last      = self.atoms[-1]
-        atoms     = zip(*other.atoms)
-        atoms[0]  = [i+shift for i in atoms[0]]   # Update atom numbers
-        atoms[2]  = [i+last[2] for i in atoms[2]] # Update residue numbers
-        atoms[5]  = [i+last[5] for i in atoms[5]] # Update charge group numbers
-        self.atoms.extend(zip(*atoms))
+        # The following used work: zip>list expansions>zip back, but that only works if
+        # all the tuples in the original list of of equal length. With masses and charges
+        # that is not necessarly the case.
+        for atom in other.atoms:
+            atom = list(atom)
+            atom[0] += shift    # Update atom numbers
+            atom[2] += last[2]  # Update residue numbers
+            atom[5] += last[5]  # Update charge group numbers
+            self.atoms.append(tuple(atom))
         for attrib in ["bonds","vsites","angles","dihedrals","impropers","constraints"]:
             getattr(self,attrib).extend([source+shift for source in getattr(other,attrib)])
         return self

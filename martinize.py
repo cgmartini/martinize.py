@@ -54,6 +54,8 @@ notes = [
     ("JJU261112","Update basic DNA capabilities"),
     ("JJU261112","Fixed bug recognizing water chain type"),
     ("DdJ271112","V2.2"),
+    ("DdJ130213","Fixed bugs: DSSP call, error message for missing atoms and catenating topologies."),
+    ("DdJ130213","V2.3"),
     ]
 
 # 
