@@ -253,11 +253,15 @@ class Topology:
             other = Topology(other)
         shift     = len(self.atoms)
         last      = self.atoms[-1]
-        atoms     = zip(*other.atoms)
-        atoms[0]  = [i+shift for i in atoms[0]]   # Update atom numbers
-        atoms[2]  = [i+last[2] for i in atoms[2]] # Update residue numbers
-        atoms[5]  = [i+last[5] for i in atoms[5]] # Update charge group numbers
-        self.atoms.extend(zip(*atoms))
+        # The following used work: zip>list expansions>zip back, but that only works if
+        # all the tuples in the original list of of equal length. With masses and charges
+        # that is not necessarly the case.
+        for atom in other.atoms:
+            atom = list(atom)
+            atom[0] += shift    # Update atom numbers
+            atom[2] += last[2]  # Update residue numbers
+            atom[5] += last[5]  # Update charge group numbers
+            self.atoms.append(tuple(atom))
         for attrib in ["bonds","vsites","angles","dihedrals","impropers","constraints"]:
             getattr(self,attrib).extend([source+shift for source in getattr(other,attrib)])
         return self

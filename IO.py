@@ -643,7 +643,7 @@ class Chain:
                 elif residue[0][1] in self.options['ForceField'].charged:
                     beads = add_dummy(beads,dist=0.11,n=1)
             except ValueError:
-                logging.error("Too many atoms missing from residue %s %d(ch:%s):",residue[0][1],residue[0][2]>>20,residue[0][3])
+                logging.error("Too many atoms missing from residue %s %d(ch:%s):",residue[0][1],residue[0][2]-(32<<20),residue[0][3])
                 logging.error(repr([ i[0] for i in residue ]))
                 fail = True
 
