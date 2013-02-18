@@ -53,18 +53,7 @@ class polbb:
         
         # In a polarizable backbone there are 4 beads in the backbone. 
         # Parameters are dependent on which bead it is.
-        self.pol_bb = {
-        #                        BAS DIM DBB DIP   
-            'atom'   : FUNC.spl("BAS DIM DBB DIP"),
-            'bond'   : [(0.215,50000),(0.236,50000),(0.249,50000),(0.206,50000),(0.249,50000),(0.380,None),],
-            'angle'  : [(8,0,2.0),(1,95,1.5),],
-            'dih'    : [(8,1,0.2),(8,5,0.8),],
-            'imp'    : [(2,0,100),],
-            'vsite'  : [(0.5),],
-            'excl'   : [(True),(True)],
-            'pair'   : [(-0.40,-0.40,0.0,1e-7),(-0.40,0.40,0.0,1e-7),(0.40,-0.40,0.0,1e-7),(0.40,0.40,0.0,1e-7)]
-        }
-       # Only the pair interactions are dependent on secondary structure
+        # Only the pair interactions are dependent on secondary structure
         self.pol_bb = {
         #                        DIP BAS DIM DBB   
             'atom'   : FUNC.spl("DIP BAS DIM DBB"),
@@ -87,6 +76,7 @@ class polbb:
             'excl'   : [(1,5,7),(3,5,7)],
             'pair'   : [(1,5),(1,7),(3,5),(3,7)],
         }
+
         # Some Forcefields use the Ca position to position the BB-bead (me like!)
         # Setting puts extra beads in the coarse grain
         self.ca2bb = 'polBB' 
@@ -153,7 +143,7 @@ class polbb:
         self.connectivity = {
         #RES       BONDS                                             ANGLES                            DIHEDRALS       V-SITE
         "TRP":     [[(0, 3), (3, 4), (4, 6), (6, 5), (5, 3), (3, 6)],[(0, 3, 4), (0, 3, 6), (0, 3, 5)],[(3, 4, 5, 6)]],
-        "TYR":     [[(0, 3), (0, 4), (3, 5), (3, 5), (4, 5)],        [(0, 3, 4), (0, 3, 5)]],
+        "TYR":     [[(0, 3), (0, 4), (3, 4), (3, 5), (4, 5)],        [(0, 3, 4), (0, 3, 5)]],
         "PHE":     [[(0, 3), (0, 4), (3, 4), (3, 5), (4, 5)],        [(0, 3, 4), (0, 3, 5)]],
         "HIS":     [[(0, 3), (3, 4), (3, 5), (4, 5)],                [(0, 3, 4), (0, 3, 5)]],
         "HIH":     [[(0, 3), (3, 4), (3, 5), (4, 5)],                [(0, 3, 4), (0, 3, 5)]],
@@ -236,17 +226,17 @@ class polbb:
         return self.pol_bb['atom']                      
     
     def bbGetBond(self,r,ca,ss):
-        # The next line put everything in ca back by the amount needed to set the first feeld to be <5
+        # The next line puts everything in ca back by the amount needed to set the first field to be <5
         ca = tuple([i-(ca[0]-ca[0]%4) for i in ca])
         return ca in self.bbBondDictC.keys() and self.bbBondDictC[ca] or None
     
     def bbGetAngle(self,r,ca,ss):
-        # The next line put everything in ca back by the amount needed to set the first feeld to be <5
+        # The next line puts everything in ca back by the amount needed to set the first field to be <5
         ca = tuple([i-(ca[0]-ca[0]%4) for i in ca])
         return ca in self.bbAngleDictC.keys() and self.bbAngleDictC[ca] or None
 
     def bbGetDihedral(self,r,ca,ss):
-        # The next line put everything in ca back by the amount needed to set the first feeld to be <5
+        # The next line puts everything in ca back by the amount needed to set the first field to be <5
         ca = tuple([i-(ca[0]-ca[0]%4) for i in ca])
         return ca in self.bbDihedDictC.keys() and self.bbDihedDictC[ca] or None
 
@@ -276,3 +266,4 @@ class polbb:
         logging.warning('There is no such thing as a Martini polarizable backbone!!!')
         logging.warning('IF YOU ARE READING THIS, YOU SHOULD BE VERY AFFRAID!!!')
         pass
+

@@ -101,7 +101,7 @@ class Bond(Bonded):
         self.comments   = "%s(%s)-%s(%s)" % (r[0],ss[0],r[1],ss[1])
         # The category can be used to keep bonds sorted
         self.category   = kwargs.get("category")
-       
+
         if not self.parameters:
             self.parameters = self.options['ForceField'].bbGetBond(r,ca,ss)
         # Backbone bonds also can be constraints. We could change the type further on, but this is more general.
@@ -961,7 +961,7 @@ class Topology:
         # bbGetBead always returns all the BB-beads. For the first residue we do not need
         # first bead. This we pop out. Then we make it at length with seqss to give also
         # the last bead the right length.
-        #bb[0] = bb[0][1:]
+        bb[0] = bb[0][1:]
         bbMulti = [beadname for residue,beads in zip(seqss,bb) for atomid,beadname in zip(residue[0],beads)]
 
         # This is going to be usefull for the type of the last backbone bead.
@@ -1028,15 +1028,17 @@ class Topology:
         # This adds each element to a list three times, feel free to shorten up
         residMulti = [res for i,res in enumerate(resid) for j in range(len(bb[i]))]
         sequenceMulti = [resname for i,resname in enumerate(self.sequence) for j in range(len(bb[i]))]
+
         # Would it be easier to only give a sidechain for the beads that connect to one (ie the first)?
         scMulti = [sidechain for i,sidechain in enumerate(sc) for j in range(len(bb[i]))]
         secstrucMulti = [secstruc for i,secstruc in enumerate(self.secstruc) for j in range(len(bb[i]))]
+
         count = 0 
         for resi,resname,bbb,sidechn,ss in zip(residMulti,sequenceMulti,bbMulti,scMulti,secstrucMulti):
             # We only want one side chain per three backbone beads so this skips the others
             #if (count % len(bb[1])) == 0:    
             if bbb == 'BAS':
-                # Note added impropers in contrast to aa
+                # Note: added impropers in contrast to aa
                 scatoms, bon_par, ang_par, dih_par, imp_par, vsite_par = sidechn
 
                 # Side chain bonded terms
@@ -1052,35 +1054,34 @@ class Topology:
                         self.bonds.append(Bond(options=self.options,atoms=atids,parameters=par,type=1,
                                                comments=resname,category="SC"))
                     # Shift the atom numbers
-                    self.bonds[-1] += atid
+                    self.bonds[-1] += (atid+min(count,1))
 
                 # Side Chain Angles
                 for atids,par in zip(ang_con,ang_par):
                     self.angles.append(Angle(options=self.options,atoms=atids,parameters=par,type=2,
                                              comments=resname,category="SC"))
                     # Shift the atom numbers
-                    self.angles[-1] += atid
-
+                    self.angles[-1] += (atid+min(count,1))
                 # Side Chain Dihedrals
                 for atids,par in zip(dih_con,dih_par):
                     self.dihedrals.append(Dihedral(options=self.options,atoms=atids,parameters=par,type=2,
                                                    comments=resname,category="SC"))
                     # Shift the atom numbers
-                    self.dihedrals[-1] += atid
+                    self.dihedrals[-1] += (atid+min(count,1))
 
                 # Side Chain Impropers
                 for atids,par in zip(imp_con,imp_par):
                     self.dihedrals.append(Dihedral(options=self.options,atoms=atids,parameters=par,type=2,
                                                    comments=resname,category="SC"))
                     # Shift the atom numbers
-                    self.dihedrals[-1] += atid
+                    self.dihedrals[-1] += (atid+min(count,1))
 
                 # Side Chain V-Sites
                 for atids,par in zip(vsite_con,vsite_par):
                     self.vsites.append(Vsite(options=self.options,atoms=atids,parameters=par,type=1,
                                                    comments=resname,category="SC"))
                     # Shift the atom numbers
-                    self.vsites[-1] += atid
+                    self.vsites[-1] += atid+min(count,1)
             
                 # Side Chain exclusions
                 # The new polarizable forcefield give problems with the charges in the sidechain, if the backbone is also charged.
