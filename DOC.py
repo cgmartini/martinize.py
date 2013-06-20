@@ -95,15 +95,12 @@ behaviour can be changed using -nt and -cb, respectively.
 Disulphide bridges can be specified using -cys. This option can be
 given multiple times on the command line. The argument is a pair of
 cysteine residues, using the format
-chain/resn/resi,chain/resn/resi. For disulphide bridges, the residue
-name is not required, and the chain identifier is optional. If no
-chain identifier is given, all matching residue pairs will be checked,
-and pairs within the cutoff distance (0.22 nm) will be linked. It is
-also possible to let martinize detect cysteine pairs based on this
-cut-off distance, by giving the keyword 'auto' as argument to -cys.
+chain/resn/resi,chain/resn/resi. 
+It is also possible to let martinize detect cysteine pairs based on a
+cut-off distance of 0.22nm, by giving the keyword 'auto' as argument to -cys.
 Alternatively, a different cut-off distance can be specified, which
 will also trigger a search of pairs satisfying the distance
-criterion.
+criterion (eg: -cys 0.32).
 
 In addition to cystine bridges, links between other atoms can be
 specified using -link. This requires specification of the atoms, using

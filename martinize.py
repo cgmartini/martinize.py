@@ -56,6 +56,7 @@ notes = [
     ("DdJ271112","V2.2"),
     ("DdJ130213","Fixed bugs: DSSP call, error message for missing atoms and catenating topologies."),
     ("DdJ130213","V2.3"),
+    ("DdJ200613","Fixes in cysteine bridge detection and help text."),
     ]
 
 # 

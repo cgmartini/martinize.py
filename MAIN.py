@@ -331,7 +331,7 @@ def main(options):
                     d2 = min([FUNC.distance2(a,b) for a,b in zip(cyscoord[i],cyscoord[j])])
                     if d2 <= options['CystineMaxDist2']:
                         a, b = cysteines[i], cysteines[j]
-                        options['linkListCG'].append((("SC1","CYS",a[2],a[3]),("SC1","CYS",b[2]-(32<<20),b[3]),bl,kb))
+                        options['linkListCG'].append((("SC1","CYS",a[2],a[3]),("SC1","CYS",b[2],b[3]),bl,kb))
                         a,b = (a[0],a[1],a[2]-(32<<20),a[3]),(b[0],b[1],b[2]-(32<<20),b[3])
                         logging.info("Detected SS bridge between %s and %s (%f nm)"%(a,b,math.sqrt(d2)/10))
         
