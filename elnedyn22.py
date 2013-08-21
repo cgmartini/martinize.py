@@ -106,8 +106,8 @@ class elnedyn22:
         'TRP': [FUNC.spl("SC4 SNd SC5 SC5"), [(0.255,73000), (0.220,None), (0.250,None), (0.280,None), (0.255,None), (0.35454,None)], [(142,30), (143,20), (104,50)], [(180,200)]],
         'TYR': [FUNC.spl("SC4 SC4 SP1"),     [(0.335, 6000), (0.335,6000), (0.240,None), (0.310,None), (0.310,None)], [(70,100), (130, 50)]],
         'PHE': [FUNC.spl("SC5 SC5 SC5"),     [(0.340, 7500), (0.340,7500), (0.240,None), (0.240,None), (0.240,None)], [(70,100), (125,100)]],
-        'HIS': [FUNC.spl("SC4 SP1 SP1"),     [(0.195,94000), (0.193,None), (0.295,None), (0.216,None)],               [(135,100),(115, 50)]],
-        'HIH': [FUNC.spl("SC4 SP1 SQd"),     [(0.195,94000), (0.193,None), (0.295,None), (0.216,None)],               [(135,100),(115, 50)]],
+        'HIS': [FUNC.spl("SC4 SP1 SP1"),     [(0.195, None), (0.193,None), (0.295,None), (0.216,None)],               [(135,100),(115, 50)]],
+        'HIH': [FUNC.spl("SC4 SP1 SP1"),     [(0.195, None), (0.193,None), (0.295,None), (0.216,None)],               [(135,100),(115, 50)]],
         'ARG': [FUNC.spl("N0 Qd"),           [(0.250,12500), (0.350,6200)],                                           [(150,15)]],
         'LYS': [FUNC.spl("C3 Qd"),           [(0.250,12500), (0.300,9700)],                                           [(150,20)]],
         'CYS': [FUNC.spl("C5"),              [(0.240, None)]],
@@ -175,7 +175,7 @@ class elnedyn22:
         self.special = {
             # Used for sulfur bridges
             # ATOM 1         ATOM 2          BOND LENGTH   FORCE CONSTANT
-            (("SC1","CYS"), ("SC1","CYS")):     (0.39,         5000),
+            (("SC1","CYS"), ("SC1","CYS")):     (0.24,         None),
             }
        
         # By default use an elastic network
@@ -230,7 +230,7 @@ class elnedyn22:
         import FUNC 
         import math
         # The 150000 forceconstant gave an error message, turning to constraints would be better.
-        return ( math.sqrt(FUNC.distance2(ca[0],ca[1]))/10., None )
+        return ( math.sqrt(FUNC.distance2(ca[0],ca[1]))/10., 150000 )
     
     def bbGetAngle(self,r,ca,ss):
         import FUNC,IO 
@@ -242,10 +242,11 @@ class elnedyn22:
         '''Prints any force-field specific logging messages.'''
         import logging
         logging.info('The elnedyn forcefield has been implemented with some changes compared to the published parameters:')
-        logging.info('- Backbone-Backbone bonds are constraints in stead of high force constant bonds.')
-        #logging.info('- Backbone-Backbone bonds use high force constant bonds instead of constraints.')
+        #logging.info('- Backbone-Backbone bonds are constraints in stead of high force constant bonds.')
+        logging.info('- Backbone-Backbone bonds use high force constant bonds instead of constraints.')
         logging.info('- Trp has an extra constrain added to the sidechain.')
         logging.info('- The Backbone sidechain bonds with high force constants are replaced by constraints except for Trp and His.')
+        logging.info('- Cysteine bonds are 0.24 nm constraints, instead of the published 0.39nm/5000kJ/mol.')
         logging.warning('Elnedyn topologies might not give numerical stable simulations with a 20fs timestep.')
         logging.warning('This can be solved by setting all S-type bead masses to 72amu.')
         logging.warning('Martini version 2.2 is in beta release. It has not been extensively tested and problems might occur.')

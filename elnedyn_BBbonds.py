@@ -173,7 +173,7 @@ class elnedyn:
         self.special = {
             # Used for sulfur bridges
             # ATOM 1         ATOM 2          BOND LENGTH   FORCE CONSTANT
-            (("SC1","CYS"), ("SC1","CYS")):     (0.39,         5000),
+            (("SC1","CYS"), ("SC1","CYS")):     (0.24,         None),
             }
        
         # By default use an elastic network
@@ -245,6 +245,7 @@ class elnedyn:
         logging.info('- Backbone-Backbone bonds use high force constant bonds instead of constraints.')
         logging.info('- Trp has an extra constrain added to the sidechain.')
         logging.info('- The Backbone sidechain bonds with high force constants are replaced by constraints except for Trp and His.')
+        logging.info('- Cysteine bonds are 0.24 nm constraints, instead of the published 0.39nm/5000kJ/mol.')
         logging.warning('Elnedyn topologies might not give numerical stable simulations with a 20fs timestep.')
         logging.warning('This can be solved by setting all S-type bead masses to 72amu.') 
         pass

@@ -169,7 +169,7 @@ class martini21p:
         self.special = {
             # Used for sulfur bridges
             # ATOM 1         ATOM 2          BOND LENGTH   FORCE CONSTANT
-            (("SC1","CYS"), ("SC1","CYS")):     (0.39,         5000),
+            (("SC1","CYS"), ("SC1","CYS")):     (0.24,         None),
             }
        
         # By default use an elastic network
@@ -243,5 +243,5 @@ class martini21p:
         
     def messages(self):
         '''Prints any force-field specific logging messages.'''
-        pass
+        logging.info('Note: Cysteine bonds are 0.24 nm constraints, instead of the published 0.39nm/5000kJ/mol.')
 
