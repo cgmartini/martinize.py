@@ -4,7 +4,7 @@
 # EDITABLE SECTIONS ARE MARKED WITH #@# 
 
 
-version="2.3"
+version="2.3c"
 authors=["Djurre de Jong", "Jaakko J. Uusitalo", "Tsjerk A. Wassenaar"]
 
 # Parameters are defined for the following (protein) forcefields:
@@ -57,6 +57,8 @@ notes = [
     ("DdJ130213","Fixed bugs: DSSP call, error message for missing atoms and catenating topologies."),
     ("DdJ130213","V2.3"),
     ("DdJ200613","Fixes in cysteine bridge detection and help text."),
+    ("DdJ200820","Fixes in cysteine bridge length and added a warning about it."),
+    ("DdJ200826","Inverted 'define NO_RUBBER_BANDS', fixed writing posres when merging and added few comments."),
     ]
 
 # 
@@ -107,10 +109,13 @@ if __name__ == '__main__':
     import sys,logging
     import DOC,CMD,MAIN
     args = sys.argv[1:]
+    # The argument cat is only given once: when concatenating to on exportable script.
     if '-cat' in args:
         cat('martinize-'+version+'.py')
         sys.exit()
+    # Get the possible commandline arguments arguments and help text. 
     options,lists = DOC.options,DOC.lists
+    # Parse commandline options.
     options = CMD.option_parser(args,options,lists,version)
 
     MAIN.main(options)

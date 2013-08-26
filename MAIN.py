@@ -362,7 +362,7 @@ def main(options):
             # If not, generate the topology from the chain definition
             if not mol in moleculeTypes or options['SeparateTop']:
                 # Name of the moleculetype
-                # NOTE: The naming should be changed; now it becomes Protein_X+Protein_Y+...
+                # XXX: The naming should be changed; now it becomes Protein_X+Protein_Y+...
                 name = "+".join([chain.getname(options['-name'].value) for chain in mol])
                 moleculeTypes[mol] = name
     

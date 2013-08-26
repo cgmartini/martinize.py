@@ -262,7 +262,7 @@ class Topology:
             atom[2] += last[2]  # Update residue numbers
             atom[5] += last[5]  # Update charge group numbers
             self.atoms.append(tuple(atom))
-        for attrib in ["bonds","vsites","angles","dihedrals","impropers","constraints"]:
+        for attrib in ["bonds","vsites","angles","dihedrals","impropers","constraints","posres"]:
             getattr(self,attrib).extend([source+shift for source in getattr(other,attrib)])
         return self
 
@@ -338,7 +338,7 @@ class Topology:
         bonds = [str(i) for i in self.bonds["Rubber",True]]
         if bonds:
             # Add a CPP style directive to allow control over the elastic network
-            out.append("#ifdef RUBBER_BANDS")
+            out.append("#ifndef NO_RUBBER_BANDS")
             out.append("#ifndef RUBBER_FC\n#define RUBBER_FC %f\n#endif"%self.options['ElasticMaximumForce'])
             out.extend(bonds)
             out.append("#endif")
