@@ -12,74 +12,31 @@ forcefields = ['martini21','martini21p','martini22','martini22p','elnedyn','elne
 
 
 notes = [
-    ("TAW110929","Modified Option class to handle boolean options nicely"),
-    ("TAW110929","Modified position restraints to allow arbitrary atom name selections"),
-    ("TAW110929","Enabled merging chains (option -merge)"),
-    ("TAW110930","Changed order of fields in CG atom representation (name,resn,chain,resi)->(name,resn,resi,chain)"),
-    ("TAW110930","Enabled cystine bridges, including automatic detection"),
-    ("TAW111007","Added stuff to support multiscaling"),
-    ("TAW111007","Added writing of an index file for multiscaling"),
-    ("TAW120215","Started rearranging things and added documentation to options"),    
-    ("TAW120314","Enabled elastic networks"),
-    ("TAW120314","Moved mapping stuff to class CoarseGrained - Class needs to be made into generic converter"),
-    ("TAW120329","Added support for residue insertion codes in PDB files"),
-    ("DdJ120401","v1.1"),
-    ("DdJ120512","Fixed bug with counter in multi chain topologies"),
-    ("DdJ120512","Corrected wrong collagen parameters"),
-    ("DdJ120521","Corrected wrong collagen parameters"),
-    ("DdJ120521","Fixed bug involving BBBB dihedrals in extended regions."),
-    ("DdJ120522","v1.2"),
-    ("DdJ120406","Splitted script in to 10+1 seperate modules."),
-    ("DdJ120419","Added a WEB module."),
-    ("DdJ240419","Moved all the forcefield specific settings to FF or CMD, to allow easy adding of forcefields."),
-    ("DdJ120512","Every forcefield now has it's own file."),
-    ("DdJ140612","The program is martini 2.2(p) ready (dummy beads in pdb, dummies,vsites and p-charged in itp."),
-    ("DdJ140612","Added new forcefield files (martini22, martini22p, elnedyn2)"),
-    ("DdJ260612","Adopted forcefield class to better fit in polar and charged particles"),
-    ("DdJ260612","Added new forcefield files (elnedyn, elnedyn22, elnedyn22p)"),
-    ("DdJ120712","Added basic DNA capabilities"),
-    ("DdJ240712","Fixed bug with manually defined Cys-bridges due to insertion code (TAW120329)."), 
-    ("DdJ240712","Added FF specific message definition."),
-    ("DdJ240712","Added exclusions for p-FFs. Changed naming of dummy beads."),
-    ("DdJ220812","Bug fixing bond lengths, ss for multiple chains and print message in itp."),
-    ("DdJ140912","Fixed wrong combining of position restraints when merging proteins."),
-    ("DdJ140912","Fixed bug in TYR/HIS in elnedyn forcefields."),
-    ("DdJ140912","Added warning about differing beadnames and printing commandline arguments to itp."),
-    ("DdJ270912","The Ca position is now determined based on atom name (CA) iso second atom of residue."),
-    ("DdJ280912","Fixed more bugs in the elnedyn definition."),
-    ("DdJ221112","Clean help text and some code."),
-    ("DdJ221112","Fixed that crashed the break checking code if water chain name == protein chain name."),
-    ("DdJ231112","Fixed bug when helix was starting at first residue."),
-    ("DdJ261112","Added capability to interactively choose HIS-charge state."),
-    ("JJU261112","Update basic DNA capabilities"),
-    ("JJU261112","Fixed bug recognizing water chain type"),
-    ("DdJ271112","V2.2"),
-    ("DdJ130213","Fixed bugs: DSSP call, error message for missing atoms and catenating topologies."),
     ("DdJ130213","V2.3"),
     ("DdJ200613","Fixes in cysteine bridge detection and help text."),
     ("DdJ200820","Fixes in cysteine bridge length and added a warning about it."),
     ("DdJ200826","Inverted 'define NO_RUBBER_BANDS', fixed writing posres when merging and added few comments."),
+    ("DdJ200831","Shortened in-file changelog and fixed some comments."),
     ]
 
 # 
-# This program has grown to be pretty complete and complex. 
-# The routines have been organized in sections, which are 
-# tagged to make jumping to a particular section easy.
-# For working versions, the sections are in different modules
+# This program has grown to be pretty complex. 
+# The routines have been organized in different files.
+# For working versions, all files can be incorporated by using the option -cat. 
 #
-# Index of this file:
+# Index of the program files:
 #
-#   1. Options and documentation                             @DOC
-#   2. Description, options and command line parsing         @CMD
-#   3. Helper functions and macros                           @FUNC
-#   4. Finegrained to coarsegrained mapping                  @MAP
-#   5. Secondary structure determination and interpretation  @SS
-#   6. Force field parameters (MARTINI/ELNEDYN)              @FF
-#   7. Elastic network                                       @ELN
-#   8. Structure I/O                                         @IO
-#   9. Topology generation                                   @TOP
-#  10. Main                                                  @MAIN
-#  11. Web-interface		                			     @WEB
+#   1. Options and documentation                             @DOC.py
+#   2. Description, options and command line parsing         @CMD.py
+#   3. Helper functions and macros                           @FUNC.py
+#   4. Finegrained to coarsegrained mapping                  @MAP.py
+#   5. Secondary structure determination and interpretation  @SS.py
+#   6. Force field parameters (MARTINI/ELNEDYN)              @FF.py
+#   7. Elastic network                                       @ELN.py
+#   8. Structure I/O                                         @IO.py
+#   9. Topology generation                                   @TOP.py
+#  10. Main                                                  @MAIN.py
+#  11. Web-interface		                			     @WEB.py
 #  
 
 def cat(file_out):
