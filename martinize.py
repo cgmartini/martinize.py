@@ -7,10 +7,6 @@
 version="2.3c"
 authors=["Djurre de Jong", "Jaakko J. Uusitalo", "Tsjerk A. Wassenaar"]
 
-# Parameters are defined for the following (protein) forcefields:
-forcefields = ['martini21','martini21p','martini22','martini22p','elnedyn','elnedyn22','elnedyn22p','martini22dna']
-
-
 notes = [
     ("DdJ130213","V2.3"),
     ("DdJ200613","Fixes in cysteine bridge detection and help text."),
@@ -43,10 +39,6 @@ if __name__ == '__main__':
     import sys,logging
     import DOC,CMD,MAIN
     args = sys.argv[1:]
-    # The argument cat is only given once: when concatenating to on exportable script.
-    if '-cat' in args:
-        cat('martinize-'+version+'.py')
-        sys.exit()
     # Get the possible commandline arguments arguments and help text. 
     options,lists = DOC.options,DOC.lists
     # Parse commandline options.
