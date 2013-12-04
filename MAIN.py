@@ -384,8 +384,8 @@ def main(options):
                     atomA = atomA in mcg and mcg.index(atomA)+1
                     atomB = atomB in mcg and mcg.index(atomB)+1
                     if atomA and atomB:
-                        cat = (mcg[atomA][1] == "CYS" and mcg[atomB][1] == "CYS") and "Cystine" or "Link"
-                        top.bonds.append(TOP.Bond((atomA,atomB),options=options,type=1,parameters=(bondlength,forceconst),category=cat))
+                        cat = (forceconst == None) and "Constraint" or "Link"
+                        top.bonds.append(TOP.Bond((atomA,atomB),options=options,type=1,parameters=(bondlength,forceconst),category=cat,comments="Cys-bonds/special link"))
         
                 # Elastic Network
                 # The elastic network is added after the topology is constructed, since that
