@@ -4,7 +4,7 @@
 # EDITABLE SECTIONS ARE MARKED WITH #@# 
 
 
-version="2.4"
+version="2.5a"
 authors=["Djurre de Jong", "Jaakko J. Uusitalo", "Tsjerk A. Wassenaar"]
 
 # Parameters are defined for the following (protein) forcefields:

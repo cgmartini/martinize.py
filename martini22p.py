@@ -263,7 +263,6 @@ class martini22p:
     def messages(self):
         '''Prints any force-field specific logging messages.'''
         import logging
-        logging.warning('Martini version 2.2 is in beta release. It has not been extensively tested and problems might occur.')
         logging.warning('Bead names of charges in sidechains differ between .top/.itp and .pdb.')
         logging.warning('Using names in topology, as Gromacs does, gives the correct result.')
         logging.info('Note: Cysteine bonds are 0.24 nm constraints, instead of the published 0.39nm/5000kJ/mol.')

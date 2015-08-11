@@ -249,5 +249,4 @@ class elnedyn22:
         logging.info('- Cysteine bonds are 0.24 nm constraints, instead of the published 0.39nm/5000kJ/mol.')
         logging.warning('Elnedyn topologies might not give numerical stable simulations with a 20fs timestep.')
         logging.warning('This can be solved by setting all S-type bead masses to 72amu.')
-        logging.warning('Martini version 2.2 is in beta release. It has not been extensively tested and problems might occur.')
         pass
