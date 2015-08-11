@@ -4,7 +4,7 @@
 # EDITABLE SECTIONS ARE MARKED WITH #@# 
 
 
-version="2.5a"
+version="2.5"
 authors=["Djurre de Jong", "Jaakko J. Uusitalo", "Tsjerk A. Wassenaar"]
 
 # Parameters are defined for the following (protein) forcefields:
@@ -12,12 +12,10 @@ forcefields = ['martini21','martini21p','martini22','martini22p','elnedyn','elne
 
 
 notes = [
-    ("DdJ130213","V2.3"),
-    ("DdJ200613","Fixes in cysteine bridge detection and help text."),
-    ("DdJ200820","Fixes in cysteine bridge length and revert elnedyn BB-bonds to bonds."),
-    ("DdJ200826","Inverted 'define NO_RUBBER_BANDS', fixed writing posres when merging and added few comments."),
-    ("DdJ200831","Shortened in-file changelog and fixed some comments."),
     ("DdJ181013","V2.4"),
+    ("DdJ041213","Fixed bug where Cys-Cys constraints were not recognized as such."),
+    ("DdJ110815","Removed warnings about beta status of Martini 2.2."),
+    ("DdJ110815","V2.5"),
     ]
 
 # 
