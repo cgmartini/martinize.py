@@ -3038,13 +3038,14 @@ def decayFunction(distance,shift,rate,power):
 def rubberBands(atomList,lowerBound,upperBound,decayFactor,decayPower,forceConstant,minimumForce):
     out = []
     u2  = upperBound**2
+    l2  = lowerBound**2
     while len(atomList) > 3:
         bi,xi = atomList.pop(0)
         for bj,xj in atomList[2:]:
             # Mind the nm/A conversion -- This has to be standardized! Global use of nm?
             d2 = distance2(xi,xj)/100
             
-            if d2 < u2:
+            if l2 < d2 < u2:
                 dij  = math.sqrt(d2)
                 fscl = decayFunction(dij,lowerBound,decayFactor,decayPower)
                 if fscl*forceConstant > minimumForce:
