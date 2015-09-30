@@ -2,12 +2,24 @@
 ## 6 # FORCE FIELD PARAMETERS ##  -> @FF <-
 ################################
 
-class martini21p:
+# New martini 2.2p parameters.
+# Changed: 
+#   Unstructured Pro backbone bead
+#   Proline side chains
+#   Phe sidechain
+#   Trp sidechain
+#   Polar beads
+#   Helix BB-bonds to constraint      
+# Todo:
+#   Helix BB-bond length
+
+class martini22p:
+    ff = True
     def __init__(self):
         import SS,FUNC,IO 
 
         # parameters are defined here for the following (protein) forcefields:
-        self.name = 'martini21p'
+        self.name = 'martini22p'
         
         # Charged types:
         self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                                                           #@#
@@ -41,16 +53,16 @@ class martini21p:
         
         ###############################################################################################
         ## BEADS ##                                                                         #                 
-        #                          F     E     H     1     2     3     T     S     C        # SS one letter   
+        #                              F     E     H     1     2     3     T     S     C    # SS one letter   
         self.bbdef    =    FUNC.spl(" N0   Nda    N0    Nd    Na   Nda   Nda    P5    P5")  # Default beads   #@#
         self.bbtyp    = {                                                                   #                 #@#
-                     "ALA": FUNC.spl(" C5    N0    C5    N0    N0    N0    N0    P4    P4"),# ALA specific    #@#
-                     "PRO": FUNC.spl(" C5    N0    C5    N0    Na    N0    N0    Na    Na"),# PRO specific    #@#
-                     "HYP": FUNC.spl(" C5    N0    C5    N0    N0    N0    N0    Na    Na") # HYP specific    #@#
+                    "ALA": FUNC.spl(" C5    N0    C5    N0    N0    N0    N0    P4    P4"), # ALA specific    #@#
+                    "PRO": FUNC.spl(" C5    N0    C5    N0    Na    N0    N0    P4    P4"), # PRO specific    #@#
+                    "HYP": FUNC.spl(" C5    N0    C5    N0    N0    N0    N0    P4    P4")  # HYP specific    #@#
         }                                                                                   #                 #@#
         ## BONDS ##                                                                         #                 
-        self.bbldef   =             (.365, .350, .350, .350, .350, .350, .350, .350, .350)  # BB bond lengths #@#
-        self.bbkb     =             (1250, 1250, 1250, 1250, 1250, 1250,  500,  400,  400)  # BB bond kB      #@#
+        self.bbldef   =             (.365, .350, .310, .310, .310, .310, .350, .350, .350)  # BB bond lengths #@#
+        self.bbkb     =             (1250, 1250, None, None, None, None, 1250, 1250, 1250)  # BB bond kB      #@#
         self.bbltyp   = {}                                                                  #                 #@#
         self.bbkbtyp  = {}                                                                  #                 #@#
         ## ANGLES ##                                                                        #                 
@@ -96,61 +108,69 @@ class martini21p:
         
         # To be compatible with Elnedyn, all parameters are explicitly defined, even if they are double.
         self.sidechains = {
-            #RES#   BEADS                   BONDS                                                   ANGLES              DIHEDRALS
-            #                               BB-SC          SC-SC                                        BB-SC-SC  SC-SC-SC
-            "TRP": [FUNC.spl("SC4 SP1 SC4 SC4"),[(0.300,5000)]+[(0.270,None) for i in range(5)],        [(210,50),(90,50),(90,50)], [(0,50),(0,200)]],
-            "TYR": [FUNC.spl("SC4 SC4 SP1"),    [(0.320,5000), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
-            "PHE": [FUNC.spl("SC4 SC4 SC4"),    [(0.310,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
-            "HIS": [FUNC.spl("SC4 SP1 SP1"),    [(0.320,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
-            "HIH": [FUNC.spl("SC4 SP1 SQd"),    [(0.320,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
-            "ARG": [FUNC.spl("N0 Qd"),          [(0.330,5000), (0.340,5000)],                           [(180,25)]],
-            "LYS": [FUNC.spl("C3 Qd"),          [(0.330,5000), (0.280,5000)],                           [(180,25)]],
-            "CYS": [FUNC.spl("C5"),             [(0.310,7500)]],
-            "ASP": [FUNC.spl("Qa"),             [(0.320,7500)]],
-            "GLU": [FUNC.spl("Qa"),             [(0.400,5000)]],
-            "ILE": [FUNC.spl("C1"),            [(0.310,None)]],
-            "LEU": [FUNC.spl("C1"),            [(0.330,7500)]],
-            "MET": [FUNC.spl("C5"),             [(0.400,2500)]],
-            "ASN": [FUNC.spl("P5"),             [(0.320,5000)]],
-            "PRO": [FUNC.spl("C2"),            [(0.300,7500)]],
-            "HYP": [FUNC.spl("P1"),             [(0.300,7500)]],
-            "GLN": [FUNC.spl("P4"),             [(0.400,5000)]],
-            "SER": [FUNC.spl("P1"),             [(0.250,7500)]],
-            "THR": [FUNC.spl("P1"),             [(0.260,None)]],
-            "VAL": [FUNC.spl("C2"),            [(0.265,None)]],
-            "ALA": [],
-            "GLY": [],
-            }
+          #RES#   BEADS                       BONDS                                                                   ANGLES                      DIHEDRALS        V-SITES
+          #                                   BB-SC          SC-SC                                                    BB-SC-SC  SC-SC-SC
+          "TRP": [FUNC.spl("SC4 SNd SC5 SC5"),[(0.300,5000)]+[(0.270,None) for i in range(5)],                    [(210,50),(90,50),(90,50)], [(0,50),(0,200)]],
+          "TYR": [FUNC.spl("SC4 SC4 SP1"),    [(0.320,5000), (0.270,None), (0.270,None),(0.270,None)],            [(150,50),(150,50)],        [(0,50)]],
+          "PHE": [FUNC.spl("SC5 SC5 SC5"),    [(0.310,7500), (0.270,None), (0.270,None),(0.270,None)],            [(150,50),(150,50)],        [(0,50)]],
+          "HIS": [FUNC.spl("SC4 SP1 SP1"),    [(0.320,7500), (0.270,None), (0.270,None),(0.270,None)],            [(150,50),(150,50)],        [(0,50)]],
+          "HIH": [FUNC.spl("SC4 SP1 SQd D"),  [(0.320,7500), (0.270,None), (0.270,None),(0.270,None),(0.11,None)],[(150,50),(150,50)],        [(0,50)]],
+          "GLN": [FUNC.spl("Nda D D"),        [(0.400,5000), (0.280,None)],                                       [],                         [],              [(0.5,)]],
+          "ASN": [FUNC.spl("Nda D D"),        [(0.320,5000), (0.280,None)],                                       [],                         [],              [(0.5,)]],
+          "SER": [FUNC.spl("N0 D D"),         [(0.250,7500), (0.280,None)],                                       [],                         [],              [(0.5,)]],
+          "THR": [FUNC.spl("N0 D D"),         [(0.260,9000), (0.280,None)],                                       [],                         [],              [(0.5,)]],
+          "ARG": [FUNC.spl("N0 Qd D"),        [(0.330,5000), (0.340,5000), (0.110,None)],                         [(180,25)]],
+          "LYS": [FUNC.spl("C3 Qd D"),        [(0.330,5000), (0.280,5000), (0.110,None)],                         [(180,25)]],
+          "ASP": [FUNC.spl("Qa D"),           [(0.320,7500), (0.110,None)]],
+          "GLU": [FUNC.spl("Qa D"),           [(0.400,5000), (0.110,None)]],
+          "CYS": [FUNC.spl("C5"),             [(0.310,7500)]],
+          "ILE": [FUNC.spl("C1"),             [(0.310,None)]],
+          "LEU": [FUNC.spl("C1"),             [(0.330,7500)]],
+          "MET": [FUNC.spl("C5"),             [(0.400,2500)]],
+          "PRO": [FUNC.spl("C3"),             [(0.300,7500)]],
+          "HYP": [FUNC.spl("P1"),             [(0.300,7500)]],
+          "VAL": [FUNC.spl("C2"),             [(0.265,None)]],
+          "ALA": [],
+          "GLY": [],
+          }
         
         # Not all (eg Elnedyn) forcefields use backbone-backbone-sidechain angles and BBBB-dihedrals.
         self.UseBBSAngles          = True 
         self.UseBBBBDihedrals      = True
 
         # Martini 2.2p has polar and charged residues with seperate charges.
-        self.polar   = []
-        self.charged = []
+        self.polar   = ["GLN","ASN","SER","THR"]
+        self.charged = ["ARG","LYS","ASP","GLU","HIH"]
 
         # If masses or charged diverge from standard (45/72 and -/+1) they are defined here.
         self.mass_charge = {
         #RES   MASS               CHARGE
+        "GLN":[[0,36,36],         [0,0.42,-0.42]], 
+        "ASN":[[0,36,36],         [0,0.46,-0.46]], 
+        "SER":[[0,36,36],         [0,0.40,-0.40]],
+        "THR":[[0,36,36],         [0,0.36,-0.36]],
+        "ARG":[[72,36,36],        [0,0,1]],
+        "LYS":[[72,36,36],        [0,0,1]],
+        "HIH":[[45,45,36,36],     [0,0,0,1]],
+        "ASP":[[36,36],           [0,-1]],
+        "GLU":[[36,36],           [0,-1]],
         }
 
-        # Defines the connectivity between between beads
         self.connectivity = {
         #RES       BONDS                                   ANGLES             DIHEDRALS              V-SITE
-        "TRP":     [[(0,1),(1,2),(1,3),(2,3),(2,4),(3,4)], [(0,1,2),(0,1,3)], [(0,2,3,1),(1,2,4,3)]],
-        "TYR":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
+        "TRP":     [[(0,1),(1,2),(1,3),(2,3),(2,4),(3,4)], [(0,1,2),(0,1,3)], [(0,2,3,1),(1,2,4,3)]],  
+        "TYR":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]], 
         "PHE":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
         "HIS":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
-        "HIH":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
-        "GLN":     [[(0,1)]],
-        "ASN":     [[(0,1)]],
-        "SER":     [[(0,1)]],
-        "THR":     [[(0,1)]],
-        "ARG":     [[(0,1),(1,2)],                         [(0,1,2)]],
-        "LYS":     [[(0,1),(1,2)],                         [(0,1,2)]],
-        "ASP":     [[(0,1)]],
-        "GLU":     [[(0,1)]],
+        "HIH":     [[(0,1),(1,2),(1,3),(2,3),(3,4)],       [(0,1,2),(0,1,3)], [(0,2,3,1)]],
+        "GLN":     [[(0,1),(2,3)],                         [],                [],                    [(1,2,3)]],
+        "ASN":     [[(0,1),(2,3)],                         [],                [],                    [(1,2,3)]],
+        "SER":     [[(0,1),(2,3)],                         [],                [],                    [(1,2,3)]],
+        "THR":     [[(0,1),(2,3)],                         [],                [],                    [(1,2,3)]],
+        "ARG":     [[(0,1),(1,2),(2,3)],                   [(0,1,2)]],
+        "LYS":     [[(0,1),(1,2),(2,3)],                   [(0,1,2)]],
+        "ASP":     [[(0,1),(1,2)]],
+        "GLU":     [[(0,1),(1,2)]],
         "CYS":     [[(0,1)]],
         "ILE":     [[(0,1)]],
         "LEU":     [[(0,1)]],
@@ -161,7 +181,7 @@ class martini21p:
         "ALA":     [],
         "GLY":     [],
         }
-
+ 
         #----+----------------+
         ## C | SPECIAL BONDS  |
         #----+----------------+
@@ -171,10 +191,10 @@ class martini21p:
             # ATOM 1         ATOM 2          BOND LENGTH   FORCE CONSTANT
             (("SC1","CYS"), ("SC1","CYS")):     (0.24,         None),
             }
-       
+        
         # By default use an elastic network
-        self.ElasticNetwork = False
- 
+        self.ElasticNetwork = False 
+
         # Elastic networks bond shouldn't lead to exclusions (type 6) 
         # But Elnedyn has been parametrized with type 1.
         self.EBondType = 6
@@ -226,7 +246,7 @@ class martini21p:
         b2 = self.bbBondDictS.get(r[1],self.bbBondDictD).get(ss[1],self.bbBondDictD.get(ss[1]))
         # Determine which parameters to use for the bond
         return ( (b1[0]+b2[0])/2, min(b1[1],b2[1]) )
-    
+
     def bbGetAngle(self,r,ca,ss):
         # PRO in helices is dominant
         if r[1] == "PRO" and ss[1] in "H123":
@@ -240,8 +260,11 @@ class martini21p:
             a.sort(key=lambda i: (i[1],i[0]))
             # This selects the set with the smallest force constant and the smallest angle
             return a[0]
-        
+
     def messages(self):
         '''Prints any force-field specific logging messages.'''
+        import logging
+        logging.warning('Martini version 2.2 is in beta release. It has not been extensively tested and problems might occur.')
+        logging.warning('Bead names of charges in sidechains differ between .top/.itp and .pdb.')
+        logging.warning('Using names in topology, as Gromacs does, gives the correct result.')
         logging.info('Note: Cysteine bonds are 0.24 nm constraints, instead of the published 0.39nm/5000kJ/mol.')
-

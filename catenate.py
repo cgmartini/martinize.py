@@ -5,10 +5,12 @@ def cat():
     file_out = "martinize-%s.py"%version
 
     # Parameters are defined for the following (protein) forcefields:
-    forcefields = [ff[:-6] for ff in os.listdir(".") if ff[-6:] == ".ff.py"]
+    forcefields = [ff[:-6] for ff in os.listdir(".") if ff[-6:] == "_ff.py"]
+    if os.path.isdir("ForceFields"):
+        forcefields += ["ForceFields/"+ff[:-6] for ff in os.listdir("ForceFields") if ff[-6:] == "_ff.py"]
     if os.environ.has_key("GMXDATA"):
         gmxdata = os.environ["GMXDATA"]+"/top/"
-        forcefields += [gmxdata+ff[:-6] for ff in os.listdir(gmxdata) if ff[-6:] == ".ff.py"]
+        forcefields += [gmxdata+ff[:-6] for ff in os.listdir(gmxdata) if ff[-6:] == "_ff.py"]
 
     # Not all forcefields should be included.
     print "Found %s forcefields:"%len(forcefields)
@@ -16,7 +18,7 @@ def cat():
         print '%s. %s'%(i,ff)
     forcefields = [forcefields[i] for i in input("Which ones should be included? (enter comma seperate string):")]
  
-    files_in = 'martinize.py '+'.ff.py '.join(forcefields)+'.ff.py DOC.py CMD.py FUNC.py MAP.py SS.py ELN.py IO.py TOP.py MAIN.py '
+    files_in = 'martinize.py '+'_ff.py '.join(forcefields)+'_ff.py DOC.py CMD.py FUNC.py MAP.py SS.py ELN.py IO.py TOP.py MAIN.py '
     pattern1 = re.compile(files_in.replace('.py ','|')[:-1])
     pattern2 = re.compile(files_in.replace('.py ','\.|')[:-1])
     file_out = open(file_out,'w')

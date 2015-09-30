@@ -3,6 +3,7 @@
 ################################
 
 class elnedyn22p:
+    ff = True
     def __init__(self):
         import SS,FUNC,IO 
 

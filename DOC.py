@@ -26,9 +26,11 @@ class Option:
             self.value = [ self.func(i) for i in v ]
     
 # Parameters can be defined for multiple forcefields
-# We look for them within the script, in the local directory and in the GMXDATA dir.
-forcefields = [str(ff).split('.')[-1] for ff in globals().values() if (type(ff) == types.ClassType and str(ff)[-3:] == "_ff")]
+# We look for them within the script...
+forcefields = [str(ff).split('.')[-1] for ff in globals().values() if (type(ff) == types.ClassType and hasattr(ff,"ff"))]
+# ... in the local directory, ....
 forcefields += [ff[:-3] for ff in os.listdir(".") if ff[-6:] == "_ff.py"]
+# ... and in the GMXDATA dir.
 if os.environ.has_key("GMXDATA"):
     forcefields += [ff[:-3] for ff in os.listdir(os.environ["GMXDATA"]+"/top/") if ff[-6:] == "_ff.py"]
 
