@@ -10,10 +10,10 @@ def cat():
         forcefields += ["ForceFields/"+ff[:-6] for ff in os.listdir("ForceFields") if ff[-6:] == "_ff.py"]
 
     # Not all forcefields should be included.
-    print "Found %s forcefields:"%len(forcefields)
+    print("Found %s forcefields:"%len(forcefields))
     for i,ff in enumerate(forcefields):
-        print '%s. %s'%(i,ff)
-    forcefields = [forcefields[i] for i in input("Which ones should be included? (enter comma seperate string):")]
+        print('%s. %s'%(i,ff))
+    forcefields = [forcefields[i] for i in eval(input("Which ones should be included? (enter comma seperate string):"))]
  
     files_in = 'martinize.py '+'_ff.py '.join(forcefields)+'_ff.py DOC.py CMD.py FUNC.py MAP.py SS.py ELN.py IO.py TOP.py MAIN.py '
     pattern1 = re.compile(files_in.replace('.py ','|')[:-1])

@@ -30,7 +30,7 @@ class Bonded:
                     if not attr[0] == "_":
                         setattr(self, attr, getattr(other, attr))
             elif type(other) == dict:
-                for attr in other.keys():
+                for attr in list(other.keys()):
                     setattr(self, attr, other[attr])
             elif type(other) in (list, tuple):
                 self.atoms = other
@@ -49,7 +49,7 @@ class Bonded:
         if self.atoms and type(self.atoms[0]) == tuple:
             self.set(self.atoms, **kwargs)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self.atoms)
 
     def __str__(self):
@@ -95,7 +95,7 @@ class Bonded:
 # using the category
 class Bond(Bonded):
     def set(self, atoms, **kwargs):
-        ids, r, ss, ca  = zip(*atoms)
+        ids, r, ss, ca  = list(zip(*atoms))
         self.atoms      = ids
         self.type       = 1
         self.positionCa = ca
@@ -120,7 +120,7 @@ class Bond(Bonded):
 # Similar to the preceding class
 class Angle(Bonded):
     def set(self, atoms, **kwargs):
-        ids, r, ss, ca  = zip(*atoms)
+        ids, r, ss, ca  = list(zip(*atoms))
         self.atoms      = ids
         self.type       = 2
         self.positionCa = ca
@@ -132,7 +132,7 @@ class Angle(Bonded):
 # Similar to the preceding class
 class Vsite(Bonded):
     def set(self, atoms, **kwargs):
-        ids, r, ss, ca  = zip(*atoms)
+        ids, r, ss, ca  = list(zip(*atoms))
         self.atoms      = ids
         self.type       = 1
         self.positionCa = ca
@@ -144,7 +144,7 @@ class Vsite(Bonded):
 # Similar to the preceding class
 class Exclusion(Bonded):
     def set(self, atoms, **kwargs):
-        ids, r, ss, ca  = zip(*atoms)
+        ids, r, ss, ca  = list(zip(*atoms))
         self.atoms      = ids
         self.positionCa = ca
         self.comments   = "%s" % (r[0])
@@ -155,7 +155,7 @@ class Exclusion(Bonded):
 # Similar to the preceding class
 class Dihedral(Bonded):
     def set(self, atoms, **kwargs):
-        ids, r, ss, ca  = zip(*atoms)
+        ids, r, ss, ca  = list(zip(*atoms))
         self.atoms      = ids
         self.type       = 1
         self.positionCa = ca
@@ -473,12 +473,12 @@ class Topology:
                     positionCa.append(atom[4:])
 
         # Residue numbers for this moleculetype topology
-        resid = range(startResi, startResi+len(self.sequence))
+        resid = list(range(startResi, startResi+len(self.sequence)))
 
         # This contains the information for deriving backbone bead types,
         # bb bond types, bbb/bbs angle types, and bbbb dihedral types and
         # Elnedyn BB-bondlength BBB-angles
-        seqss = zip(bbid, self.sequence, self.secstruc, positionCa)
+        seqss = list(zip(bbid, self.sequence, self.secstruc, positionCa))
 
         # Fetch the proper backbone beads
         bb = [self.options['ForceField'].bbGetBead(res, typ) for num, res, typ, Ca in seqss]
@@ -507,13 +507,13 @@ class Topology:
             self.angles.extend([Angle(triple, options=self.options, category="BBB") for triple in zip(frg, frg[1:], frg[2:])])
 
             # Get backbone quadruples
-            quadruples = zip(frg, frg[1:], frg[2:], frg[3:])
+            quadruples = list(zip(frg, frg[1:], frg[2:], frg[3:]))
 
             # No i-1,i,i+1,i+2 interactions defined for Elnedyn
             if self.options['ForceField'].UseBBBBDihedrals:
                 # Process dihedrals
                 for q in quadruples:
-                    id, rn, ss, ca = zip(*q)
+                    id, rn, ss, ca = list(zip(*q))
                     # Maybe do local elastic networks
                     if ss == ("E", "E", "E", "E") and not self.options['ExtendedDihedrals']:
                         # This one may already be listed as the 2-4 bond of a previous one
@@ -643,7 +643,7 @@ class Topology:
             # The polarizable forcefield give problems with the charges in the sidechain,
             # if the backbone is also charged.
             # To avoid that, we add explicit exclusions
-            if bbb in self.options['ForceField'].charges.keys() and resname in self.options['ForceField'].mass_charge.keys():
+            if bbb in list(self.options['ForceField'].charges.keys()) and resname in list(self.options['ForceField'].mass_charge.keys()):
                 for i in [j for j, d in enumerate(scatoms) if d == 'D']:
                     self.exclusions.append(Exclusion(
                         options    = self.options,
@@ -658,7 +658,7 @@ class Topology:
                     atype, aname = "v" + atype, "v" + aname
                 # If mass or charge diverse, we adopt it here.
                 # We don't want to do this for BB beads because of charged termini.
-                if resname in self.options['ForceField'].mass_charge.keys() and counter != 0:
+                if resname in list(self.options['ForceField'].mass_charge.keys()) and counter != 0:
                     M, Q = self.options['ForceField'].mass_charge[resname]
                     aname = Q[counter-1] > 0 and 'SCP' or Q[counter-1] < 0 and 'SCN' or aname
                     self.atoms.append((atid, atype, resi, resname, aname, atid,
@@ -752,11 +752,11 @@ class Topology:
             bbid.append([bbid1, bbid1+1, bbid1+2])
 
         # Residue numbers for this moleculetype topology
-        resid = range(startResi, startResi+len(self.sequence))
+        resid = list(range(startResi, startResi+len(self.sequence)))
 
         # This contains the information for deriving backbone bead types,
         # bb bond types, bbb/bbs angle types, and bbbb dihedral types.
-        seqss = zip(bbid, self.sequence, self.secstruc)
+        seqss = list(zip(bbid, self.sequence, self.secstruc))
 
         # Fetch the proper backbone beads
         # Since there are three beads we need to split these to the list
@@ -792,12 +792,12 @@ class Topology:
             self.angles.extend([Angle(triple, options=self.options, category="BBB") for triple in zip(frg, frg[1:], frg[2:])])
 
             # Get backbone quadruples
-            quadruples = zip(frg, frg[1:], frg[2:], frg[3:])
+            quadruples = list(zip(frg, frg[1:], frg[2:], frg[3:]))
 
             # No i-1,i,i+1,i+2 interactions defined for Elnedyn
             # Process dihedrals
             for q in quadruples:
-                id, rn, ss, ca = zip(*q)
+                id, rn, ss, ca = list(zip(*q))
                 # Since dihedrals can return None, we first collect them separately and then
                 # add the non-None ones to the list
                 dihed = Dihedral(q, options=self.options, category="BBBB")

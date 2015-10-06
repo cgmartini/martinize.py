@@ -14,7 +14,7 @@ class Option:
         self.value       = default
         self.description = description
 
-    def __nonzero__(self): 
+    def __bool__(self): 
         if self.func == bool:
             return self.value != False
         return bool(self.value)
@@ -30,11 +30,11 @@ class Option:
     
 # Parameters can be defined for multiple forcefields
 # We look for them within the script...
-forcefields = [str(ff).split('.')[-1] for ff in globals().values() if (type(ff) == types.ClassType and hasattr(ff,"ff"))]
+forcefields = [str(ff).split('.')[-1] for ff in list(globals().values()) if (type(ff) == type and hasattr(ff,"ff"))]
 # ... in the local directory, ....
 forcefields += [ff[:-3] for ff in os.listdir(".") if ff[-6:] == "_ff.py"]
 # ... and in the GMXDATA dir.
-if os.environ.has_key("GMXDATA"):
+if "GMXDATA" in os.environ:
     forcefields += [ff[:-3] for ff in os.listdir(os.environ["GMXDATA"]+"/top/") if ff[-6:] == "_ff.py"]
 
 # Lists for gathering arguments to options that can be specified
@@ -238,9 +238,9 @@ def help():
     import sys
     for item in options:
         if type(item) == str:
-            print item
+            print(item)
     for item in options:
         if type(item) != str:
-            print "%10s  %s" % (item[0], item[1].description)
-    print
+            print("%10s  %s" % (item[0], item[1].description))
+    print()
     sys.exit()

@@ -27,7 +27,7 @@ ss_names = {
  "C": "Coil",                                                                               #@#
 }
 
-bbss = ss_names.keys()
+bbss = list(ss_names.keys())
 bbss = FUNC.spl("  F     E     H     1     2     3     T     S     C")  # SS one letter
 
 
@@ -84,7 +84,7 @@ ss2num = FUNC.hash(bbss, ssnum)
 
 
 # List of programs for which secondary structure definitions can be processed
-programs = ssdefs.keys()
+programs = list(ssdefs.keys())
 
 
 # Dictionaries mapping ss types to the CG ss types
@@ -129,11 +129,11 @@ def ssClassification(ss, program="dssp"):
     # Translate dssp/pymol/gmx ss to Martini ss
     ss  = ss.translate(sstt[program])
     # Separate the different secondary structure types
-    sep = dict([(i, ss.translate(sstd[i])) for i in sstd.keys()])
+    sep = dict([(i, ss.translate(sstd[i])) for i in list(sstd.keys())])
     # Do type substitutions based on patterns
     # If the ss type is not in the patterns lists, do not substitute
     # (use empty lists for substitutions)
-    typ = [typesub(sep[i], patterns.get(i, []), pattypes.get(i, [])) for i in sstd.keys()]
+    typ = [typesub(sep[i], patterns.get(i, []), pattypes.get(i, [])) for i in list(sstd.keys())]
     # Translate all types to numerical values
     typ = [[ord(j) for j in list(i)] for i in typ]
     # Sum characters back to get a full typed sequence
