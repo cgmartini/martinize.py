@@ -11,6 +11,7 @@
 #   Helix BB-bonds to constraint      
 
 class martini22:
+    ff = True
     def __init__(self):
         import SS,FUNC,IO 
 

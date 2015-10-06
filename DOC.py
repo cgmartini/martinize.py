@@ -2,9 +2,9 @@
 ## 1 # OPTIONS AND DOCUMENTATION ##  -> @DOC <-
 ###################################
 
-import martinize
-
-
+import martinize 
+import types, os
+    
 # This is a simple and versatily option class that allows easy
 # definition and parsing of options.
 class Option:
@@ -27,6 +27,15 @@ class Option:
             self.value = self.func(v[0])
         else:
             self.value = [self.func(i) for i in v]
+    
+# Parameters can be defined for multiple forcefields
+# We look for them within the script...
+forcefields = [str(ff).split('.')[-1] for ff in globals().values() if (type(ff) == types.ClassType and hasattr(ff,"ff"))]
+# ... in the local directory, ....
+forcefields += [ff[:-3] for ff in os.listdir(".") if ff[-6:] == "_ff.py"]
+# ... and in the GMXDATA dir.
+if os.environ.has_key("GMXDATA"):
+    forcefields += [ff[:-3] for ff in os.listdir(os.environ["GMXDATA"]+"/top/") if ff[-6:] == "_ff.py"]
 
 # Lists for gathering arguments to options that can be specified
 # multiple times on the command line.
@@ -189,7 +198,7 @@ as argument, causing all chains to be multiscaled.
     ("-pf",       Option(float,                    1,     1000, "Position restraints force constant (default: 1000 kJ/mol/nm^2)")),
     ("-ed",       Option(bool,                     0,    False, "Use dihedrals for extended regions rather than elastic bonds)")),
     ("-sep",      Option(bool,                     0,    False, "Write separate topologies for identical chains.")),
-    ("-ff",       Option(str,                      1, 'martini21', "Which forcefield to use: "+' ,'.join(n for n in martinize.forcefields[:-1]))),
+    ("-ff",       Option(str,                      1, 'martini21_ff', "Which forcefield to use: "+' ,'.join(n for n in forcefields[:-1]))),
 # Fij = Fc exp( -a (rij - lo)**p )
     ("-elastic",  Option(bool,                     0,    False, "Write elastic bonds")),
     ("-ef",       Option(float,                    1,      500, "Elastic bond force constant Fc")),
@@ -227,7 +236,6 @@ desc = ""
 def help():
     """Print help text and list of options and end the program."""
     import sys
-    from martinize import forcefields
     for item in options:
         if type(item) == str:
             print item

@@ -8,6 +8,7 @@ class elnedyn22:
     - Trp has an extra constrain added to the sidechain
     - The Backbone-Sidechain bonds with high force constants are replaced by constraints except for Trp and His.
     '''
+    ff = True
     def __init__(self):
         import SS,FUNC,IO 
 

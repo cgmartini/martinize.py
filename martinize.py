@@ -7,10 +7,6 @@
 version = "2.5"
 authors = ["Djurre de Jong", "Jaakko J. Uusitalo", "Tsjerk A. Wassenaar"]
 
-# Parameters are defined for the following (protein) forcefields:
-forcefields = ['martini21', 'martini21p', 'martini22', 'martini22p', 'elnedyn', 'elnedyn22', 'elnedyn22p', 'martini22dna']
-
-
 notes = [
     ("DdJ181013", "V2.4"),
     ("DdJ041213", "Fixed bug where Cys-Cys constraints were not recognized as such."),
@@ -38,39 +34,11 @@ notes = [
 #
 
 
-def cat(file_out):
-    '''Function to 'compile' the martinize script into one file.'''
-    import re
-    files_in = 'martinize.py DOC.py CMD.py FUNC.py MAP.py SS.py '+'.py '.join(forcefields)+'.py ELN.py IO.py TOP.py MAIN.py '
-    pattern1 = re.compile(files_in.replace('.py ', '|')[:-1])
-    pattern2 = re.compile(files_in.replace('.py ', '\.|')[:-1])
-    file_out = open(file_out, 'w')
-    tail = ''
-    head = True
-    for f in files_in.split():
-        for line in open(f).readlines():
-            # Split the string to avoid the function finding itself
-            if '__na'+'me__' in line:
-                head = False
-            if head:
-                file_out.write(line)
-            elif (f == 'martinize.py' and not head) and not ('import' in line and pattern1.search(line)):
-                tail += pattern2.sub('', line)
-            elif line[0] == '#':
-                file_out.write(line)
-            elif not ('import' in line and pattern1.search(line)):
-                file_out.write(pattern2.sub('', line))
-    file_out.write(tail)
-
 if __name__ == '__main__':
     import sys, logging
     import DOC, CMD, MAIN
     args = sys.argv[1:]
-    # The argument cat is only given once: when concatenating to on exportable script.
-    if '-cat' in args:
-        cat('martinize-'+version+'.py')
-        sys.exit()
-    # Get the possible commandline arguments arguments and help text.
+    # Get the possible commandline arguments arguments and help text. 
     options, lists = DOC.options, DOC.lists
     # Parse commandline options.
     options = CMD.option_parser(args, options, lists, version)
