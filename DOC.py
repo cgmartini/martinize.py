@@ -2,30 +2,33 @@
 ## 1 # OPTIONS AND DOCUMENTATION ##  -> @DOC <-
 ###################################
 
-import martinize 
-    
+import martinize
+
+
 # This is a simple and versatily option class that allows easy
-# definition and parsing of options. 
+# definition and parsing of options.
 class Option:
-    def __init__(self,func=str,num=1,default=None,description=""):
+    def __init__(self, func=str, num=1, default=None, description=""):
         self.func        = func
         self.num         = num
         self.value       = default
         self.description = description
+
     def __nonzero__(self): 
         if self.func == bool:
             return self.value != False
         return bool(self.value)
+
     def __str__(self):
         return self.value and str(self.value) or ""
-    def setvalue(self,v):
+
+    def setvalue(self, v):
         if len(v) == 1:
             self.value = self.func(v[0])
         else:
-            self.value = [ self.func(i) for i in v ]
-    
+            self.value = [self.func(i) for i in v]
 
-# Lists for gathering arguments to options that can be specified 
+# Lists for gathering arguments to options that can be specified
 # multiple times on the command line.
 lists = {
     'cystines': [],
@@ -34,14 +37,14 @@ lists = {
     'multi'   : [],
     }
 
-# List of Help text and options. 
-# This way we can simply print this list if the user wants help. 
+# List of Help text and options.
+# This way we can simply print this list if the user wants help.
 options = [
 #   NOTE: Options marked with (+) can be given multiple times on the command line
 #   option              type number default description
     """
 MARTINIZE.py is a script to create Coarse Grain Martini input files of
-proteins, ready for use in the molecular dynamics simulations package 
+proteins, ready for use in the molecular dynamics simulations package
 Gromacs. For more information on the Martini forcefield, see:
 www.cgmartini.nl
 and read our papers:
@@ -51,8 +54,8 @@ de Jong et al., J. Chem. Theory Comput., 2013, DOI:10.1021/ct300646g
 Primary input/output
 --------------------
 The input file (-f) should be a coordinate file in PDB or GROMOS
-format. The format is inferred from the structure of the file. The 
-input can also be provided through stdin, allowing piping of 
+format. The format is inferred from the structure of the file. The
+input can also be provided through stdin, allowing piping of
 structures. The input structure can have multiple frames/models. If an output
 structure file (-x) is given, each frame will be coarse grained,
 resulting in a multimodel output structure. Having multiple frames may
@@ -75,12 +78,12 @@ specification of the secondary structure as a string (-ss), or as a
 file containing a specification in GROMACS' ssdump format
 (-ss). Alternatively, DSSP can be used for an on-the-fly assignment of
 the secondary structure. For this, the option -dssp has to be used
-giving the location of the executable as the argument. 
+giving the location of the executable as the argument.
 The option -collagen will set the whole structure to collagen. If this
 is not what you want (eg only part of the structure is collagen, you
 can give a secondary structure file/string (-ss) and specifiy collagen
-as "F". Parameters for collagen are taken from: Gautieri et al., 
-J. Chem. Theory Comput., 2010, 6, 1210-1218. 
+as "F". Parameters for collagen are taken from: Gautieri et al.,
+J. Chem. Theory Comput., 2010, 6, 1210-1218.
 With multimodel input files, the secondary structure as determined with
 DSSP will be averaged over the frames. In this case, a cutoff
 can be specified (-ssc) indicating the fraction of frames to match a
@@ -95,7 +98,7 @@ behaviour can be changed using -nt and -cb, respectively.
 Disulphide bridges can be specified using -cys. This option can be
 given multiple times on the command line. The argument is a pair of
 cysteine residues, using the format
-chain/resn/resi,chain/resn/resi. 
+chain/resn/resi,chain/resn/resi.
 It is also possible to let martinize detect cysteine pairs based on a
 cut-off distance of 0.22nm, by giving the keyword 'auto' as argument to -cys.
 Alternatively, a different cut-off distance can be specified, which
@@ -127,12 +130,12 @@ molecule, inferred from the sequence and the secondary structure
 definition. It is possible to force writing a moleculetype definition
 for every single molecule, using -sep.
 
-The option -p can be used to write position restraints, using the 
-force constant specified with -pf, which is set to 1000 kJ/mol 
+The option -p can be used to write position restraints, using the
+force constant specified with -pf, which is set to 1000 kJ/mol
 by default.
 
-For stability, elastic bonds are used to retain the structure of 
-extended strands. The option -ed causes dihedrals to be used 
+For stability, elastic bonds are used to retain the structure of
+extended strands. The option -ed causes dihedrals to be used
 instead.
 
 Different forcefields can be specified with -ff. All the parameters and
@@ -143,7 +146,7 @@ used.
 Elastic network
 ---------------
 Martinize can write an elastic network for atom pairs within a cutoff
-distance. The force constant (-ef) and the upper distance bound (-eu) 
+distance. The force constant (-ef) and the upper distance bound (-eu)
 can be speficied. If a force field with an intrinsic Elastic
 network is specified (eg. Elnedyn) with -ff, -elastic in implied and
 the default values for the force constant and upper cutoff are used.
@@ -154,9 +157,9 @@ Multiscaling
 Martinize can process a structure to yield a multiscale system,
 consisting of a coordinate file with atomistic parts and
 corresponding, overlaid coarsegrained parts. For chains that are
-multiscaled, rather than writing a full moleculetype definition, 
-additional [atoms] and [virtual_sitesn] sections are written, to 
-be appended to the atomistic moleculetype definitions. 
+multiscaled, rather than writing a full moleculetype definition,
+additional [atoms] and [virtual_sitesn] sections are written, to
+be appended to the atomistic moleculetype definitions.
 The option -multi can be specified multiple times, and takes a chain
 identifier as argument. Alternatively, the keyword 'all' can be given
 as argument, causing all chains to be multiscaled.
@@ -167,7 +170,7 @@ as argument, causing all chains to be multiscaled.
     ("-x",        Option(str,                      1,     None, "Output coarse grained structure (PDB)")),
     ("-n",        Option(str,                      1,     None, "Output index file with CG (and multiscale) beads.")),
     ("-nmap",     Option(str,                      1,     None, "Output index file containing per bead mapping.")),
-    ("-v",        Option(bool,                     0,    False, "Verbose. Be load and noisy.")), 
+    ("-v",        Option(bool,                     0,    False, "Verbose. Be load and noisy.")),
     ("-h",        Option(bool,                     0,    False, "Display this help.")),
     ("-ss",       Option(str,                      1,     None, "Secondary structure (File or string)")),
     ("-ssc",      Option(float,                    1,      0.5, "Cutoff fraction for ss in case of ambiguity (default: 0.5).")),
@@ -175,8 +178,8 @@ as argument, causing all chains to be multiscaled.
 #    ("-pymol",    Option(str,                      1,     None, "PyMOL executable for determining structure")),
     ("-collagen", Option(bool,                     0,    False, "Use collagen parameters")),
     ("-his",      Option(bool,                     0,    False, "Interactively set the charge of each His-residue.")),
-    ("-nt",       Option(bool,                     0,    False, "Set neutral termini (charged is default)")), 
-    ("-cb",       Option(bool,                     0,    False, "Set charges at chain breaks (neutral is default)")), 
+    ("-nt",       Option(bool,                     0,    False, "Set neutral termini (charged is default)")),
+    ("-cb",       Option(bool,                     0,    False, "Set charges at chain breaks (neutral is default)")),
     ("-cys",      Option(lists['cystines'].append, 1,     None, "Disulphide bond (+)")),
     ("-link",     Option(lists['links'].append,    1,     None, "Link (+)")),
     ("-merge",    Option(lists['merges'].append,   1,     None, "Merge chains: e.g. -merge A,B,C (+)")),
@@ -186,7 +189,7 @@ as argument, causing all chains to be multiscaled.
     ("-pf",       Option(float,                    1,     1000, "Position restraints force constant (default: 1000 kJ/mol/nm^2)")),
     ("-ed",       Option(bool,                     0,    False, "Use dihedrals for extended regions rather than elastic bonds)")),
     ("-sep",      Option(bool,                     0,    False, "Write separate topologies for identical chains.")),
-    ("-ff",       Option(str,                      1,'martini21', "Which forcefield to use: "+' ,'.join(n for n in martinize.forcefields[:-1]))),
+    ("-ff",       Option(str,                      1, 'martini21', "Which forcefield to use: "+' ,'.join(n for n in martinize.forcefields[:-1]))),
 # Fij = Fc exp( -a (rij - lo)**p )
     ("-elastic",  Option(bool,                     0,    False, "Write elastic bonds")),
     ("-ef",       Option(float,                    1,      500, "Elastic bond force constant Fc")),
@@ -200,7 +203,7 @@ as argument, causing all chains to be multiscaled.
     ("-multi",    Option(lists['multi'].append,    1,     None, "Chain to be set up for multiscaling (+)")),
     ]
 
-## Martini Quotes
+# Martini Quotes
 martiniq = [
     ("Robert Benchley",
      "Why don't you get out of that wet coat and into a dry martini?"),
@@ -219,7 +222,8 @@ martiniq = [
     ]
 
 desc = ""
-    
+
+
 def help():
     """Print help text and list of options and end the program."""
     import sys
@@ -229,6 +233,6 @@ def help():
             print item
     for item in options:
         if type(item) != str:
-            print "%10s  %s"%(item[0],item[1].description)
+            print "%10s  %s" % (item[0], item[1].description)
     print
     sys.exit()
