@@ -145,7 +145,7 @@ class CoarseGrained:
 # coordinates and the list of ids mapped to this bead
 def aver(b):
     mwx, ids = list(zip(*[((m*x, m*y, m*z), i) for m, (x, y, z), i in b]))      # Weighted coordinates
-    tm  = sum(zip(*b)[0])                                                 # Sum of weights
+    tm  = sum(next(zip(*b)))                                                 # Sum of weights
     return [sum(i)/tm for i in zip(*mwx)], ids                            # Centre of mass
 
 

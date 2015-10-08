@@ -245,7 +245,11 @@ class martini22p:
         b1 = self.bbBondDictS.get(r[0],self.bbBondDictD).get(ss[0],self.bbBondDictD.get(ss[0]))
         b2 = self.bbBondDictS.get(r[1],self.bbBondDictD).get(ss[1],self.bbBondDictD.get(ss[1]))
         # Determine which parameters to use for the bond
-        return ( (b1[0]+b2[0])/2, min(b1[1],b2[1]) )
+        # Python3 no longer returns a NoneType if None is compared to an integer.
+        if b1[1] == None or b2[1] == None:
+            return ( (b1[0]+b2[0])/2, None )
+        else:
+            return ( (b1[0]+b2[0])/2, min(b1[1],b2[1]) )
 
     def bbGetAngle(self,r,ca,ss):
         # PRO in helices is dominant

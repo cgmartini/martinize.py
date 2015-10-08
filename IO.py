@@ -137,7 +137,7 @@ def groFrameIterator(streamIterator):
             title = next(streamIterator)
         except StopIteration:
             break
-        natoms = streamIterator.next().strip()
+        natoms = next(streamIterator).strip()
         if not natoms:
             break
         natoms = int(natoms)

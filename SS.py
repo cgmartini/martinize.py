@@ -165,8 +165,8 @@ def call_dssp(chain, atomlist, executable='dsspcmbi'):
 
     for atom in atomlist:
         if atom[0][:2] == 'O1': atom = ('O',)+atom[1:]
-        if atom[0][0] != 'H' and atom[0][:2] != 'O2': p.stdin.write(IO.pdbOut(atom))
-    p.stdin.write('TER\n')
+        if atom[0][0] != 'H' and atom[0][:2] != 'O2': p.stdin.write(IO.pdbOut(atom).encode('utf-8'))
+    p.stdin.write('TER\n'.encode('utf-8'))
     data = p.communicate()
     p.wait()
     main, ss = 0, ''

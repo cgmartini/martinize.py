@@ -459,7 +459,7 @@ class Topology:
 
         # Backbone bead atom IDs
         bbid = [startAtom]
-        for i in zip(*sc)[0]:
+        for i in next(zip(*sc)):
             bbid.append(bbid[-1]+len(i)+1)
 
         # Calpha positions, to get Elnedyn BBB-angles and BB-bond lengths
@@ -747,7 +747,7 @@ class Topology:
 
         # Backbone bead atom IDs
         bbid = [[startAtom, startAtom+1, startAtom+2]]
-        for i in zip(*sc)[0]:
+        for i in next(zip(*sc)):
             bbid1 = bbid[-1][0]+len(i)+3
             bbid.append([bbid1, bbid1+1, bbid1+2])
 
