@@ -2,7 +2,7 @@
 ## 6 # FORCE FIELD PARAMETERS ##  -> @FF <-
 ################################
 
-class elnedyn:
+class elnedyn(object):
     ff = True
     def __init__(self):
         '''The forcefield has been implemented with some changes compared to the published parameters:

@@ -31,7 +31,7 @@ residueTypes = dict(
     )
 
 
-class CoarseGrained:
+class CoarseGrained(object):
     # Class for mapping an atomistic residue list to a coarsegrained one
     # Should get an __init__ function taking a residuelist, atomlist, Pymol selection or ChemPy model
     # The result should be stored in a list-type attribute

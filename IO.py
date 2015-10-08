@@ -389,7 +389,7 @@ def check_merge(chains, m_list=[], l_list=[], ss_cutoff=0):
 
 ## !! NOTE !! ##
 ## XXX The chain class needs to be simplified by extracting things to separate functions/classes
-class Chain:
+class Chain(object):
     # Attributes defining a chain
     # When copying a chain, or slicing, the attributes in this list have to
     # be handled accordingly.
@@ -485,25 +485,24 @@ class Chain:
                         return i
                 else:
                     return []
+        elif type(other) == slice:
+            # This implements the old __getslice__ method 
+            i, j = other.start, other.stop
+            newchain = Chain(self.options, name=self.id)
+            # Extract the slices from all lists
+            for attr in self._attributes:
+                setattr(newchain, attr, getattr(self, attr)[i:j])
+            # Breaks that fall within the start and end of this chain need to be passed on.
+            # Residue numbering is increased by 20 bits!!
+            ch_sta, ch_end      = newchain.residues[0][0][2], newchain.residues[-1][0][2]
+            newchain.breaks     = [crack for crack in self.breaks if ch_sta < (crack << 20) < ch_end]
+            newchain.links      = [link for link in self.links if ch_sta < (link << 20) < ch_end]
+            newchain.multiscale = self.multiscale
+            newchain.natoms     = len(newchain.atoms())
+            # newchain.type()
+            # Return the chain slice
+            return newchain
         return self.sequence[other]
-
-    # Extract a piece of a chain as a new chain
-    def __getslice__(self, i, j):
-        newchain = Chain(self.options, name=self.id)
-        # Extract the slices from all lists
-        for attr in self._attributes:
-            setattr(newchain, attr, getattr(self, attr)[i:j])
-        # Breaks that fall within the start and end of this chain need to be passed on.
-        # Residue numbering is increased by 20 bits!!
-        # XXX I don't know if this works.
-        ch_sta, ch_end      = newchain.residues[0][0][2], newchain.residues[-1][0][2]
-        newchain.breaks     = [crack for crack in self.breaks if ch_sta < (crack << 20) < ch_end]
-        newchain.links      = [link for link in self.links if ch_sta < (link << 20) < ch_end]
-        newchain.multiscale = self.multiscale
-        newchain.natoms     = len(newchain.atoms())
-        newchain.type()
-        # Return the chain slice
-        return newchain
 
     def _contains(self, atomlist, atom):
         atnm, resn, resi, chn = atom

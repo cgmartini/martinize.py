@@ -10,7 +10,7 @@
 #   Trp sidechain
 #   Helix BB-bonds to constraint      
 
-class martini22dna:
+class martini22dna(object):
     ff = True
     def __init__(self):
         import SS,FUNC,IO

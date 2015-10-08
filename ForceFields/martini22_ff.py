@@ -10,7 +10,7 @@
 #   Trp sidechain
 #   Helix BB-bonds to constraint      
 
-class martini22:
+class martini22(object):
     ff = True
     def __init__(self):
         import SS,FUNC,IO 

@@ -10,10 +10,9 @@
 #   Trp sidechain
 #   Polar beads
 #   Helix BB-bonds to constraint      
-# Todo:
 #   Helix BB-bond length
 
-class martini22p:
+class martini22p(object):
     ff = True
     def __init__(self):
         import SS,FUNC,IO 
@@ -22,8 +21,7 @@ class martini22p:
         self.name = 'martini22p'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                                                           #@#
-        
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}    #@#
         
         #----+---------------------+
         ## A | BACKBONE PARAMETERS |

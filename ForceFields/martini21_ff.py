@@ -2,7 +2,7 @@
 ## 6 # FORCE FIELD PARAMETERS ##  -> @FF <-
 ################################
 
-class martini21:
+class martini21(object):
     ff = True
     def __init__(self):
         import SS,FUNC,IO 

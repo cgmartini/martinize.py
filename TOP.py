@@ -6,7 +6,7 @@ import logging, math
 
 
 # This is a generic class for Topology Bonded Type definitions
-class Bonded:
+class Bonded(object):
     # The init method is generic to the bonded types,
     # but may call the set method if atoms are given
     # as (ID, ResidueName, SecondaryStructure) tuples
@@ -194,7 +194,7 @@ class CategorizedList(list):
             return [i for i in self if i.category == tag[0]]
 
 
-class Topology:
+class Topology(object):
     def __init__(self, other=None, options=None, name=""):
         self.name        = ''
         self.nrexcl      = 1

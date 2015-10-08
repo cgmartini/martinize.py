@@ -2,7 +2,7 @@
 ## 6 # FORCE FIELD PARAMETERS ##  -> @FF <-
 ################################
 
-class elnedyn22:
+class elnedyn22(object):
     '''The forcefield has been implemented with some changes compared to the published parameters:
     - Backbone-Backbone bonds are constraints in stead of strong bonds.
     - Trp has an extra constrain added to the sidechain

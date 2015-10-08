@@ -7,7 +7,7 @@ import types, os
     
 # This is a simple and versatily option class that allows easy
 # definition and parsing of options.
-class Option:
+class Option(object):
     def __init__(self, func=str, num=1, default=None, description=""):
         self.func        = func
         self.num         = num

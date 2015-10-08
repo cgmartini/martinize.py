@@ -2,7 +2,7 @@
 ## 6 # FORCE FIELD PARAMETERS ##  -> @FF <-
 ################################
 
-class elnedyn22p:
+class elnedyn22p(object):
     ff = True
     def __init__(self):
         import SS,FUNC,IO 
