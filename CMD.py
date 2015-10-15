@@ -1,7 +1,7 @@
 ##############################
 ## 2 # COMMAND LINE PARSING ##  -> @CMD <-
 ##############################
-import sys, logging
+import sys, logging, os, inspect
 import DOC
 
 
@@ -50,19 +50,47 @@ def option_parser(args, options, lists, version=0):
     logging.info('If you use this script please cite:')
     logging.info('de Jong et al., J. Chem. Theory Comput., 2013, DOI:10.1021/ct300646g')
 
-    # The make the program flexible, the forcefield parameters are defined
-    # for multiple forcefield. Check if a existing one is defined:
+    # To make the program flexible, the forcefield parameters are defined
+    # for multiple forcefield. We first check for a FF file in the current directory.
+    # Next we check for the FF in globals (for catenated scripts). 
+    # Next we check in at the location of the script and the subdiretory FF.
     try:
+        options['ForceField'] = globals()[options['-ff'].value.lower()]()
+    except KeyError:
         try:
-            # Try to load the forcefield class from a different file
-            _tmp = __import__(options['-ff'].value.lower())
+            _tmp = __import__(options['-ff'].value.lower()+"_ff")
             options['ForceField'] = getattr(_tmp, options['-ff'].value.lower())()
-        except:
-            # Try to load the forcefield class from the current file
-            options['ForceField'] = globals()[options['-ff'].value.lower()]()
-    except:
-        logging.error("Forcefield '%s' can not be found."%(options['-ff']))
-        sys.exit()
+        except ImportError:
+            try:
+                # We add the directory where the script resides and a possible "ForceFields" directory to the search path
+                # realpath() will make your script run, even if you symlink it :)
+                cmd_folder = os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe())))
+                if cmd_folder not in sys.path:
+                    sys.path.insert(0, cmd_folder)
+                # use this if you want to include modules from a subfolder
+                cmd_subfolder = os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe()))) + "/ForceFields"
+                if cmd_subfolder not in sys.path:
+                     sys.path.insert(0, cmd_subfolder)
+                _tmp = __import__(options['-ff'].value.lower()+"_ff")
+                options['ForceField'] = getattr(_tmp, options['-ff'].value.lower())()
+            except:
+                logging.error("Forcefield '%s' can not be loaded." % (options['-ff']))
+                sys.exit()
+        
+    #    if os.path.exists(options['-ff'].value.lower()+'_ff.py'):
+    #        _tmp = __import__(options['-ff'].value.lower()+"_ff")
+    #        options['ForceField'] = getattr(_tmp, options['-ff'].value.lower())()
+    #    elif os.path.exists('ForceFields/'+options['-ff'].value.lower()+'_ff.py'):
+    #        _tmp = __import__("ForceFields."+options['-ff'].value.lower()+'_ff',fromlist="ForceFields")
+    #        options['ForceField'] = getattr(_tmp, options['-ff'].value.lower())()
+    #    elif options['-ff'].value.lower() in globals():
+    #        options['ForceField'] = globals()[options['-ff'].value.lower()]()
+    #    else:
+    #        logging.error("Forcefield '%s' can not be found."%(options['-ff']))
+    #        sys.exit()
+    #except:
+    #    logging.error("Forcefield '%s' can not be loaded."%(options['-ff']))
+    #    sys.exit()
 
     # Process the raw options from the command line
     # Boolean options are set to more intuitive variables

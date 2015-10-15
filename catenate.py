@@ -8,9 +8,6 @@ def cat():
     forcefields = [ff[:-6] for ff in os.listdir(".") if ff[-6:] == "_ff.py"]
     if os.path.isdir("ForceFields"):
         forcefields += ["ForceFields/"+ff[:-6] for ff in os.listdir("ForceFields") if ff[-6:] == "_ff.py"]
-    if os.environ.has_key("GMXDATA"):
-        gmxdata = os.environ["GMXDATA"]+"/top/"
-        forcefields += [gmxdata+ff[:-6] for ff in os.listdir(gmxdata) if ff[-6:] == "_ff.py"]
 
     # Not all forcefields should be included.
     print "Found %s forcefields:"%len(forcefields)

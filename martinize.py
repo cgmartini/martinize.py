@@ -4,7 +4,7 @@
 # EDITABLE SECTIONS ARE MARKED WITH #@#
 
 
-version = "2.5"
+version = "2.6"
 authors = ["Djurre de Jong", "Jaakko J. Uusitalo", "Tsjerk A. Wassenaar"]
 
 notes = [
