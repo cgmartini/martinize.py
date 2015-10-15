@@ -5,19 +5,11 @@
 
 
 version = "2.6"
-authors = ["Djurre de Jong", "Jaakko J. Uusitalo", "Tsjerk A. Wassenaar"]
+authors = ["Djurre H. de Jong", "Jaakko J. Uusitalo", "Tsjerk A. Wassenaar"]
 
-notes = [
-    ("DdJ181013", "V2.4"),
-    ("DdJ041213", "Fixed bug where Cys-Cys constraints were not recognized as such."),
-    ("DdJ110815", "Removed warnings about beta status of Martini 2.2."),
-    ("DdJ110815", "V2.5"),
-    ]
-
-#
 # This program has grown to be pretty complex.
 # The routines have been organized in different files.
-# For working versions, all files can be incorporated by using the option -cat.
+# For working versions, all files can be incorporated by using the catenate.py file. 
 #
 # Index of the program files:
 #
@@ -26,12 +18,13 @@ notes = [
 #   3. Helper functions and macros                           @FUNC.py
 #   4. Finegrained to coarsegrained mapping                  @MAP.py
 #   5. Secondary structure determination and interpretation  @SS.py
-#   6. Force field parameters (MARTINI/ELNEDYN)              @FF.py
-#   7. Elastic network                                       @ELN.py
-#   8. Structure I/O                                         @IO.py
-#   9. Topology generation                                   @TOP.py
-#  10. Main                                                  @MAIN.py
+#   6. Elastic network                                       @ELN.py
+#   7. Structure I/O                                         @IO.py
+#   8. Topology generation                                   @TOP.py
+#   9. Main                                                  @MAIN.py
 #
+#   Force field parameters are specified in the differentt forcefield modules,
+#   e.g.: martini22_ff.py
 
 
 if __name__ == '__main__':

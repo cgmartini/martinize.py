@@ -1,0 +1,65 @@
+Martinize.py is a python script to convert (atomistic) protein structures to 
+Martini coarse grain (CG) structures and topologies. 
+
+It has been originally been written by Djurre H. de Jong and Tsjerk A. Wassenaar 
+and is currently maintained Djurre H. de Jong and Jaakko. J. Uusitalo. The 
+script is written to be a useful tool, but comes with no warranty. If you use 
+the script for any of your publications, please cite: 
+
+de Jong et al., J. Chem. Theory Comput., 2013, DOI:10.1021/ct300646g
+
+
+--------------------------------------------------------------------------------
+  INSTALATION
+--------------------------------------------------------------------------------
+martinize.py is provided as a single-file script and no installation is needed
+other than downloading the script. The newest, tested version of the script can 
+always be downloaded from:
+
+http://www.cgmartini.nl
+
+Possible input arguments can be learned by typing "martinize.py -h" on the 
+commmand-line. Notice that the script needs a working version of python 2. A 
+python 3 version is available upon request.
+
+
+--------------------------------------------------------------------------------
+  STRUCTURE & DEVELOPMENT
+--------------------------------------------------------------------------------
+Although the final script comes as a single file, internally it consists of 
+several "Modules". In the development version the modules all come in seperate
+files. The one-file-script can be created by running "catenate.py".
+
+Organization of the different modules:
+
+1. Options and documentation                             @DOC.py
+2. Description, options and command line parsing         @CMD.py
+3. Helper functions and macros                           @FUNC.py
+4. Finegrained to coarsegrained mapping                  @MAP.py
+5. Secondary structure determination and interpretation  @SS.py
+6. Elastic network                                       @ELN.py
+7. Structure I/O                                         @IO.py
+8. Topology generation                                   @TOP.py
+9. Main                                                  @MAIN.py
+
+Force field parameters are specified in the differentt forcefield modules,
+e.g.: martini22_ff.py. In the development version all forcefields are
+placed in the "ForceFields/" subdirectory.
+
+When catenating the modules to the final script, one gets to choose which
+forcefields to include. When later running the script one can use these
+selected forcefields AND additional forcefields present in the working
+directory. The latter allows for flexible implementation of own forcefields.
+
+
+--------------------------------------------------------------------------------
+  TESTING
+--------------------------------------------------------------------------------
+Each version of martinize.py is tested for a number of protein structures, 
+trying to cover as many aspect of its function as possible. The testset is
+compiled in single script in the "tests/" subdirectory. It should be checked
+that all stuctures run without error and the obtained structure and topology
+files do not differ from previous versions.
+
+It is impossible to test every possible usage scenario, and currently 
+especially the multiscale functionalities are lacking.
