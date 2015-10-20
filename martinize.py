@@ -1,27 +1,15 @@
 #!/usr/bin/env python
 
 
-# EDITABLE SECTIONS ARE MARKED WITH #@# 
+# EDITABLE SECTIONS ARE MARKED WITH #@#
 
 
-version="2.5"
-authors=["Djurre de Jong", "Jaakko J. Uusitalo", "Tsjerk A. Wassenaar"]
+version = "2.6"
+authors = ["Djurre H. de Jong", "Jaakko J. Uusitalo", "Tsjerk A. Wassenaar"]
 
-# Parameters are defined for the following (protein) forcefields:
-forcefields = ['martini21','martini21p','martini22','martini22p','elnedyn','elnedyn22','elnedyn22p','martini22dna']
-
-
-notes = [
-    ("DdJ181013","V2.4"),
-    ("DdJ041213","Fixed bug where Cys-Cys constraints were not recognized as such."),
-    ("DdJ110815","Removed warnings about beta status of Martini 2.2."),
-    ("DdJ110815","V2.5"),
-    ]
-
-# 
-# This program has grown to be pretty complex. 
+# This program has grown to be pretty complex.
 # The routines have been organized in different files.
-# For working versions, all files can be incorporated by using the option -cat. 
+# For working versions, all files can be incorporated by using the catenate.py file. 
 #
 # Index of the program files:
 #
@@ -30,48 +18,22 @@ notes = [
 #   3. Helper functions and macros                           @FUNC.py
 #   4. Finegrained to coarsegrained mapping                  @MAP.py
 #   5. Secondary structure determination and interpretation  @SS.py
-#   6. Force field parameters (MARTINI/ELNEDYN)              @FF.py
-#   7. Elastic network                                       @ELN.py
-#   8. Structure I/O                                         @IO.py
-#   9. Topology generation                                   @TOP.py
-#  10. Main                                                  @MAIN.py
-#  11. Web-interface		                			     @WEB.py
-#  
+#   6. Elastic network                                       @ELN.py
+#   7. Structure I/O                                         @IO.py
+#   8. Topology generation                                   @TOP.py
+#   9. Main                                                  @MAIN.py
+#
+#   Force field parameters are specified in the differentt forcefield modules,
+#   e.g.: martini22_ff.py
 
-def cat(file_out):
-    '''Function to 'compile' the martinize script into one file.'''
-    import re
-    files_in = 'martinize.py DOC.py CMD.py FUNC.py MAP.py SS.py '+'.py '.join(forcefields)+'.py ELN.py IO.py TOP.py MAIN.py '
-    pattern1 = re.compile(files_in.replace('.py ','|')[:-1])
-    pattern2 = re.compile(files_in.replace('.py ','\.|')[:-1])
-    file_out = open(file_out,'w')
-    tail = ''; head = True
-    for f in files_in.split():
-        for line in open(f).readlines():
-            # Split the string to avoid the function finding itself
-            if '__na'+'me__' in line:
-                head = False
-            if head:
-                file_out.write(line)
-            elif (f == 'martinize.py' and not head) and not ('import' in line and pattern1.search(line)):
-                tail += pattern2.sub('',line)
-            elif line[0] == '#':
-                file_out.write(line)
-            elif not ('import' in line and pattern1.search(line)):
-                file_out.write(pattern2.sub('',line))
-    file_out.write(tail)
 
 if __name__ == '__main__':
-    import sys,logging
-    import DOC,CMD,MAIN
+    import sys, logging
+    import DOC, CMD, MAIN
     args = sys.argv[1:]
-    # The argument cat is only given once: when concatenating to on exportable script.
-    if '-cat' in args:
-        cat('martinize-'+version+'.py')
-        sys.exit()
     # Get the possible commandline arguments arguments and help text. 
-    options,lists = DOC.options,DOC.lists
+    options, lists = DOC.options, DOC.lists
     # Parse commandline options.
-    options = CMD.option_parser(args,options,lists,version)
+    options = CMD.option_parser(args, options, lists, version)
 
     MAIN.main(options)

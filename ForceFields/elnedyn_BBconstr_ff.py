@@ -3,6 +3,7 @@
 ################################
 
 class elnedyn:
+    ff = True
     def __init__(self):
         '''The forcefield has been implemented with some changes compared to the published parameters:
         - Backbone-Backbone bonds are constraints in stead of strong bonds.
