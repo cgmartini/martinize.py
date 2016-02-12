@@ -4,7 +4,6 @@
 
 class elnedyn22:
     '''The forcefield has been implemented with some changes compared to the published parameters:
-    - Backbone-Backbone bonds are constraints in stead of strong bonds.
     - Trp has an extra constrain added to the sidechain
     - The Backbone-Sidechain bonds with high force constants are replaced by constraints except for Trp and His.
     '''
@@ -230,7 +229,7 @@ class elnedyn22:
     def bbGetBond(self,r,ca,ss):
         import FUNC 
         import math
-        # The 150000 forceconstant gave an error message, turning to constraints would be better.
+        # The 150000 forceconstant sometimes gives an error message, turning to constraints could be better.
         return ( math.sqrt(FUNC.distance2(ca[0],ca[1]))/10., 150000 )
     
     def bbGetAngle(self,r,ca,ss):
