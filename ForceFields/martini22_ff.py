@@ -253,4 +253,4 @@ class martini22:
     def messages(self):
         '''Prints any force-field specific logging messages.'''
         import logging
-        logging.info('Note: Cysteine bonds are 0.24 nm constraints, instead of the published 0.39nm/5000kJ/mol.')
+        logging.info('Cysteine bonds are 0.24 nm constraints, instead of the published 0.39nm/5000kJ/mol.')

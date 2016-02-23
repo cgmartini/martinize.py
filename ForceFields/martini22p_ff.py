@@ -266,4 +266,4 @@ class martini22p:
         import logging
         logging.warning('Bead names of charges in sidechains differ between .top/.itp and .pdb.')
         logging.warning('Using names in topology, as Gromacs does, gives the correct result.')
-        logging.info('Note: Cysteine bonds are 0.24 nm constraints, instead of the published 0.39nm/5000kJ/mol.')
+        logging.info('Cysteine bonds are 0.24 nm constraints, instead of the published 0.39nm/5000kJ/mol.')
