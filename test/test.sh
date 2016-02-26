@@ -8,7 +8,7 @@
 # It will give small difference for the pdb-files of polarizable FFs: particles use random placement.
 # Maybe we need to add 'failing' tests?
 
-SCRIPT='../../../GIT/martinize-2.6a.py'
+SCRIPT='../martinize-2.6.py'
 DIFF='V2.5/'
 
 function pdbgett {
@@ -43,6 +43,17 @@ diff *_cg.pdb ../../${DIFF}/${block}/*_cg.pdb >> ../${block}.diff
 diff *_cg.top ../../${DIFF}/${block}/*_cg.top >> ../${block}.diff
 cd ..
 
+# Most standard function for M2.3, of course with ubiquitin
+block=standard23
+echo '***************'${block}'*****************'
+mkdir $block 
+cd $block
+pdbgett 1UBQ
+$SCRIPT -f 1UBQ.pdb -o 1UBQ_cg.top -x 1UBQ_cg.pdb -dssp $DSSP -ff martini23bbcsk
+diff *_cg.pdb ../../${DIFF}/${block}/*_cg.pdb >> ../${block}.diff
+diff *_cg.top ../../${DIFF}/${block}/*_cg.top >> ../${block}.diff
+cd ..
+
 # Most standard functions for polarizable martini, of course with ubiquitin
 block=standard22p
 echo '***************'${block}'*****************'
@@ -50,6 +61,17 @@ mkdir $block
 cd $block
 pdbgett 1UBQ
 $SCRIPT -f 1UBQ.pdb -o 1UBQ_cg.top -x 1UBQ_cg.pdb -dssp $DSSP -ff martini22p
+diff *_cg.pdb ../../${DIFF}/${block}/*_cg.pdb >> ../${block}.diff
+diff *_cg.top ../../${DIFF}/${block}/*_cg.top >> ../${block}.diff
+cd ..
+
+# Most standard functions for polarizable martini (2.3p), of course with ubiquitin
+block=standard23p
+echo '***************'${block}'*****************'
+mkdir $block 
+cd $block
+pdbgett 1UBQ
+$SCRIPT -f 1UBQ.pdb -o 1UBQ_cg.top -x 1UBQ_cg.pdb -dssp $DSSP -ff martini23pbbcsk
 diff *_cg.pdb ../../${DIFF}/${block}/*_cg.pdb >> ../${block}.diff
 diff *_cg.top ../../${DIFF}/${block}/*_cg.top >> ../${block}.diff
 cd ..
@@ -76,13 +98,24 @@ diff *_cg.pdb ../../${DIFF}/${block}/*_cg.pdb >> ../${block}.diff
 diff *_cg.top ../../${DIFF}/${block}/*_cg.top >> ../${block}.diff
 cd ..
 
-# Elnedyn (2) and giving secondary sturcture as string. Use custom elastic force.
+# Elnedyn (2) and giving secondary sturcture as string.
 block=elnedyn2
 echo '***************'${block}'*****************'
 mkdir $block 
 cd $block
 pdbgett 1UBQ
 $SCRIPT -f 1UBQ.pdb -o 1UBQ_cg.top -x 1UBQ_cg.pdb -ss ~EEEEEETTS~EEEEE~~TTSBHHHHHHHHHHHH~~~GGGEEEEETTEE~~TTSBTGGGT~~TT~EEEEEE~~S~~ -ff elnedyn22p
+diff *_cg.pdb ../../${DIFF}/${block}/*_cg.pdb >> ../${block}.diff
+diff *_cg.top ../../${DIFF}/${block}/*_cg.top >> ../${block}.diff
+cd ..
+
+# Elnedyn (2.3) and giving secondary sturcture as string.
+block=elnedyn23
+echo '***************'${block}'*****************'
+mkdir $block 
+cd $block
+pdbgett 1UBQ
+$SCRIPT -f 1UBQ.pdb -o 1UBQ_cg.top -x 1UBQ_cg.pdb -ss ~EEEEEETTS~EEEEE~~TTSBHHHHHHHHHHHH~~~GGGEEEEETTEE~~TTSBTGGGT~~TT~EEEEEE~~S~~ -ff elnedyn23bbcsk
 diff *_cg.pdb ../../${DIFF}/${block}/*_cg.pdb >> ../${block}.diff
 diff *_cg.top ../../${DIFF}/${block}/*_cg.top >> ../${block}.diff
 cd ..
@@ -131,6 +164,17 @@ diff *_cg.pdb ../../${DIFF}/${block}/*_cg.pdb >> ../${block}.diff
 diff *_cg.top ../../${DIFF}/${block}/*_cg.top >> ../${block}.diff
 cd ..
 
+# Test cysteine bridge (between cys 9 and cys 164), naming protein and use dihedrals for extended regions. Use mutated lysozyme.V
+block=Sbonds23
+echo '***************'${block}'*****************'
+mkdir $block 
+cd $block
+pdbgett 1L35
+$SCRIPT -f 1L35.pdb -o 1L35_cg.top -x 1l35_cg.pdb -cys auto -name lysozyme -dssp $DSSP -ed -ff martini23bbcsk
+diff *_cg.pdb ../../${DIFF}/${block}/*_cg.pdb >> ../${block}.diff
+diff *_cg.top ../../${DIFF}/${block}/*_cg.top >> ../${block}.diff
+cd ..
+
 # Test collagen paramters on of the six collagen parameters.
 block=collagen21
 echo '***************'${block}'*****************'
@@ -153,15 +197,26 @@ diff *_cg.pdb ../../${DIFF}/${block}/*_cg.pdb >> ../${block}.diff
 diff *_cg.top ../../${DIFF}/${block}/*_cg.top >> ../${block}.diff
 cd ..
 
-# Test mixed DNA-protein.
-block=DNAprotein
+# Test collagen paramters on of the six collagen parameters.
+block=collagen23
 echo '***************'${block}'*****************'
 mkdir $block 
 cd $block
-pdbgett 3SJM
-$SCRIPT -f 3SJM.pdb -o 3SJM_cg.top -x 3SJM_cg.pdb -collagen -ff martini22dna
+pdbget 1CAG
+$SCRIPT -f 1CAG.pdb -o 1CAG_cg.top -x 1CAG_cg.pdb -collagen -ff martini23bbcsk
 diff *_cg.pdb ../../${DIFF}/${block}/*_cg.pdb >> ../${block}.diff
 diff *_cg.top ../../${DIFF}/${block}/*_cg.top >> ../${block}.diff
 cd ..
+
+## Test mixed DNA-protein.
+#block=DNAprotein
+#echo '***************'${block}'*****************'
+#mkdir $block 
+#cd $block
+#pdbgett 3SJM
+#$SCRIPT -f 3SJM.pdb -o 3SJM_cg.top -x 3SJM_cg.pdb -collagen -ff martini22dna
+#diff *_cg.pdb ../../${DIFF}/${block}/*_cg.pdb >> ../${block}.diff
+#diff *_cg.top ../../${DIFF}/${block}/*_cg.top >> ../${block}.diff
+#cd ..
 
 cd ..
