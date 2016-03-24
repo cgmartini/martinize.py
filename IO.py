@@ -11,7 +11,6 @@ import MAP, SS, FUNC
 d2r = 3.14159265358979323846264338327950288/180
 
 # Reformatting of lines in structure file
-pdbAtomLine = "ATOM  %5d %4s%4s %1s%4d%1s   %8.3f%8.3f%8.3f%6.2f%6.2f\n"
 pdbBoxLine  = "CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f P 1           1\n"
 
 
@@ -48,15 +47,23 @@ def pdbAtom(a):
     return tuple(atom) 
 
 
-def pdbOut(atom, i=1):
+def pdbOut(atom, i=1, **kwargs):
     # insc contains the insertion code, shifted by 20-bitwise.
     # This means there are multiple residues with the same "resi",
     # which we circumvent by subtracting "insc" from "resi".
     # At other places this subtraction as to be inverted.
     insc = atom[2] >> 20
     resi = atom[2]-(insc << 20)
-    pdbline = "ATOM  %5i  %-3s %3s%2s%4i%1s   %8.3f%8.3f%8.3f%6.2f%6.2f           %1s  \n"
-    return pdbline % ((i, atom[0][:3], atom[1], atom[3], resi, chr(insc)) + atom[4:] + (1, 40, atom[0][0]))
+    if atom[3] == None:
+        chain = ' '
+    else:
+        chain = atom[3]
+    pdbline = "ATOM  %5i  %-3s %3s%2s%4i%1s   %8.3f%8.3f%8.3f%6.2f%6.2f           %1s \n"
+    if "ssid" in kwargs and type(kwargs["ssid"]) == type(int()):
+        occupancy = kwargs["ssid"]
+    else:
+        occupancy = 40
+    return pdbline % ((i, atom[0][:3], atom[1], chain, resi, chr(insc)) + atom[4:] + (1, occupancy, atom[0][0]))
 
 
 def isPdbAtom(a):
