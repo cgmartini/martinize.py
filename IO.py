@@ -39,9 +39,13 @@ def pdbAtom(a):
     #       insertion code. We shift that 20 bits and add it to the residue number
     #       to ensure that residue numbers will be unique.
     ## ===> atom name,       res name,        res id,                        chain,
-    return (a[12:16].strip(), a[17:20].strip(), int(a[22:26])+(ord(a[26])<<20), a[21],
+    atom = [a[12:16].strip(), a[17:20].strip(), int(a[22:26])+(ord(a[26])<<20), a[21],
     #             x,              y,              z
-            float(a[30:38]), float(a[38:46]), float(a[46:54]))
+            float(a[30:38]), float(a[38:46]), float(a[46:54])]
+    # If the chain identifier is empty, the chain is to None
+    if atom[3].strip() == '':
+        atom[3] = None
+    return tuple(atom) 
 
 
 def pdbOut(atom, i=1):
@@ -124,8 +128,8 @@ def groAtom(a):
     constant = 32 << 20
     #012345678901234567890123456789012345678901234567890
     #    1PRN      N    1   4.168  11.132   5.291
-    #  ===> atom name,        res name,          res id,    chain,
-    return (a[10:15].strip(), a[5:10].strip(),   int(a[:5])+constant, " ",
+    #  ===> atom name,        res name,          res id,             chain,
+    return (a[10:15].strip(), a[5:10].strip(),   int(a[:5])+constant, None,
     #                x,                 y,                 z
             10*float(a[20:28]), 10*float(a[28:36]), 10*float(a[36:44]))
 
