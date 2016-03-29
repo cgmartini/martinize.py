@@ -172,18 +172,14 @@ def main(options):
                 if ci.multiscale:
                     for r in ci.residues:
                         for name, resn, resi, chain, x, y, z in r:
-                            insc  = resi >> 20
-                            resi -= insc << 20
-                            cgOutPDB.write(IO.pdbAtomLine % (atid, name, resn[:3], chain, resi, chr(insc), x, y, z, 1, 0))
+                            cgOutPDB.write(IO.pdbOut((name, resn[:3], resi, chain, x, y, z),i=atid))
                             atid += 1
                 coarseGrained = ci.cg(com=True)
                 if coarseGrained:
                     for name, resn, resi, chain, x, y, z, ssid in coarseGrained:
-                        insc  = resi >> 20
-                        resi -= insc << 20
                         if ci.multiscale:
                             name = "v"+name
-                        cgOutPDB.write(IO.pdbAtomLine % (atid, name, resn[:3], chain, resi, chr(insc), x, y, z, 1, ssid))
+                        cgOutPDB.write(IO.pdbOut((name, resn[:3], resi, chain, x, y, z),i=atid,ssid=ssid))
                         atid += 1
                     cgOutPDB.write("TER\n")
                 else:

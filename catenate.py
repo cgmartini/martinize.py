@@ -2,7 +2,7 @@ def cat():
     '''Function to 'compile' (catenate) the martinize script modules into one file.'''
     import re,os
     from martinize import version
-    file_out = "martinize-%s.py"%version
+    file_name = "martinize-%s.py"%version
 
     # Parameters are defined for the following (protein) forcefields:
     forcefields = [ff[:-6] for ff in os.listdir(".") if ff[-6:] == "_ff.py"]
@@ -18,7 +18,7 @@ def cat():
     files_in = 'martinize.py '+'_ff.py '.join(forcefields)+'_ff.py DOC.py CMD.py FUNC.py MAP.py SS.py ELN.py IO.py TOP.py MAIN.py '
     pattern1 = re.compile(files_in.replace('.py ','|')[:-1])
     pattern2 = re.compile(files_in.replace('.py ','\.|')[:-1])
-    file_out = open(file_out,'w')
+    file_out = open(file_name,'w')
     tail = ''; head = True
     for f in files_in.split():
         for line in open(f).readlines():
@@ -34,6 +34,7 @@ def cat():
             elif not ('import' in line and pattern1.search(line)):
                 file_out.write(pattern2.sub('',line))
     file_out.write(tail)
+    os.chmod(file_name,0755)
 
 if __name__ == '__main__':
     cat()

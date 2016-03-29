@@ -198,7 +198,7 @@ as argument, causing all chains to be multiscaled.
     ("-pf",       Option(float,                    1,     1000, "Position restraints force constant (default: 1000 kJ/mol/nm^2)")),
     ("-ed",       Option(bool,                     0,    False, "Use dihedrals for extended regions rather than elastic bonds)")),
     ("-sep",      Option(bool,                     0,    False, "Write separate topologies for identical chains.")),
-    ("-ff",       Option(str,                      1, 'martini22', "Which forcefield to use: "+' ,'.join(n for n in forcefields[:-1]))),
+    ("-ff",       Option(str,                      1, 'martini22', "Which forcefield to use: "+' ,'.join(n for n in forcefields))),
 # Fij = Fc exp( -a (rij - lo)**p )
     ("-elastic",  Option(bool,                     0,    False, "Write elastic bonds")),
     ("-ef",       Option(float,                    1,      500, "Elastic bond force constant Fc")),

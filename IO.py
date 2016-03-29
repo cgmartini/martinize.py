@@ -11,7 +11,6 @@ import MAP, SS, FUNC
 d2r = 3.14159265358979323846264338327950288/180
 
 # Reformatting of lines in structure file
-pdbAtomLine = "ATOM  %5d %4s%4s %1s%4d%1s   %8.3f%8.3f%8.3f%6.2f%6.2f\n"
 pdbBoxLine  = "CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f P 1           1\n"
 
 
@@ -39,20 +38,32 @@ def pdbAtom(a):
     #       insertion code. We shift that 20 bits and add it to the residue number
     #       to ensure that residue numbers will be unique.
     ## ===> atom name,       res name,        res id,                        chain,
-    return (a[12:16].strip(), a[17:20].strip(), int(a[22:26])+(ord(a[26])<<20), a[21],
+    atom = [a[12:16].strip(), a[17:20].strip(), int(a[22:26])+(ord(a[26])<<20), a[21],
     #             x,              y,              z
-            float(a[30:38]), float(a[38:46]), float(a[46:54]))
+            float(a[30:38]), float(a[38:46]), float(a[46:54])]
+    # If the chain identifier is empty, the chain is to None
+    if atom[3].strip() == '':
+        atom[3] = None
+    return tuple(atom) 
 
 
-def pdbOut(atom, i=1):
+def pdbOut(atom, i=1, **kwargs):
     # insc contains the insertion code, shifted by 20-bitwise.
     # This means there are multiple residues with the same "resi",
     # which we circumvent by subtracting "insc" from "resi".
     # At other places this subtraction as to be inverted.
     insc = atom[2] >> 20
     resi = atom[2]-(insc << 20)
-    pdbline = "ATOM  %5i  %-3s %3s%2s%4i%1s   %8.3f%8.3f%8.3f%6.2f%6.2f           %1s  \n"
-    return pdbline % ((i, atom[0][:3], atom[1], atom[3], resi, chr(insc)) + atom[4:] + (1, 40, atom[0][0]))
+    if atom[3] == None:
+        chain = ' '
+    else:
+        chain = atom[3]
+    pdbline = "ATOM  %5i  %-3s %3s%2s%4i%1s   %8.3f%8.3f%8.3f%6.2f%6.2f           %1s \n"
+    if "ssid" in kwargs and type(kwargs["ssid"]) == type(int()):
+        occupancy = kwargs["ssid"]
+    else:
+        occupancy = 40
+    return pdbline % ((i, atom[0][:3], atom[1], chain, resi, chr(insc)) + atom[4:] + (1, occupancy, atom[0][0]))
 
 
 def isPdbAtom(a):
@@ -124,8 +135,8 @@ def groAtom(a):
     constant = 32 << 20
     #012345678901234567890123456789012345678901234567890
     #    1PRN      N    1   4.168  11.132   5.291
-    #  ===> atom name,        res name,          res id,    chain,
-    return (a[10:15].strip(), a[5:10].strip(),   int(a[:5])+constant, " ",
+    #  ===> atom name,        res name,          res id,             chain,
+    return (a[10:15].strip(), a[5:10].strip(),   int(a[:5])+constant, None,
     #                x,                 y,                 z
             10*float(a[20:28]), 10*float(a[28:36]), 10*float(a[36:44]))
 
