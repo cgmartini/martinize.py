@@ -43,7 +43,7 @@ class Bonded:
             setattr(self, key, kwargs[key])
 
         # If atoms are given as tuples of
-        # (ID, ResidueName[, SecondaryStructure])
+        # (ID, ResidueName, SecondaryStructure, Ca, SC1)
         # then determine the corresponding parameters
         # from the lists above
         if self.atoms and type(self.atoms[0]) == tuple:
@@ -95,15 +95,15 @@ class Bonded:
 # using the category
 class Bond(Bonded):
     def set(self, atoms, **kwargs):
-        ids, r, ss, ca  = zip(*atoms)
-        self.atoms      = ids
-        self.type       = 1
-        self.positionCa = ca
-        self.comments   = "%s(%s)-%s(%s)" % (r[0], ss[0], r[1], ss[1])
+        ids, r, ss, ca, sc1  = zip(*atoms)
+        self.atoms           = ids
+        self.type            = 1
+        self.positionCa      = ca
+        self.comments        = "%s(%s)-%s(%s)" % (r[0], ss[0], r[1], ss[1])
         # The category can be used to keep bonds sorted
-        self.category   = kwargs.get("category")
+        self.category        = kwargs.get("category")
 
-        self.parameters = self.options['ForceField'].bbGetBond(r, ca, ss)
+        self.parameters      = self.options['ForceField'].bbGetBond(r, ca, ss)
         # Backbone bonds also can be constraints.
         # We could change the type further on, but this is more general.
         # Even better would be to add a new type: BB-Constraint
@@ -120,36 +120,36 @@ class Bond(Bonded):
 # Similar to the preceding class
 class Angle(Bonded):
     def set(self, atoms, **kwargs):
-        ids, r, ss, ca  = zip(*atoms)
-        self.atoms      = ids
-        self.type       = 2
-        self.positionCa = ca
-        self.comments   = "%s(%s)-%s(%s)-%s(%s)" % (r[0], ss[0], r[1], ss[1], r[2], ss[2])
-        self.category   = kwargs.get("category")
-        self.parameters = self.options['ForceField'].bbGetAngle(r, ca, ss)
+        ids, r, ss, ca, sc1  = zip(*atoms)
+        self.atoms           = ids
+        self.type            = 2
+        self.positionCa      = ca
+        self.comments        = "%s(%s)-%s(%s)-%s(%s)" % (r[0], ss[0], r[1], ss[1], r[2], ss[2])
+        self.category        = kwargs.get("category")
+        self.parameters      = self.options['ForceField'].bbGetAngle(r, ca, ss)
 
 
 # Similar to the preceding class
 class Vsite(Bonded):
     def set(self, atoms, **kwargs):
-        ids, r, ss, ca  = zip(*atoms)
-        self.atoms      = ids
-        self.type       = 1
-        self.positionCa = ca
-        self.comments   = "%s" % (r[0])
-        self.category   = kwargs.get("category")
-        self.parameters = kwargs.get("parameters")
+        ids, r, ss, ca, sc1  = zip(*atoms)
+        self.atoms           = ids
+        self.type            = 1
+        self.positionCa      = ca
+        self.comments        = "%s" % (r[0])
+        self.category        = kwargs.get("category")
+        self.parameters      = kwargs.get("parameters")
 
 
 # Similar to the preceding class
 class Exclusion(Bonded):
     def set(self, atoms, **kwargs):
-        ids, r, ss, ca  = zip(*atoms)
-        self.atoms      = ids
-        self.positionCa = ca
-        self.comments   = "%s" % (r[0])
-        self.category   = kwargs.get("category")
-        self.parameters = kwargs.get("parameters")
+        ids, r, ss, ca, sc1  = zip(*atoms)
+        self.atoms           = ids
+        self.positionCa      = ca
+        self.comments        = "%s" % (r[0])
+        self.category        = kwargs.get("category")
+        self.parameters      = kwargs.get("parameters")
 
 
 # Similar to the preceding class
@@ -388,6 +388,8 @@ class Topology:
         out.append("\n[ dihedrals ]")
         out.append("; Backbone dihedrals")
         out.extend([str(i) for i in self.dihedrals["BBBB"] if i.parameters])
+        out.append("; Sidechain Backbone Backbone Sidechain dihedrals")
+        out.extend([str(i) for i in self.dihedrals["SBBS"] if i.parameters])
         out.append("; Sidechain improper dihedrals")
         out.extend([str(i) for i in self.dihedrals["SC"] if i.parameters])
 
@@ -406,7 +408,9 @@ class Topology:
                               breaks=None, mapping=None, rubber=False,
                               multi=False):
         '''The sequence function can be used to generate the topology for
-           a sequence :) either given as sequence or as chain'''
+           a sequence :) either given as sequence or as chain. 
+           Starting from a sequence currently doesn't work anymore, since
+           for Elnedyn/scFix atom positions are needed.'''
 
         # Shift for the atom numbers of the atomistic part in a chain
         # that is being multiscaled
@@ -462,15 +466,13 @@ class Topology:
         for i in zip(*sc)[0]:
             bbid.append(bbid[-1]+len(i)+1)
 
+        # We need - Calpha positions to get Elnedyn BB-bonds and BBB-angles
+        #         - SC1 positions to get scFix SBBS dihedrals.
         # Calpha positions, to get Elnedyn BBB-angles and BB-bond lengths
-        # positionCa = [residue[1][4:] for residue in chain.residues]
-        # The old method (line above) assumed no hydrogens: Ca would always be
-        # the second atom of the residue. Now we look at the name.
-        positionCa = []
-        for residue in chain.residues:
-            for atom in residue:
-                if atom[0] == "CA":
-                    positionCa.append(atom[4:])
+        # Since for Elnedyn the positions of Calpha and BB are the same we go
+        # through the CG-list of positions
+        positionCa  = [atom[4:] for atom in chain.cg() if atom[0] == "BB"]
+        positionSC1  = [atom[4:] for atom in chain.cg() if atom[0] == "SC1"]
 
         # Residue numbers for this moleculetype topology
         resid = range(startResi, startResi+len(self.sequence))
@@ -478,10 +480,10 @@ class Topology:
         # This contains the information for deriving backbone bead types,
         # bb bond types, bbb/bbs angle types, and bbbb dihedral types and
         # Elnedyn BB-bondlength BBB-angles
-        seqss = zip(bbid, self.sequence, self.secstruc, positionCa)
+        seqss = zip(bbid, self.sequence, self.secstruc, positionCa, positionSC1)
 
         # Fetch the proper backbone beads
-        bb = [self.options['ForceField'].bbGetBead(res, typ) for num, res, typ, Ca in seqss]
+        bb = [self.options['ForceField'].bbGetBead(res, typ) for num, res, typ, Ca, SC1 in seqss]
 
         # If termini need to be charged, change the bead types
         if not self.options['NeutralTermini']:
@@ -505,6 +507,29 @@ class Topology:
             # Iterate over backbone angles
             # Don't skip the first and last residue in the fragment
             self.angles.extend([Angle(triple, options=self.options, category="BBB") for triple in zip(frg, frg[1:], frg[2:])])
+
+            # For the scFix forcefield we need to add SBBS-dihedrals based upon:
+            #       wether the current pair is in an extended region
+            #       wether the residue has a side chain
+            #       the angle found in the pdb.
+            if hasattr(self.options['ForceField'], 'UseSBBSDihedrals') and self.options['ForceField'].UseSBBSDihedrals:
+                for pair in zip(frg, frg[1:]):
+                    id, rn, ss, ca, sc1 = zip(*pair)
+                    if (ss == ("E", "E") and 
+                            self.options['ForceField'].sidechains[rn[0]] and 
+                            self.options['ForceField'].sidechains[rn[0]]):
+                        dihed = Dihedral(
+                            atoms        = (id[0]+1, id[0], id[1], id[1]+1),
+                            parameters   = self.options['ForceField'].sbbsGetDihedral(ca, sc1),
+                            type         = 1,
+                            options      = self.options,
+                            comments     = "%s-%s" % (rn[0], rn[1]),
+                            category     = "SBBS"
+                        )
+                        if dihed:
+                            self.dihedrals.append(dihed)
+
+
 
             # Get backbone quadruples
             quadruples = zip(frg, frg[1:], frg[2:], frg[3:])

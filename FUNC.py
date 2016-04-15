@@ -45,6 +45,11 @@ def formatString(i):
 ## B | MATH FUNCTIONS |
 #----+----------------+
 
+def cross(a,b):
+    c = [a[1]*b[2] - a[2]*b[1],
+         a[2]*b[0] - a[0]*b[2],
+         a[0]*b[1] - a[1]*b[0]]
+    return c
 
 def cos_angle(a, b):
     p = sum([i*j for i, j in zip(a, b)])
