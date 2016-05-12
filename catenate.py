@@ -34,7 +34,7 @@ def cat():
             elif not ('import' in line and pattern1.search(line)):
                 file_out.write(pattern2.sub('',line))
     file_out.write(tail)
-    os.chmod(file_name,0755)
+    os.chmod(file_name,0o755)
 
 if __name__ == '__main__':
     cat()
