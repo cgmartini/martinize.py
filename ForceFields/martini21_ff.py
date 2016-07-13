@@ -2,15 +2,16 @@
 ## 6 # FORCE FIELD PARAMETERS ##  -> @FF <-
 ################################
 
-class martini21p:
+class martini21:
+    ff = True
     def __init__(self):
         import SS,FUNC,IO 
 
         # parameters are defined here for the following (protein) forcefields:
-        self.name = 'martini21p'
+        self.name = 'martini21'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                                                           #@#
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                        #@#
         
         
         #----+---------------------+
@@ -108,16 +109,16 @@ class martini21p:
             "CYS": [FUNC.spl("C5"),             [(0.310,7500)]],
             "ASP": [FUNC.spl("Qa"),             [(0.320,7500)]],
             "GLU": [FUNC.spl("Qa"),             [(0.400,5000)]],
-            "ILE": [FUNC.spl("C1"),            [(0.310,None)]],
-            "LEU": [FUNC.spl("C1"),            [(0.330,7500)]],
+            "ILE": [FUNC.spl("AC1"),            [(0.310,None)]],
+            "LEU": [FUNC.spl("AC1"),            [(0.330,7500)]],
             "MET": [FUNC.spl("C5"),             [(0.400,2500)]],
             "ASN": [FUNC.spl("P5"),             [(0.320,5000)]],
-            "PRO": [FUNC.spl("C2"),            [(0.300,7500)]],
+            "PRO": [FUNC.spl("AC2"),            [(0.300,7500)]],
             "HYP": [FUNC.spl("P1"),             [(0.300,7500)]],
             "GLN": [FUNC.spl("P4"),             [(0.400,5000)]],
             "SER": [FUNC.spl("P1"),             [(0.250,7500)]],
             "THR": [FUNC.spl("P1"),             [(0.260,None)]],
-            "VAL": [FUNC.spl("C2"),            [(0.265,None)]],
+            "VAL": [FUNC.spl("AC2"),            [(0.265,None)]],
             "ALA": [],
             "GLY": [],
             }
@@ -161,7 +162,7 @@ class martini21p:
         "ALA":     [],
         "GLY":     [],
         }
-
+       
         #----+----------------+
         ## C | SPECIAL BONDS  |
         #----+----------------+
@@ -169,12 +170,12 @@ class martini21p:
         self.special = {
             # Used for sulfur bridges
             # ATOM 1         ATOM 2          BOND LENGTH   FORCE CONSTANT
-            (("SC1","CYS"), ("SC1","CYS")):     (0.39,         5000),
+            (("SC1","CYS"), ("SC1","CYS")):     (0.24,         None),
             }
-       
+        
         # By default use an elastic network
-        self.ElasticNetwork = False
- 
+        self.ElasticNetwork = False 
+
         # Elastic networks bond shouldn't lead to exclusions (type 6) 
         # But Elnedyn has been parametrized with type 1.
         self.EBondType = 6
@@ -218,8 +219,7 @@ class martini21p:
     # dictionary) revert to the default.                                                        
     def bbGetBead(self,r1,ss="C"):                                                                   
         return self.bbBeadDictS.get(r1,self.bbBeadDictD).get(ss,self.bbBeadDictD.get(ss))                      
-    
-    
+
     def bbGetBond(self,r,a,ss):
         # Retrieve parameters for each residue from table defined above
         b1 = self.bbBondDictS.get(r[0],self.bbBondDictD).get(ss[0],self.bbBondDictD.get(ss[0]))
@@ -242,6 +242,8 @@ class martini21p:
             return a[0]
         
     def messages(self):
+        import logging 
         '''Prints any force-field specific logging messages.'''
-        pass
-
+        logging.info('Note: Cysteine bonds are 0.24 nm constraints, instead of the published 0.39nm/5000kJ/mol.')
+    
+    

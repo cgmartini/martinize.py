@@ -1,9 +1,9 @@
 #############################
 ## 5 # SECONDARY STRUCTURE ##  -> @SS <-
 #############################
-import logging,os,sys
+import logging, os, sys
 import subprocess as subp
-import FUNC,IO
+import FUNC, IO
 
 #----+--------------------------------------+
 ## A | SECONDARY STRUCTURE TYPE DEFINITIONS |
@@ -27,21 +27,22 @@ ss_names = {
  "C": "Coil",                                                                               #@#
 }
 
-bbss     =    FUNC.spl("  F     E     H     1     2     3     T     S     C")  # SS one letter 
+bbss = ss_names.keys()
+bbss = FUNC.spl("  F     E     H     1     2     3     T     S     C")  # SS one letter
 
 
 # The following dictionary contains secondary structure types as assigned by
-# different programs. The corresponding Martini secondary structure types are               
-# listed in cgss                                                                            
-#                                                                                           
-# NOTE:                                                                                     
-#  Each list of letters in the dictionary ss should exactly match the list                  
-#  in cgss.                                                                                 
-#                                                                                           
+# different programs. The corresponding Martini secondary structure types are
+# listed in cgss
+#
+# NOTE:
+#  Each list of letters in the dictionary ss should exactly match the list
+#  in cgss.
+#
 ssdefs = {
     "dssp":  list(".HGIBETSC~"),             # DSSP one letter secondary structure code     #@#
-    "pymol": list(".H...S...L"),             # Pymol one letter secondary structure code    #@# 
-    "gmx":   list(".H...ETS.C"),             # Gromacs secondary structure dump code        #@#    
+    "pymol": list(".H...S...L"),             # Pymol one letter secondary structure code    #@#
+    "gmx":   list(".H...ETS.C"),             # Gromacs secondary structure dump code        #@#
     "self":  list("FHHHEETSCC")              # Internal CG secondary structure codes        #@#
 }
 cgss     =   list("FHHHEETSCC")              # Corresponding CG secondary structure types   #@#
@@ -53,11 +54,11 @@ cgss     =   list("FHHHEETSCC")              # Corresponding CG secondary struct
 
 
 # For all structure types specific dihedrals may be used if four or
-# more consecutive residues are assigned that type.                
+# more consecutive residues are assigned that type.
 
 # Helix start and end regions are special and require assignment of
-# specific types. The following pattern substitutions are applied 
-# (in the given order). A dot matches any other type.             
+# specific types. The following pattern substitutions are applied
+# (in the given order). A dot matches any other type.
 # Patterns can be added to the dictionaries. This only makes sense
 # if for each key in patterns there is a matching key in pattypes.
 patterns = {
@@ -67,114 +68,113 @@ pattypes = {
     "H": FUNC.pat(".3. .33. .333. .3333. .13332. .113322. .1113222. .1111 2222.")                #@#
 }
 
-    
+
 #----+----------+
 ## C | INTERNAL |
 #----+----------+
 
 
 # Pymol Colors
-#           F   E   H   1   2   3   T   S   C
-ssnum  = ( 13,  4,  2,  2,  2,  2,  6, 22,  0 )                                             #@#
+#          F   E   H   1   2   3   T   S   C
+ssnum  = (13,  4,  2,  2,  2,  2,  6, 22,  0)                                             #@#
 
 # Dictionary returning a number for a given type of secondary structure
-# This can be used for setting the b-factor field for coloring         
-ss2num = FUNC.hash(bbss,ssnum)                                                                   
+# This can be used for setting the b-factor field for coloring
+ss2num = FUNC.hash(bbss, ssnum)
 
 
 # List of programs for which secondary structure definitions can be processed
-programs = ssdefs.keys()                                                                    
+programs = ssdefs.keys()
 
 
-# Dictionaries mapping ss types to the CG ss types                                          
-ssd = dict([ (i, FUNC.hash(ssdefs[i],cgss)) for i in programs ])                                 
+# Dictionaries mapping ss types to the CG ss types
+ssd = dict([(i, FUNC.hash(ssdefs[i], cgss)) for i in programs])
 
 
 # From the secondary structure dictionaries we create translation tables
 # with which all secondary structure types can be processed. Anything
 # not listed above will be mapped to C (coil).
-# Note, a translation table is a list of 256 characters to map standard  
+# Note, a translation table is a list of 256 characters to map standard
 # ascii characters to.
-def tt(program):                                                                            
-    return  "".join([ssd[program].get(chr(i),"C") for i in range(256)])                     
+def tt(program):
+    return "".join([ssd[program].get(chr(i), "C") for i in range(256)])
 
 
-# The translation table depends on the program used to obtain the 
+# The translation table depends on the program used to obtain the
 # secondary structure definitions
-sstt = dict([(i,tt(i)) for i in programs])                                                  
+sstt = dict([(i, tt(i)) for i in programs])
 
 
-# The following translation tables are used to identify stretches of 
+# The following translation tables are used to identify stretches of
 # a certain type of secondary structure. These translation tables have
 # every character, except for the indicated secondary structure, set to
 # \x00. This allows summing the sequences after processing to obtain
 # a single sequence summarizing all the features.
-null = "\x00"                                                                               
-sstd = dict([ (i,ord(i)*null+i+(255-ord(i))*null) for i in cgss ])                          
+null = "\x00"
+sstd = dict([(i, ord(i)*null+i+(255-ord(i))*null) for i in cgss])
 
 
 # Pattern substitutions
-def typesub(seq,patterns,types):                                                            
+def typesub(seq, patterns, types):
     seq = null+seq+null
-    for i,j in zip(patterns,types):                                                         
-        seq = seq.replace(i,j)                                                              
-    return seq[1:-1]                                                                              
+    for i, j in zip(patterns, types):
+        seq = seq.replace(i, j)
+    return seq[1:-1]
 
 
 # The following function translates a string encoding the secondary structure
-# to a string of corresponding Martini types, taking the origin of the 
+# to a string of corresponding Martini types, taking the origin of the
 # secondary structure into account, and replacing termini if requested.
-def ssClassification(ss,program="dssp"):                                                    
-    # Translate dssp/pymol/gmx ss to Martini ss                                             
-    ss  = ss.translate(sstt[program])                                                       
-    # Separate the different secondary structure types                                      
-    sep = dict([(i,ss.translate(sstd[i])) for i in sstd.keys()])                            
-    # Do type substitutions based on patterns                                               
-    # If the ss type is not in the patterns lists, do not substitute                        
-    # (use empty lists for substitutions)                                                   
-    typ = [ typesub(sep[i],patterns.get(i,[]),pattypes.get(i,[]))                           
-            for i in sstd.keys()]                                                           
-    # Translate all types to numerical values                                               
-    typ = [ [ord(j) for j in list(i)] for i in typ ]                                        
-    # Sum characters back to get a full typed sequence                                      
-    typ = "".join([chr(sum(i)) for i in zip(*typ)])                                         
-    # Return both the actual as well as the fully typed sequence                             
-    return ss, typ                                                                          
+def ssClassification(ss, program="dssp"):
+    # Translate dssp/pymol/gmx ss to Martini ss
+    ss  = ss.translate(sstt[program])
+    # Separate the different secondary structure types
+    sep = dict([(i, ss.translate(sstd[i])) for i in sstd.keys()])
+    # Do type substitutions based on patterns
+    # If the ss type is not in the patterns lists, do not substitute
+    # (use empty lists for substitutions)
+    typ = [typesub(sep[i], patterns.get(i, []), pattypes.get(i, [])) for i in sstd.keys()]
+    # Translate all types to numerical values
+    typ = [[ord(j) for j in list(i)] for i in typ]
+    # Sum characters back to get a full typed sequence
+    typ = "".join([chr(sum(i)) for i in zip(*typ)])
+    # Return both the actual as well as the fully typed sequence
+    return ss, typ
 
 
-# The following functions are for determination of secondary structure, 
+# The following functions are for determination of secondary structure,
 # given a list of atoms. The atom format is generic and can be written out
 # as PDB or GRO. The coordinates are in Angstrom.
-# NOTE: There is the *OLD* DSSP and the *NEW* DSSP, which require 
+# NOTE: There is the *OLD* DSSP and the *NEW* DSSP, which require
 # different calls. The old version uses '--' to indicate reading from stdin
 # whereas the new version uses '-i /dev/stdin'
-def call_dssp(chain,atomlist,executable='dsspcmbi'):
+def call_dssp(chain, atomlist, executable='dsspcmbi'):
     '''Get the secondary structure, by calling to dssp'''
-    ssdfile = 'chain_%s.ssd'%chain.id 
+    ssdfile = 'chain_%s.ssd' % chain.id
 
     try:
-        if os.system(executable+" -V >/dev/null"):
-            logging.debug("New version of DSSP; Executing '%s -i /dev/stdin -o %s'"%(executable,ssdfile))
-            p = subp.Popen([executable,"-i","/dev/stdin","-o",ssdfile],stderr=subp.PIPE,stdout=subp.PIPE,stdin=subp.PIPE)
+        if os.system(executable+" -V 2>/dev/null"):
+            logging.debug("New version of DSSP; Executing '%s -i /dev/stdin -o %s'" % (executable, ssdfile))
+            p = subp.Popen([executable, "-i", "/dev/stdin", "-o", ssdfile], stderr=subp.PIPE, stdout=subp.PIPE, stdin=subp.PIPE)
         else:
-            logging.debug("Old version of DSSP; Executing '%s -- %s'"%(executable,ssdfile))
-            p = subp.Popen([executable,"--",ssdfile],stderr=subp.PIPE,stdout=subp.PIPE,stdin=subp.PIPE)
+            logging.debug("Old version of DSSP; Executing '%s -- %s'" % (executable, ssdfile))
+            p = subp.Popen([executable, "--", ssdfile], stderr=subp.PIPE, stdout=subp.PIPE, stdin=subp.PIPE)
     except OSError:
-        logging.error("A problem occured calling %s."%executable)
+        logging.error("A problem occured calling %s." % executable)
         sys.exit(1)
 
-    for atom in atomlist: 
-        if atom[0][:2] == 'O1': atom=('O',)+atom[1:]
-        if atom[0][0]!='H' and atom[0][:2]!='O2': p.stdin.write(IO.pdbOut(atom))
+    for atom in atomlist:
+        if atom[0][:2] == 'O1': atom = ('O',)+atom[1:]
+        if atom[0][0] != 'H' and atom[0][:2] != 'O2': p.stdin.write(IO.pdbOut(atom))
     p.stdin.write('TER\n')
     data = p.communicate()
     p.wait()
-    main,ss = 0,''
-    for line in open(ssdfile).readlines(): 
-      if main and not line[13] == "!": ss+=line[16]
-      if line[:15] == '  #  RESIDUE AA': main=1
+    main, ss = 0, ''
+    for line in open(ssdfile).readlines():
+        if main and not line[13] == "!": ss += line[16]
+        if line[:15] == '  #  RESIDUE AA': main = 1
     return ss
-     
+
 ssDetermination = {
     "dssp": call_dssp
     }

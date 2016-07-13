@@ -14,6 +14,7 @@
 #   Helix BB-bond length
 
 class martini22p:
+    ff = True
     def __init__(self):
         import SS,FUNC,IO 
 
@@ -188,7 +189,7 @@ class martini22p:
         self.special = {
             # Used for sulfur bridges
             # ATOM 1         ATOM 2          BOND LENGTH   FORCE CONSTANT
-            (("SC1","CYS"), ("SC1","CYS")):     (0.39,         5000),
+            (("SC1","CYS"), ("SC1","CYS")):     (0.24,         None),
             }
         
         # By default use an elastic network
@@ -263,7 +264,6 @@ class martini22p:
     def messages(self):
         '''Prints any force-field specific logging messages.'''
         import logging
-        logging.warning('Martini version 2.2 is in beta release. It has not been extensively tested and problems might occur.')
         logging.warning('Bead names of charges in sidechains differ between .top/.itp and .pdb.')
         logging.warning('Using names in topology, as Gromacs does, gives the correct result.')
-        pass
+        logging.info('Note: Cysteine bonds are 0.24 nm constraints, instead of the published 0.39nm/5000kJ/mol.')
