@@ -2,15 +2,24 @@
 ## 6 # FORCE FIELD PARAMETERS ##  -> @FF <-
 ################################
 
-class martini21:
+# New martini 2.2 parameters.
+# Changed: 
+#   Unstructured Pro backbone bead
+#   Proline side chains
+#   Phe sidechain
+#   Trp sidechain
+#   Helix BB-bonds to constraint      
+
+class martini22:
+    ff = True
     def __init__(self):
         import SS,FUNC,IO 
 
         # parameters are defined here for the following (protein) forcefields:
-        self.name = 'martini21'
+        self.name = 'martini22'
         
         # Charged types:
-        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                        #@#
+        self.charges = {"Qd":1, "Qa":-1, "SQd":1, "SQa":-1, "RQd":1, "AQa":-1}                                                           #@#
         
         
         #----+---------------------+
@@ -41,21 +50,21 @@ class martini21:
         
         ###############################################################################################
         ## BEADS ##                                                                         #                 
-        #                          F     E     H     1     2     3     T     S     C        # SS one letter   
+        #                              F     E     H     1     2     3     T     S     C    # SS one letter   
         self.bbdef    =    FUNC.spl(" N0   Nda    N0    Nd    Na   Nda   Nda    P5    P5")  # Default beads   #@#
         self.bbtyp    = {                                                                   #                 #@#
-                     "ALA": FUNC.spl(" C5    N0    C5    N0    N0    N0    N0    P4    P4"),# ALA specific    #@#
-                     "PRO": FUNC.spl(" C5    N0    C5    N0    Na    N0    N0    Na    Na"),# PRO specific    #@#
-                     "HYP": FUNC.spl(" C5    N0    C5    N0    N0    N0    N0    Na    Na") # HYP specific    #@#
+                    "ALA": FUNC.spl(" C5    N0    C5    N0    N0    N0    N0    P4    P4"), # ALA specific    #@#
+                    "PRO": FUNC.spl(" C5    N0    C5    N0    Na    N0    N0    P4    P4"), # PRO specific    #@#
+                    "HYP": FUNC.spl(" C5    N0    C5    N0    N0    N0    N0    P4    P4")  # HYP specific    #@#
         }                                                                                   #                 #@#
         ## BONDS ##                                                                         #                 
-        self.bbldef   =             (.365, .350, .350, .350, .350, .350, .350, .350, .350)  # BB bond lengths #@#
-        self.bbkb     =             (1250, 1250, 1250, 1250, 1250, 1250,  500,  400,  400)  # BB bond kB      #@#
+        self.bbldef   =             (.365, .350, .310, .310, .310, .310, .350, .350, .350)  # BB bond lengths #@#
+        self.bbkb     =             (1250, 1250, None, None, None, None, 1250, 1250, 1250)  # BB bond kB      #@#
         self.bbltyp   = {}                                                                  #                 #@#
         self.bbkbtyp  = {}                                                                  #                 #@#
         ## ANGLES ##                                                                        #                 
         self.bbadef   =             ( 119.2,134,   96,   96,   96,   96,  100,  130,  127)  # BBB angles      #@#
-        self.bbka     =             ( 150,   25,  700,  700,  700,  700,   25,   25,   25)  # BBB angle kB    #@#
+        self.bbka     =             ( 150,   25,  700,  700,  700,  700,   20,   20,   20)  # BBB angle kB    #@#
         self.bbatyp   = {                                                                   #                 #@#
                "PRO":               ( 119.2,134,   98,   98,   98,   98,  100,  130,  127), # PRO specific    #@#
                "HYP":               ( 119.2,134,   98,   98,   98,   98,  100,  130,  127)  # PRO specific    #@#
@@ -98,9 +107,9 @@ class martini21:
         self.sidechains = {
             #RES#   BEADS                   BONDS                                                   ANGLES              DIHEDRALS
             #                               BB-SC          SC-SC                                        BB-SC-SC  SC-SC-SC
-            "TRP": [FUNC.spl("SC4 SP1 SC4 SC4"),[(0.300,5000)]+[(0.270,None) for i in range(5)],        [(210,50),(90,50),(90,50)], [(0,50),(0,200)]],
+            "TRP": [FUNC.spl("SC4 SNd SC5 SC5"),[(0.300,5000)]+[(0.270,None) for i in range(5)],        [(210,50),(90,50),(90,50)], [(0,50),(0,200)]],
             "TYR": [FUNC.spl("SC4 SC4 SP1"),    [(0.320,5000), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
-            "PHE": [FUNC.spl("SC4 SC4 SC4"),    [(0.310,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
+            "PHE": [FUNC.spl("SC5 SC5 SC5"),    [(0.310,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
             "HIS": [FUNC.spl("SC4 SP1 SP1"),    [(0.320,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
             "HIH": [FUNC.spl("SC4 SP1 SQd"),    [(0.320,7500), (0.270,None), (0.270,None),(0.270,None)],[(150,50),(150,50)],        [(0,50)]],
             "ARG": [FUNC.spl("N0 Qd"),          [(0.330,5000), (0.340,5000)],                           [(180,25)]],
@@ -112,7 +121,7 @@ class martini21:
             "LEU": [FUNC.spl("AC1"),            [(0.330,7500)]],
             "MET": [FUNC.spl("C5"),             [(0.400,2500)]],
             "ASN": [FUNC.spl("P5"),             [(0.320,5000)]],
-            "PRO": [FUNC.spl("AC2"),            [(0.300,7500)]],
+            "PRO": [FUNC.spl("C3"),             [(0.300,7500)]],
             "HYP": [FUNC.spl("P1"),             [(0.300,7500)]],
             "GLN": [FUNC.spl("P4"),             [(0.400,5000)]],
             "SER": [FUNC.spl("P1"),             [(0.250,7500)]],
@@ -138,8 +147,8 @@ class martini21:
         # Defines the connectivity between between beads
         self.connectivity = {
         #RES       BONDS                                   ANGLES             DIHEDRALS              V-SITE
-        "TRP":     [[(0,1),(1,2),(1,3),(2,3),(2,4),(3,4)], [(0,1,2),(0,1,3)], [(0,2,3,1),(1,2,4,3)]],
-        "TYR":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
+        "TRP":     [[(0,1),(1,2),(1,3),(2,3),(2,4),(3,4)], [(0,1,2),(0,1,3)], [(0,2,3,1),(1,2,4,3)]],  
+        "TYR":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]], 
         "PHE":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
         "HIS":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
         "HIH":     [[(0,1),(1,2),(1,3),(2,3)],             [(0,1,2),(0,1,3)], [(0,2,3,1)]],
@@ -161,7 +170,7 @@ class martini21:
         "ALA":     [],
         "GLY":     [],
         }
-       
+        
         #----+----------------+
         ## C | SPECIAL BONDS  |
         #----+----------------+
@@ -169,7 +178,7 @@ class martini21:
         self.special = {
             # Used for sulfur bridges
             # ATOM 1         ATOM 2          BOND LENGTH   FORCE CONSTANT
-            (("SC1","CYS"), ("SC1","CYS")):     (0.39,         5000),
+            (("SC1","CYS"), ("SC1","CYS")):     (0.24,         None),
             }
         
         # By default use an elastic network
@@ -218,7 +227,8 @@ class martini21:
     # dictionary) revert to the default.                                                        
     def bbGetBead(self,r1,ss="C"):                                                                   
         return self.bbBeadDictS.get(r1,self.bbBeadDictD).get(ss,self.bbBeadDictD.get(ss))                      
-
+    
+    
     def bbGetBond(self,r,a,ss):
         # Retrieve parameters for each residue from table defined above
         b1 = self.bbBondDictS.get(r[0],self.bbBondDictD).get(ss[0],self.bbBondDictD.get(ss[0]))
@@ -241,8 +251,6 @@ class martini21:
             return a[0]
         
     def messages(self):
-        import logging 
         '''Prints any force-field specific logging messages.'''
-        pass
-    
-    
+        import logging
+        logging.info('Note: Cysteine bonds are 0.24 nm constraints, instead of the published 0.39nm/5000kJ/mol.')

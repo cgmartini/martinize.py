@@ -11,6 +11,7 @@
 #   Helix BB-bonds to constraint      
 
 class martini22dna:
+    ff = True
     def __init__(self):
         import SS,FUNC,IO
 
@@ -243,7 +244,7 @@ class martini22dna:
         self.special = {
             # Used for sulfur bridges
             # ATOM 1         ATOM 2          BOND LENGTH   FORCE CONSTANT
-            (("SC1","CYS"), ("SC1","CYS")):     (0.39,         5000),
+            (("SC1","CYS"), ("SC1","CYS")):     (0.24,         None),
             }
         
         # By default use an elastic network
