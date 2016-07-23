@@ -667,7 +667,6 @@ class Chain:
                     beads      = zip(MAP.CoarseGrained.residue_bead_names_polBB,beads,ids)
                 else:
                     beads      = zip(MAP.CoarseGrained.names[residue[0][1]],beads,ids)
-
                 # Check needed for martini 2.2 polar and charged lipids.
                 if residue[0][1] in self.options['ForceField'].polar:
                     beads = add_dummy(beads, dist=0.14, n=2)

@@ -1041,10 +1041,8 @@ class Topology:
         # This contains the information for deriving backbone bead types,
         # bb bond types, bbb/bbs angle types, and bbbb dihedral types.
         seqss = zip(bbid,self.sequence,self.secstruc,seqBBid)
-        # The first residue does not start with DIP but CA
-        #seqss[0] = (seqss[0][0][1:],)+seqss[0][1:]
-        # The last residue only has DIP and CA in the BB
-        seqss[-1] = (seqss[-1][0][:2],)+seqss[-1][1:]
+        # The last residue only has DIP, CA and DIM in the BB
+        seqss[-1] = (seqss[-1][0][:1],)+seqss[-1][1:]
 
         # Fetch the proper backbone beads          
         # Since there are  N beads we need to split these to the list
@@ -1052,7 +1050,7 @@ class Topology:
         # bbGetBead always returns all the BB-beads. For the first residue we do not need
         # first bead. This we pop out. Then we make it at length with seqss to give also
         # the last bead the right length.
-        bb[0] = bb[0][1:]
+        #bb[0] = bb[0][1:]
         bbMulti = [beadname for residue,beads in zip(seqss,bb) for atomid,beadname in zip(residue[0],beads)]
 
         # This is going to be usefull for the type of the last backbone bead.
@@ -1184,12 +1182,14 @@ class Topology:
                 # All residue atoms
                 counter = 0  # Counts over beads
                 # Count it the current backbone bead. bbb is the current backbone residue
-                if resi == 1:
-                    bbbset = bbMulti[count:count+3]
-                    aNames = MAP.CoarseGrained.residue_bead_names_polBB[1:]
-                else:
-                    bbbset = bbMulti[count-1:count+3]
-                    aNames = MAP.CoarseGrained.residue_bead_names_polBB
+                #if resi == 1:
+                #    bbbset = bbMulti[count:count+3]
+                #    aNames = MAP.CoarseGrained.residue_bead_names_polBB[1:]
+                #else:
+                #    bbbset = bbMulti[count-1:count+3]
+                #    aNames = MAP.CoarseGrained.residue_bead_names_polBB
+                bbbset = bbMulti[count-1:count+3]
+                aNames = MAP.CoarseGrained.residue_bead_names_polBB
                 for atype,aname in zip(bbbset+list(scatoms),aNames):
                     if self.multiscale:
                         atype,aname = "v"+atype,"v"+aname

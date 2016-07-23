@@ -4,7 +4,7 @@
 # EDITABLE SECTIONS ARE MARKED WITH #@#
 
 
-version = "2.6"
+version = "2.6_polBB"
 authors = ["Djurre H. de Jong", "Jaakko J. Uusitalo", "Tsjerk A. Wassenaar"]
 
 # This program has grown to be pretty complex.

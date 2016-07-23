@@ -157,7 +157,7 @@ def aver(b):
 def map(r, ca2bb = False):
     p = CoarseGrained.mapping[r[0][1]]                                             # Mapping for this residue 
     if ca2bb == "polBB": 
-        p = [["N"],["CA"],["O"],["C"]]+p[1:]
+        p = [["N"],["CA"],["O","O1"],["C"]]+p[1:]
     elif ca2bb: p[0] = ["CA"]                                                      # Elnedyn maps BB to CA, ca2bb is False or True
     # Get the name, mass and coordinates for all atoms in the residue
     a = [(i[0], CoarseGrained.mass.get(i[0][0], 0), i[4:]) for i in r]
