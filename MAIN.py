@@ -136,9 +136,10 @@ def main(options):
             # Now set the secondary structure for each of the chains
             sstmp = ss
             for chain in chains:
+                assert len(chain) <= len(sstmp) or len(sstmp) == 1, 'ss structure is not the right length'
                 ln = min(len(sstmp), len(chain))
                 chain.set_ss(sstmp[:ln])
-                sstmp = ss[:ln]
+                sstmp = sstmp[ln:]
         else:
             if options["-dssp"]:
                 method, executable = "dssp", options["-dssp"].value

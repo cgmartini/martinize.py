@@ -109,6 +109,28 @@ diff *_cg.pdb ../../${DIFF}/${block}/*_cg.pdb >> ../${block}.diff
 diff *_cg.top ../../${DIFF}/${block}/*_cg.top >> ../${block}.diff
 cd ..
 
+# Test the seperate writing of chains of different lengths, position restraints, neutral termini. Use Mscl.
+block=chains22difflen
+echo '***************'${block}'*****************'
+mkdir $block
+cd $block
+pdbgett 3IPD
+$SCRIPT -f 3IPD.pdb -o 3IPD_cg.top -x 3IPD_cg.pdb -sep -nt -p All -pf 500 -dssp $DSSP -ff martini22
+diff *_cg.pdb ../../${DIFF}/${block}/*_cg.pdb >> ../${block}.diff
+diff *_cg.top ../../${DIFF}/${block}/*_cg.top >> ../${block}.diff
+cd ..
+
+# Multi chain and giving secondary sturcture as string.
+block=chains22ss
+echo '***************'${block}'*****************'
+mkdir $block
+cd $block
+pdbgett 3IPD
+$SCRIPT -f 3IPD.pdb -o 3IPD_cg.top -x 3IPD_cg.pdb -sep -ss HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC -ff martini22
+diff *_cg.pdb ../../${DIFF}/${block}/*_cg.pdb >> ../${block}.diff
+diff *_cg.top ../../${DIFF}/${block}/*_cg.top >> ../${block}.diff
+cd ..
+
 # Test cysteine bridge (between cys 9 and cys 164), naming protein and use dihedrals for extended regions. Use mutated lysozyme.
 block=Sbonds21
 echo '***************'${block}'*****************'
