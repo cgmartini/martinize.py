@@ -145,15 +145,15 @@ def groAtom(a):
 def groFrameIterator(streamIterator):
     while True:
         try:
-            title = streamIterator.next()
+            title = next(streamIterator)
         except StopIteration:
             break
         natoms = streamIterator.next().strip()
         if not natoms:
             break
         natoms = int(natoms)
-        atoms  = [groAtom(streamIterator.next()) for i in range(natoms)]
-        box    = groBoxRead(streamIterator.next())
+        atoms  = [groAtom(next(streamIterator)) for i in range(natoms)]
+        box    = groBoxRead(next(streamIterator))
         yield title, atoms, box
 
 
@@ -165,12 +165,12 @@ def groFrameIterator(streamIterator):
 # Called from main.
 def getChargeType(resname, resid, choices):
     '''Get user input for the charge of residues, based on list with choises.'''
-    print 'Which %s type do you want for residue %s:' % (resname, resid+1)
-    for i, choice in choices.iteritems():
-        print '%s. %s' % (i, choice)
+    print('Which %s type do you want for residue %s:' % (resname, resid+1))
+    for i, choice in choices.items():
+        print('%s. %s' % (i, choice))
     choice = None
-    while choice not in choices.keys():
-        choice = input('Type a number:')
+    while choice not in list(choices.keys()):
+        choice = eval(input('Type a number:'))
     return choices[choice]
 
 
@@ -272,7 +272,7 @@ def breaks(residuelist, selection=("N", "CA", "C"), cutoff=2.5):
 
 
 def contacts(atoms, cutoff=5):
-    rla = range(len(atoms))
+    rla = list(range(len(atoms)))
     crd = [atom[4:] for atom in atoms]
     return [(i, j) for i in rla[:-1] for j in rla[i+1:]
             if FUNC.distance2(crd[i], crd[j]) < cutoff]
@@ -296,7 +296,7 @@ def add_dummy(beads, dist=0.11, n=2):
 
 
 def check_merge(chains, m_list=[], l_list=[], ss_cutoff=0):
-    chainIndex = range(len(chains))
+    chainIndex = list(range(len(chains)))
 
     if 'all' in m_list:
         logging.info("All chains will be merged in a single moleculetype.")
@@ -312,7 +312,7 @@ def check_merge(chains, m_list=[], l_list=[], ss_cutoff=0):
         # before building the dictionary
         chainIndex.reverse()
         chainID.reverse()
-        dct = dict(zip(chainID, chainIndex))
+        dct = dict(list(zip(chainID, chainIndex)))
         chainIndex.reverse()
         # Convert chains in the merge_list to numeric, if necessary
         # NOTE The internal numbering is zero-based, while the
@@ -499,7 +499,7 @@ class Chain:
         return self.sequence[other]
 
     # Extract a piece of a chain as a new chain
-    def __getslice__(self, i, j):
+    def getslice(self, i, j):
         newchain = Chain(self.options, name=self.id)
         # Extract the slices from all lists
         for attr in self._attributes:
@@ -562,11 +562,11 @@ class Chain:
         for i in range(len(self.sequence)-1):
             if MAP.residueTypes.get(self.sequence[i], "Unknown") != MAP.residueTypes.get(self.sequence[i+1], "Unknown"):
                 # Use the __getslice__ method to take a part of the chain.
-                chains.append(self[chainStart:i+1])
+                chains.append(self.getslice(chainStart,i+1))
                 chainStart = i+1
         if chains:
             logging.debug('Splitting chain %s in %s chains' % (self.id, len(chains)+1))
-        return chains + [self[chainStart:]]
+        return chains + [self.getslice(chainStart,None)]
 
     def getname(self, basename=None):
         name = []
@@ -644,7 +644,7 @@ class Chain:
             residue = [(atom[0], resname)+atom[2:] for atom in residue]
             if residue[0][1] in ("SOL", "HOH", "TIP"):
                 continue
-            if not residue[0][1] in MAP.CoarseGrained.mapping.keys():
+            if not residue[0][1] in list(MAP.CoarseGrained.mapping.keys()):
                 logging.warning("Skipped unknown residue %s\n" % residue[0][1])
                 continue
             # Get the mapping for this residue
@@ -655,7 +655,7 @@ class Chain:
             # an error
             try:
                 beads, ids = MAP.map(residue, ca2bb=self.options['ForceField'].ca2bb)
-                beads      = zip(MAP.CoarseGrained.names[residue[0][1]], beads, ids)
+                beads      = list(zip(MAP.CoarseGrained.names[residue[0][1]], beads, ids))
                 if residue[0][1] in self.options['ForceField'].polar:
                     beads = add_dummy(beads, dist=0.14, n=2)
                 elif residue[0][1] in self.options['ForceField'].charged:
@@ -688,8 +688,8 @@ class Chain:
         # Return pairs of numbers that should be CONECTed
         # First extract the backbone IDs
         cg = self.cg()
-        bb = [i+1 for i, j in zip(range(len(cg)), cg) if j[0] == "BB"]
-        bb = zip(bb, bb[1:]+[len(bb)])
+        bb = [i+1 for i, j in zip(list(range(len(cg))), cg) if j[0] == "BB"]
+        bb = list(zip(bb, bb[1:]+[len(bb)]))
         # Set the backbone CONECTs (check whether the distance is consistent with binding)
         conect = [(i, j) for i, j in bb[:-1] if FUNC.distance2(cg[i-1][4:7], cg[j-1][4:7]) < 14]
         # Now add CONECTs for sidechains
