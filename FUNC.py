@@ -21,7 +21,7 @@ def nsplit(*x):
 
 # Make a dictionary from two lists
 def hash(x, y):
-    return dict(zip(x, y))
+    return dict(list(zip(x, y)))
 
 
 # Function to reformat pattern strings

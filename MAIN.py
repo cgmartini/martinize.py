@@ -13,7 +13,7 @@ def main(options):
 
     # The streamTag iterator first yields the file type, which
     # is used to specify the function for reading frames
-    fileType = inStream.next()
+    fileType = next(inStream)
     if fileType == "GRO":
         frameIterator = IO.groFrameIterator
     else:
@@ -43,7 +43,7 @@ def main(options):
             # Reorder, such that each chain is specified with (i,j,k)
             # where i and j are the start and end of the chain, and
             # k is a chain identifier
-            chains = zip([0]+broken, broken+[len(residuelist)], range(len(broken)+1))
+            chains = list(zip([0]+broken, broken+[len(residuelist)], list(range(len(broken)+1))))
             chains = [IO.Chain(options, residuelist[i:j], name=chr(65+k)) for i, j, k in chains]
 
         for chain in chains:
@@ -64,6 +64,7 @@ def main(options):
             demixedChains = []
             for chain in chains:
                 demixedChains.extend(chain.split())
+
             chains = demixedChains
 
         n = 1
@@ -231,7 +232,7 @@ def main(options):
         for i_count, i in enumerate(IO.residues(atoms)):
             if i[0][1] in ("SOL", "HOH", "TIP"):
                 continue
-            if not i[0][1] in MAP.CoarseGrained.mapping.keys():
+            if not i[0][1] in list(MAP.CoarseGrained.mapping.keys()):
                 continue
             nra = 0
             names = [j[0] for j in i]
@@ -257,7 +258,7 @@ def main(options):
 
         # Collect the secondary structure stuff and decide what to do with it
         # First rearrange by the residue
-        ssTotal = zip(*ssTotal)
+        ssTotal = list(zip(*ssTotal))
         ssAver  = []
         for i in ssTotal:
             si = list(set(i))
@@ -302,14 +303,14 @@ def main(options):
         if options['CystineCheckBonds']:
             logging.info("Checking for cystine bridges, based on sulphur (SG) atoms lying closer than %.4f nm" % math.sqrt(options['CystineMaxDist2']/100))
 
-            cyscoord  = zip(*[[j[4:7] for j in i] for i in cysteines])
+            cyscoord  = list(zip(*[[j[4:7] for j in i] for i in cysteines]))
             cysteines = [i[:4] for i in cysteines[0]]
 
             bl, kb    = options['ForceField'].special[(("SC1", "CYS"), ("SC1", "CYS"))]
 
             # Check the distances and add the cysteines to the link list if the
             # SG atoms have a distance smaller than the cutoff.
-            rlc = range(len(cysteines))
+            rlc = list(range(len(cysteines)))
             for i in rlc[:-1]:
                 for j in rlc[i+1:]:
                     # Checking the minimum distance over all frames
@@ -358,7 +359,7 @@ def main(options):
 
                 # Have to add the connections, like the connecting network
                 # Gather coordinates
-                mcg, coords = zip(*[(j[:4], j[4:7]) for m in mol for j in m.cg(force=True)])
+                mcg, coords = list(zip(*[(j[:4], j[4:7]) for m in mol for j in m.cg(force=True)]))
                 mcg         = list(mcg)
 
                 # Run through the link list and add connections (links = cys bridges or hand specified links)
@@ -450,6 +451,6 @@ Martini system from %s
     options['ForceField'].messages()
 
     # The following lines are always printed (if no errors occur).
-    print "\n\tThere you are. One MARTINI. Shaken, not stirred.\n"
+    print("\n\tThere you are. One MARTINI. Shaken, not stirred.\n")
     Q = DOC.martiniq.pop(random.randint(0, len(DOC.martiniq)-1))
-    print "\n", Q[1], "\n%80s" % ("--"+Q[0]), "\n"
+    print("\n", Q[1], "\n%80s" % ("--"+Q[0]), "\n")

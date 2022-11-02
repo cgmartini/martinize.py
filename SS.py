@@ -4,6 +4,7 @@
 import logging, os, sys
 import subprocess as subp
 import FUNC, IO
+import tempfile
 
 #----+--------------------------------------+
 ## A | SECONDARY STRUCTURE TYPE DEFINITIONS |
@@ -27,7 +28,7 @@ ss_names = {
  "C": "Coil",                                                                               #@#
 }
 
-bbss = ss_names.keys()
+bbss = list(ss_names.keys())
 bbss = FUNC.spl("  F     E     H     1     2     3     T     S     C")  # SS one letter
 
 
@@ -84,7 +85,7 @@ ss2num = FUNC.hash(bbss, ssnum)
 
 
 # List of programs for which secondary structure definitions can be processed
-programs = ssdefs.keys()
+programs = list(ssdefs.keys())
 
 
 # Dictionaries mapping ss types to the CG ss types
@@ -129,11 +130,11 @@ def ssClassification(ss, program="dssp"):
     # Translate dssp/pymol/gmx ss to Martini ss
     ss  = ss.translate(sstt[program])
     # Separate the different secondary structure types
-    sep = dict([(i, ss.translate(sstd[i])) for i in sstd.keys()])
+    sep = dict([(i, ss.translate(sstd[i])) for i in list(sstd.keys())])
     # Do type substitutions based on patterns
     # If the ss type is not in the patterns lists, do not substitute
     # (use empty lists for substitutions)
-    typ = [typesub(sep[i], patterns.get(i, []), pattypes.get(i, [])) for i in sstd.keys()]
+    typ = [typesub(sep[i], patterns.get(i, []), pattypes.get(i, [])) for i in list(sstd.keys())]
     # Translate all types to numerical values
     typ = [[ord(j) for j in list(i)] for i in typ]
     # Sum characters back to get a full typed sequence
@@ -152,21 +153,32 @@ def call_dssp(chain, atomlist, executable='dsspcmbi'):
     '''Get the secondary structure, by calling to dssp'''
     ssdfile = 'chain_%s.ssd' % chain.id
 
+    struct = tempfile.NamedTemporaryFile('wt',delete=False)
+    struct.write('CRYST1\n')
+    for atom in atomlist:
+        if atom[0][:2] == 'O1': atom = ('O',)+atom[1:]
+        if atom[0][0] != 'H' and atom[0][:2] != 'O2': struct.write(IO.pdbOut(atom))
+    
     try:
-        if os.system(executable+" -V 2>/dev/null"):
-            logging.debug("New version of DSSP; Executing '%s -i /dev/stdin -o %s'" % (executable, ssdfile))
-            p = subp.Popen([executable, "-i", "/dev/stdin", "-o", ssdfile], stderr=subp.PIPE, stdout=subp.PIPE, stdin=subp.PIPE)
+        ver = subp.check_output([executable,'--version'])
+        if b'version 4' in ver:
+            logging.debug("New version of DSSP; Executing '%s -i %s -o %s --output-format dssp'" % (executable, struct.name, ssdfile))
+            p = subp.Popen([executable, "-i", struct.name, "-o", ssdfile,'--output-format','dssp'])            
+        elif os.system(executable+" -V 2>/dev/null"):
+            logging.debug("New version of DSSP; Executing '%s -i %s -o %s'" % (executable, struct.name, ssdfile))
+            p = subp.Popen([executable, "-i", struct.name, "-o", ssdfile])
         else:
             logging.debug("Old version of DSSP; Executing '%s -- %s'" % (executable, ssdfile))
             p = subp.Popen([executable, "--", ssdfile], stderr=subp.PIPE, stdout=subp.PIPE, stdin=subp.PIPE)
+            for atom in atomlist:
+                if atom[0][:2] == 'O1': atom = ('O',)+atom[1:]
+                if atom[0][0] != 'H' and atom[0][:2] != 'O2': p.stdin.write(IO.pdbOut(atom).encode())
+            p.stdin.write('TER\n'.encode())            
     except OSError:
         logging.error("A problem occured calling %s." % executable)
         sys.exit(1)
 
-    for atom in atomlist:
-        if atom[0][:2] == 'O1': atom = ('O',)+atom[1:]
-        if atom[0][0] != 'H' and atom[0][:2] != 'O2': p.stdin.write(IO.pdbOut(atom))
-    p.stdin.write('TER\n')
+
     data = p.communicate()
     p.wait()
     main, ss = 0, ''

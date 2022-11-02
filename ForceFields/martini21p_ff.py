@@ -189,26 +189,26 @@ class martini21p:
         # Dictionary of default bead types (*D)                                                     
         self.bbBeadDictD  = FUNC.hash(SS.bbss,self.bbdef)                                                             
         # Dictionary of dictionaries of types for specific residues (*S)                            
-        self.bbBeadDictS  = dict([(i,FUNC.hash(SS.bbss,self.bbtyp[i])) for i in self.bbtyp.keys()])                        
+        self.bbBeadDictS  = dict([(i,FUNC.hash(SS.bbss,self.bbtyp[i])) for i in list(self.bbtyp.keys())])                        
         
         ## BB BOND TYPE ##                                                                          
         # Dictionary of default abond types (*D)                                                    
-        self.bbBondDictD = FUNC.hash(SS.bbss,zip(self.bbldef,self.bbkb))                                                   
+        self.bbBondDictD = FUNC.hash(SS.bbss,list(zip(self.bbldef,self.bbkb)))                                                   
         # Dictionary of dictionaries for specific types (*S)                                        
-        self.bbBondDictS = dict([(i,FUNC.hash(SS.bbss,zip(self.bbltyp[i],self.bbkbtyp[i]))) for i in self.bbltyp.keys()])       
+        self.bbBondDictS = dict([(i,FUNC.hash(SS.bbss,list(zip(self.bbltyp[i],self.bbkbtyp[i])))) for i in list(self.bbltyp.keys())])       
         # This is tricky to read, but it gives the right bondlength/force constant
         
         ## BBB ANGLE TYPE ##                                                                        
         # Dictionary of default angle types (*D)                                                    
-        self.bbAngleDictD = FUNC.hash(SS.bbss,zip(self.bbadef,self.bbka))                                                  
+        self.bbAngleDictD = FUNC.hash(SS.bbss,list(zip(self.bbadef,self.bbka)))                                                  
         # Dictionary of dictionaries for specific types (*S)                                        
-        self.bbAngleDictS = dict([(i,FUNC.hash(SS.bbss,zip(self.bbatyp[i],self.bbkatyp[i]))) for i in self.bbatyp.keys()])      
+        self.bbAngleDictS = dict([(i,FUNC.hash(SS.bbss,list(zip(self.bbatyp[i],self.bbkatyp[i])))) for i in list(self.bbatyp.keys())])      
                     
         ## BBBB DIHEDRAL TYPE ##                                                                    
         # Dictionary of default dihedral types (*D)                                                 
-        self.bbDihedDictD = FUNC.hash(SS.bbss,zip(self.bbddef,self.bbkd,self.bbdmul))                                           
+        self.bbDihedDictD = FUNC.hash(SS.bbss,list(zip(self.bbddef,self.bbkd,self.bbdmul)))                                           
         # Dictionary of dictionaries for specific types (*S)                                        
-        self.bbDihedDictS = dict([(i,FUNC.hash(SS.bbss,zip(self.bbdtyp[i],self.bbkdtyp[i]))) for i in self.bbdtyp.keys()])      
+        self.bbDihedDictS = dict([(i,FUNC.hash(SS.bbss,list(zip(self.bbdtyp[i],self.bbkdtyp[i])))) for i in list(self.bbdtyp.keys())])      
         
     # The following function returns the backbone bead for a given residue and                   
     # secondary structure type.                                                                 
