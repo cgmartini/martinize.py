@@ -160,9 +160,13 @@ def call_dssp(chain, atomlist, executable='dsspcmbi'):
         if atom[0][0] != 'H' and atom[0][:2] != 'O2': struct.write(IO.pdbOut(atom))
     
     try:
-        if os.system(executable+" -V 2>/dev/null"):
+        ver = subp.check_output([executable,'--version'])
+        if b'version 4' in ver:
             logging.debug("New version of DSSP; Executing '%s -i %s -o %s --output-format dssp'" % (executable, struct.name, ssdfile))
-            p = subp.Popen([executable, "-i", struct.name, "-o", ssdfile,'--output-format','dssp'])
+            p = subp.Popen([executable, "-i", struct.name, "-o", ssdfile,'--output-format','dssp'])            
+        elif os.system(executable+" -V 2>/dev/null"):
+            logging.debug("New version of DSSP; Executing '%s -i %s -o %s'" % (executable, struct.name, ssdfile))
+            p = subp.Popen([executable, "-i", struct.name, "-o", ssdfile])
         else:
             logging.debug("Old version of DSSP; Executing '%s -- %s'" % (executable, ssdfile))
             p = subp.Popen([executable, "--", ssdfile], stderr=subp.PIPE, stdout=subp.PIPE, stdin=subp.PIPE)
